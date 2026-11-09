@@ -191,25 +191,60 @@ enum NuggetIPadOSLocator {
     static let sliceStart = 1616
     static let sliceLength = 200
 
-    static func hexString(of data: NSData) -> String {
-        (data as Data).map { String(format: "%02x", $0) }.joined()
+    // Performance (fix for app-wide lag): the locator only ever reads
+    // bytes ~[770, 920] of CacheData (anchor window + validated slots).
+    // It works byte-natively on that window only — never converting the
+    // whole CacheData to a hex string — and memoizes the result keyed
+    // by those bytes + the total length, because tweak read() runs on
+    // every UI pass and must stay effectively O(1).
+    private static var cached: (region: Data, totalLength: Int, slot: Int, value: Character)?
+    private static let regionLower = 700
+    private static let regionUpper = 1000
+
+    private static func hexDigit(_ nibble: UInt8) -> Character {
+        Character(UnicodeScalar(nibble < 10 ? 48 + nibble : 87 + nibble))
+    }
+
+    private static func hexChar(_ bytes: UnsafePointer<UInt8>, atHexIndex i: Int) -> Character {
+        let byte = bytes[i / 2]
+        return hexDigit(i % 2 == 0 ? byte >> 4 : byte & 0x0F)
+    }
+
+    private static func region(of cacheData: NSData) -> Data {
+        let lower = min(regionLower, cacheData.length)
+        let upper = min(regionUpper, cacheData.length)
+        guard upper > lower else { return Data() }
+        return Data(bytes: cacheData.bytes.advanced(by: lower), count: upper - lower)
     }
 
     /// Finds the "left" device-class slot. Returns (slot, currentValue)
     /// or (nil, error) with Nugget's error messages when the pattern
     /// does not hold on this CacheData.
     static func locate(in cacheData: NSData) -> (slot: Int?, value: Character?, error: String?) {
-        let hex = hexString(of: cacheData)
-        let chars = Array(hex)
-        guard hex.count > sliceStart else {
+        let totalHexCount = cacheData.length * 2
+        guard totalHexCount > sliceStart else {
             return (nil, nil, "CacheData is too short!")
         }
 
-        // Nugget: find `0+(?:5555)*([0-9a-f]{4})` in the slice; the first
-        // capture whose 4 hex chars contain >= 3 non-zero chars anchors
-        // the offsets.
-        let sliceEnd = min(sliceStart + sliceLength, hex.count)
-        let slice = String(chars[sliceStart..<sliceEnd])
+        if let cached, cached.totalLength == cacheData.length, cached.region == region(of: cacheData) {
+            return (cached.slot, cached.value, nil)
+        }
+
+        let bytes = cacheData.bytes.bindMemory(to: UInt8.self, capacity: cacheData.length)
+
+        // Nugget: find `0+(?:5555)*([0-9a-f]{4})` in the slice (hex chars
+        // [sliceStart, sliceStart+sliceLength) = bytes [808, 908)); the
+        // first capture whose 4 hex chars contain >= 3 non-zero chars
+        // anchors the offsets. Only this window is hex-encoded.
+        let windowStartByte = sliceStart / 2
+        let windowEndByte = min((sliceStart + sliceLength) / 2, cacheData.length)
+        var windowChars: [Character] = []
+        windowChars.reserveCapacity((windowEndByte - windowStartByte) * 2)
+        for i in windowStartByte..<windowEndByte {
+            windowChars.append(hexDigit(bytes[i] >> 4))
+            windowChars.append(hexDigit(bytes[i] & 0x0F))
+        }
+        let slice = String(windowChars)
         let regex = try! NSRegularExpression(pattern: "0+(?:5555)*([0-9a-f]{4})")
         var offset: Int?
         for match in regex.matches(in: slice, range: NSRange(slice.startIndex..., in: slice)) {
@@ -225,28 +260,34 @@ enum NuggetIPadOSLocator {
 
         let roffset = offset + 13
         let loffset = offset - 67 // Nugget: "real" left offset
-        if roffset >= hex.count - 1 || roffset - 1 < 0 {
-            return (nil, nil, "Right offset out of range. Right Offset: \(roffset), Data Length: \(hex.count)")
+        if roffset >= totalHexCount - 1 || roffset - 1 < 0 {
+            return (nil, nil, "Right offset out of range. Right Offset: \(roffset), Data Length: \(totalHexCount)")
         }
-        if loffset <= 0 || loffset + 1 >= hex.count {
-            return (nil, nil, "Left offset out of range. Left Offset: \(loffset), Data Length: \(hex.count)")
+        if loffset <= 0 || loffset + 1 >= totalHexCount {
+            return (nil, nil, "Left offset out of range. Left Offset: \(loffset), Data Length: \(totalHexCount)")
         }
 
         for (sideOffset, name) in [(roffset, "right"), (loffset, "left")] {
-            if chars[sideOffset] != "1" && chars[sideOffset] != "3" {
-                return (nil, nil, "Value at \(name) offset is not 1 or 3. Value[\(sideOffset)] = \(chars[sideOffset]), Data Length: \(hex.count)")
+            let value = hexChar(bytes, atHexIndex: sideOffset)
+            if value != "1" && value != "3" {
+                return (nil, nil, "Value at \(name) offset is not 1 or 3. Value[\(sideOffset)] = \(value), Data Length: \(totalHexCount)")
             }
-            if chars[sideOffset - 1] != "0" || chars[sideOffset + 1] != "0" {
-                return (nil, nil, "Values of \(name) offset neighbors are not 0. Value[\(sideOffset - 1)] = \(chars[sideOffset - 1]), Value[\(sideOffset + 1)] = \(chars[sideOffset + 1]), Data Length: \(hex.count)")
+            let before = hexChar(bytes, atHexIndex: sideOffset - 1)
+            let after = hexChar(bytes, atHexIndex: sideOffset + 1)
+            if before != "0" || after != "0" {
+                return (nil, nil, "Values of \(name) offset neighbors are not 0. Value[\(sideOffset - 1)] = \(before), Value[\(sideOffset + 1)] = \(after), Data Length: \(totalHexCount)")
             }
         }
 
-        print("(ipados) Nugget locator: slot \(loffset), current value \(chars[loffset]) (anchor offset \(offset))")
-        return (loffset, chars[loffset], nil)
+        let value = hexChar(bytes, atHexIndex: loffset)
+        cached = (region(of: cacheData), cacheData.length, loffset, value)
+        print("(ipados) Nugget locator: slot \(loffset), current value \(value) (anchor offset \(offset))")
+        return (loffset, value, nil)
     }
 
     /// Sets the device-class slot to "3" (iPadOS on) or "1" (off) inside
-    /// the dictionary's CacheData. Returns an error string or nil.
+    /// the dictionary's CacheData — a single-nibble edit in place.
+    /// Returns an error string or nil.
     static func setSlot(in dict: NSMutableDictionary, enabled: Bool) -> String? {
         guard let cacheData = dict["CacheData"] as? NSMutableData else {
             return "CacheData is missing from MobileGestalt."
@@ -255,22 +296,15 @@ enum NuggetIPadOSLocator {
         if let error = located.error { return error }
         guard let slot = located.slot else { return "Pattern not found in CacheData." }
 
-        var chars = Array(hexString(of: cacheData))
-        chars[slot] = enabled ? "3" : "1"
-        let newHex = String(chars)
-
-        var bytes = [UInt8]()
-        bytes.reserveCapacity(newHex.count / 2)
-        var index = newHex.startIndex
-        while index < newHex.endIndex {
-            let next = newHex.index(index, offsetBy: 2)
-            guard let byte = UInt8(newHex[index..<next], radix: 16) else {
-                return "Failed to rebuild CacheData."
-            }
-            bytes.append(byte)
-            index = next
+        let bytes = cacheData.mutableBytes.bindMemory(to: UInt8.self, capacity: cacheData.length)
+        let byteIndex = slot / 2
+        let nibble: UInt8 = enabled ? 0x3 : 0x1
+        if slot % 2 == 0 {
+            bytes[byteIndex] = (bytes[byteIndex] & 0x0F) | (nibble << 4)
+        } else {
+            bytes[byteIndex] = (bytes[byteIndex] & 0xF0) | nibble
         }
-        dict["CacheData"] = NSMutableData(bytes: bytes, length: bytes.count)
+        cached = nil
         print("(ipados) Nugget locator: slot \(slot) set to \(enabled ? "3" : "1")")
         return nil
     }
