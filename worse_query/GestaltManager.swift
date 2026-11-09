@@ -336,6 +336,27 @@ final class GestaltManager: ObservableObject {
         customValues[tweakID] = value
     }
 
+    // MARK: Auto-respring
+
+    private var pendingRespring: DispatchWorkItem?
+
+    /// Every successful write (Apply, Revert, or any Backup restore)
+    /// schedules an automatic respring about 2 seconds later, because
+    /// gestalt changes only take effect once SpringBoard restarts.
+    /// Scheduling again cancels the pending respring, so several quick
+    /// restores in a row coalesce into a single one.
+    private func scheduleRespring() {
+        pendingRespring?.cancel()
+        print("[WorkTweaks] Changes saved - auto-respring in 2 seconds...")
+        let item = DispatchWorkItem {
+            if !respringDevice() {
+                print("[WorkTweaks] Auto-respring unavailable on this iOS - please reboot manually to apply the changes.")
+            }
+        }
+        pendingRespring = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: item)
+    }
+
     // MARK: Apply
 
     /// Applies the current toggle selection.
@@ -396,7 +417,8 @@ final class GestaltManager: ObservableObject {
             }
 
             lastError = nil
-            print("[WorkTweaks] Tweaks applied. Pre-apply snapshot saved. Respring required.")
+            print("[WorkTweaks] Tweaks applied. Pre-apply snapshot saved.")
+            scheduleRespring()
         } catch {
             lastError = error.localizedDescription
         }
@@ -535,8 +557,9 @@ final class GestaltManager: ObservableObject {
             try withExtension { url in
                 try data.write(to: url, options: .atomic)
             }
-            print("[WorkTweaks] Restored backup \(snapshot.id). Respring required.")
+            print("[WorkTweaks] Restored backup \(snapshot.id).")
             load()
+            scheduleRespring()
         } catch {
             lastError = error.localizedDescription
         }
@@ -586,8 +609,9 @@ final class GestaltManager: ObservableObject {
             root["CacheExtra"] = extra
             try writeRoot(root)
             lastError = nil
-            print("[WorkTweaks] Restored \(keys.count) key(s) from \(snapshot.id). Respring required.")
+            print("[WorkTweaks] Restored \(keys.count) key(s) from \(snapshot.id).")
             load()
+            scheduleRespring()
         } catch {
             lastError = error.localizedDescription
         }
