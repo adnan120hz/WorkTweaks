@@ -204,7 +204,7 @@ struct IntroView: View {
             Divider()
             creditRow(icon: "arrow.counterclockwise", name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
 
-            Text("This app is free software under the GNU GPL v3 license, following the licenses of the projects above.")
+            Text("This app is free software under the GNU AGPL v3 license, following the licenses of the projects above.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.top, 10)

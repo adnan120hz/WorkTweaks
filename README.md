@@ -1,41 +1,73 @@
-# WorkTweaks
+<p align="center">
+  <img src="icon.png" width="160" alt="WorkTweaks icon">
+</p>
 
-### A MobileGestalt tweak app for iOS 26.0 - 26.7.2 / 27.2, built on the worse_query sandbox escape.
+<h1 align="center">WorkTweaks</h1>
 
-WorkTweaks wraps the `worse_query` proof-of-concept below in a native SwiftUI app (no PartyUI):
-
-- **Tweaks** — toggle MobileGestalt tweaks (Dynamic Island, Always-On Display, Charge Limit, Action Button, Stage Manager, and more), ported from [mond](https://github.com/rooootdev/mond).
-- **Backup** — the first successful read saves an *original* backup, and every **Apply** first saves a snapshot of the exact state at apply time. The Backup tab shows what is inside each snapshot (active tweaks and every tweak key's value) and can restore a whole snapshot, a single tweak, or a single key. Turning a tweak off also restores its keys from the original backup instead of just deleting them.
-- **Sandbox** — the original worse_query escape / path enumeration tools.
-- **Log** — the console output, in its own tab.
-
-Notes:
-
-- The Xcode target is still named `worse_query` on purpose (only the display name is WorkTweaks), and the App Group is unchanged (`group.cc.forcequit.worse-query`) — renaming either requires re-provisioning the App Group, otherwise the escape stops working.
-- Changes are written to `com.apple.MobileGestalt.plist`; respring after applying or restoring.
-- App icon source lives in `Design/AppIcon.svg`; export it to 1024x1024 PNGs for `AppIcon.appiconset`.
+<p align="center">
+  A MobileGestalt tweak app for iOS 26 &amp; 27 — unlock your device's hidden features without a jailbreak, powered by the <strong>worse_query</strong> sandbox escape.
+</p>
 
 ---
 
-# worse_query
+## Features
 
-### A workgestakt for iOS 26.0 - 26.7.2 / 27.2.
+- **Tweaks** — the tweak catalog ported from [mond](https://github.com/rooootdev/mond): Dynamic Island, Always-On Display, Apple Intelligence, Stage Manager, Charge Limit, Action Button, iPadOS Mode, device spoofing, and more — applied with mond's in-place MobileGestalt write system, so tweaks persist across resprings and reboots.
+- **Extra** — a free-form CacheExtra editor: add, edit, or delete any MobileGestalt key directly.
+- **Backup** — an original backup is saved on first read, an automatic **After Apply Tweaks** snapshot is taken at every Apply, and manual snapshots can be created at any time. Every snapshot shows which tweaks were on and the value of every tweak key, and can be restored as a whole, per tweak, or per key.
+- **Sandbox & Log** — the original worse_query escape / path tools and the live console output.
+- **First-launch intro** — developer and credits welcome screen, shown once per install.
+- Light, dark, and tinted app icons.
 
-This is a proof-of-concept for developers and isn't useful by itself.
+## Supported iOS versions
 
-worse_query is the direct successor to [bad_query](https://github.com/forcequitOS/bad_query) and essentially replaces it. To use worse_query, you'll have to set up an App Group container for your app.
+WorkTweaks is built for **iOS 26 and 27** — the worse_query core targets both major versions — and installs on iOS 26.0 or later. Later iOS 27.x releases are covered by the same major-version support. Developed and tested on **iOS 27.0.1 (24A446)**.
 
-worse_query can access these paths:
+| Version | Build |
+| --- | --- |
+| iOS 26.7 | 23H24 |
+| iOS 27.0 Developer Beta 1 | 24A5355q |
+| iOS 27.0 Developer Beta 2 | 24A5370h |
+| iOS 27.0 Developer Beta 3 | 24A5380h |
+| iOS 27.0 Developer Beta 4 | 24A5390f |
+| iOS 27.0 Developer Beta 5 | 24A5408d |
+| iOS 27.0 Developer Beta 6 | 24A5418b |
+| iOS 27.0 Developer Beta 7 | 24A5424a |
+| iOS 27.0 Developer Beta 8 | 24A5430a |
+| iOS 27.0 RC | 24A437 |
+| iOS 27.0 | 24A437 |
+| iOS 27.0.1 | 24A446 |
+| iOS 27.1 | iPhone Duo only |
+| iOS 27.2 Beta 1 | 24B5084k |
+| iOS 27.2 Beta 2 | 24B5089g |
+| iOS 27.2 Beta 3 | 24B5099f |
+| iOS 27.2 Beta 4 | 24B5110a |
+| iOS 27.2 RC | 24B115 |
+| iOS 27.2 | 24B119 |
+| iOS 27.3 Beta 1 | 24C5037i |
 
-```
-/var/containers/Data/System (iOS 27)
-/var/containers/Shared/SystemGroup/* (iOS 27)
-/var/mobile/Containers/Data/Application/*
-/var/mobile/Containers/Data/InternalDaemon/*
-/var/mobile/Containers/Data/PluginKitPlugin/*
-/var/mobile/Containers/Shared/AppGroup/*
-/var/mobile/Containers/Shared/AppGroup (iOS 27)
-```
+## Credits
 
-<sub>**This is not relevant to a jailbreak and never will be.** Please don't mislead people into believing otherwise.</sub>
+WorkTweaks is built on open-source work:
 
+| Project | Author | What it provides | License |
+| --- | --- | --- | --- |
+| [worse_query](https://github.com/forcequitOS/worse_query) | ForceQuit OS | The core system: the sandbox escape and MobileGestalt access this whole app is built on | GPL-3.0 |
+| [mond](https://github.com/rooootdev/mond) | rooootdev | The tweak engine: the tweak catalog and the load / apply / write system | AGPL-3.0 |
+| [Nugget](https://github.com/leminlimez/Nugget) | leminlimez | The file-based CacheData pattern method used by Enable iPadOS Mode | AGPL-3.0 |
+| Respring technique | @neonmodder123 & @skadz108 | The web-based respring approach and its Swift implementation (via jailbreak.party) | — |
+
+**Developer:** Adnan — [TikTok @adnan.120hz](https://www.tiktok.com/@adnan.120hz) · [GitHub @adnan120hz](https://github.com/adnan120hz)
+
+## License
+
+WorkTweaks is free software, licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see [LICENSE](LICENSE) for the full text.
+
+Why AGPL and not plain GPL: the core system (worse_query) is GPL-3.0, but the tweak engine ported from mond and the CacheData method taken from Nugget are both AGPL-3.0. GPLv3 code may be combined into an AGPLv3 work (GPLv3 §13), and the AGPL terms then apply to the combined work as a whole — so WorkTweaks is distributed under AGPL-3.0.
+
+## Building & signing notes
+
+- Every push to `main` builds an unsigned IPA in GitHub Actions (artifact `WorkTweaks-unsigned-ipa`).
+- The Xcode target is intentionally still named `worse_query` — only the display name is WorkTweaks.
+- The app must keep an App Group entitlement when signed. Signers that rewrite the bundle id and append their team id to the group (e.g. ESign with a free certificate) work automatically: the app reads its own provisioning profile at runtime and uses the group it was actually signed with.
+- Use at your own risk — tweaks modify system files. Keep your original backup.

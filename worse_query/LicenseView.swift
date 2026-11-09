@@ -103,6 +103,17 @@ struct LicenseView: View {
             }
 
             Section {
+                LabeledContent("WorkTweaks", value: "AGPL-3.0")
+                LabeledContent("worse_query — ForceQuit OS", value: "GPL-3.0")
+                LabeledContent("mond — rooootdev", value: "AGPL-3.0")
+                LabeledContent("Nugget — leminlimez", value: "AGPL-3.0")
+            } header: {
+                Label("License", systemImage: "doc.text")
+            } footer: {
+                Text("WorkTweaks is free software under the GNU Affero General Public License v3.0. The core (worse_query) is GPL-3.0, but the tweak engine from mond and the CacheData method from Nugget are AGPL-3.0 — GPLv3 code may be combined into an AGPLv3 work, and the AGPL terms then cover the combined work as a whole.")
+            }
+
+            Section {
                 Text("All upstream projects remain under their respective licenses. WorkTweaks only repackages and extends them; full credit belongs to the original authors above.")
                     .font(.caption).foregroundStyle(.secondary)
             }
