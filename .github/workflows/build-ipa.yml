@@ -1,0 +1,57 @@
+name: Build IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build unsigned IPA
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcodebuild -project worse_query.xcodeproj -list
+
+      - name: Build (unsigned)
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project worse_query.xcodeproj \
+            -scheme worse_query \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found in build products" >&2
+            exit 1
+          fi
+          echo "Packaging $APP_PATH"
+          rm -rf Payload WorkTweaks-unsigned.ipa
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          zip -qry WorkTweaks-unsigned.ipa Payload
+          ls -lh WorkTweaks-unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WorkTweaks-unsigned-ipa
+          path: WorkTweaks-unsigned.ipa
+          if-no-files-found: error
