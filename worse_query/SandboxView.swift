@@ -6,6 +6,11 @@ struct SandboxView: View {
     @State private var sandboxHandle: Int64?
     @State private var groupText = AppGroupResolver.configuredGroup
 
+    /// Master switch for the Tweaks tab (v2.0): the Tweaks tab
+    /// stays locked until this is turned on. Shared with the
+    /// Tweaks tab gate via the same AppStorage key.
+    @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
+
     private var isConsumed: Bool {
         (sandboxHandle ?? -255) > 0
     }
@@ -13,6 +18,38 @@ struct SandboxView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // v2.0: master switch for the Tweaks feature.
+                Section {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 12) {
+                            IconChip(systemImage: tweaksEnabled ? "lock.open.fill" : "lock.fill",
+                                     color: tweaksEnabled ? .green : .gray)
+                            Toggle("Start Tweaks Feature", isOn: $tweaksEnabled)
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        Text("Unlocks the Tweaks tab. Turn this on to start using tweaks.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+                .listRowBackground(Color.accentColor.opacity(0.07))
+
+                // v2.0: this device's support status.
+                Section {
+                    Label {
+                        Text(SupportInfo.isSupported
+                             ? "Supported iOS • \(SupportInfo.deviceSummary)"
+                             : "Unsupported iOS • \(SupportInfo.deviceSummary)")
+                            .font(.subheadline.weight(.medium))
+                    } icon: {
+                        Image(systemName: SupportInfo.isSupported ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                            .foregroundStyle(SupportInfo.isSupported ? .green : .orange)
+                    }
+                } header: {
+                    Label("Device", systemImage: "iphone")
+                }
+
                 Section {
                     TextField("App Group ID", text: $groupText)
                         .disableAutocorrection(true)
@@ -28,19 +65,21 @@ struct SandboxView: View {
                         AppGroupResolver.logDiagnostics()
                     }
                 } header: {
-                    Text("App Group")
+                    Label("App Group", systemImage: "link")
                 } footer: {
                     Text("Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.")
                 }
 
-                Section("Target Path") {
+                Section {
                     TextField("Target", text: $path)
                         .disabled(isConsumed)
                         .disableAutocorrection(true)
                         .textInputAutocapitalization(.never)
+                } header: {
+                    Label("Target Path", systemImage: "folder")
                 }
 
-                Section("Escape") {
+                Section {
                     Button("Consume Sandbox Extension") {
                         sandboxHandle = consumeExtension(path)
                     }
@@ -53,16 +92,20 @@ struct SandboxView: View {
                         sandboxHandle = nil
                     }
                     .disabled(!isConsumed)
+                } header: {
+                    Label("Escape", systemImage: "escape")
                 }
 
-                Section("Utilities") {
+                Section {
                     ShareLink(item: URL(fileURLWithPath: path)) {
                         Label("Share Contents", systemImage: "square.and.arrow.up")
                     }
                     .disabled(path.isEmpty)
+                } header: {
+                    Label("Utilities", systemImage: "wrench.and.screwdriver")
                 }
 
-                Section("Enumeration") {
+                Section {
                     // Reliable, but insanely slow
                     Button("Get Paths (pathleak)") {
                         leakPaths(path)
@@ -72,10 +115,12 @@ struct SandboxView: View {
                     Button("Get Paths (parentdir)") {
                         listPaths(path)
                     }
+                } header: {
+                    Label("Enumeration", systemImage: "list.bullet.indent")
                 }
                 .disabled(path.isEmpty)
 
-                Section("Log") {
+                Section {
                     ScrollViewReader { proxy in
                         ScrollView {
                             Text(console.output)
@@ -96,6 +141,8 @@ struct SandboxView: View {
                     Button("Clear") {
                         console.output = ""
                     }
+                } header: {
+                    Label("Log", systemImage: "terminal")
                 }
             }
             .navigationTitle("Sandbox")

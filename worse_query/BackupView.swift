@@ -22,24 +22,30 @@ struct BackupView: View {
                         Label("Back Up Now", systemImage: "externaldrive.badge.plus")
                     }
                     .disabled(!manager.isValid)
+                } header: {
+                    Label("Snapshots", systemImage: "externaldrive")
                 } footer: {
                     Text("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")
                 }
 
                 if let original = manager.originalSnapshot {
-                    Section("Original") {
+                    Section {
                         snapshotRow(original)
+                    } header: {
+                        Label("Original", systemImage: "lock.shield")
                     }
                 }
 
                 if manager.otherSnapshots.isEmpty {
-                    Section("Apply Snapshots") {
+                    Section {
                         Text("No snapshots yet. Apply some tweaks or tap Back Up Now.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    } header: {
+                        Label("Apply Snapshots", systemImage: "clock.arrow.circlepath")
                     }
                 } else {
-                    Section("Apply Snapshots") {
+                    Section {
                         ForEach(manager.otherSnapshots) { snapshot in
                             snapshotRow(snapshot)
                         }
@@ -48,6 +54,8 @@ struct BackupView: View {
                                 manager.deleteSnapshot(manager.otherSnapshots[index])
                             }
                         }
+                    } header: {
+                        Label("Apply Snapshots", systemImage: "clock.arrow.circlepath")
                     }
                 }
 
@@ -131,7 +139,7 @@ struct BackupDetailView: View {
                 Text("Rewrites the entire MobileGestalt.plist from this backup. A device restart is required after restoring.")
             }
 
-            Section("By Tweak") {
+            Section {
                 ForEach(TweakCatalog.all) { tweak in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
@@ -151,9 +159,11 @@ struct BackupDetailView: View {
                     }
                     .padding(.vertical, 2)
                 }
+            } header: {
+                Label("By Tweak", systemImage: "slider.horizontal.3")
             }
 
-            Section("By Key") {
+            Section {
                 ForEach(snapshot.entries) { entry in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
@@ -178,6 +188,8 @@ struct BackupDetailView: View {
                     }
                     .padding(.vertical, 2)
                 }
+            } header: {
+                Label("By Key", systemImage: "key")
             }
         }
         .navigationTitle("Backup Details")

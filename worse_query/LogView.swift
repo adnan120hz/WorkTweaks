@@ -15,6 +15,12 @@ struct LogView: View {
                         .padding()
                         .id("log-bottom")
                 }
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(0.05), lineWidth: 1)
+                )
+                .padding(12)
                 .background(Color(.systemGroupedBackground))
                 .navigationTitle("Log")
                 .navigationBarTitleDisplayMode(.inline)

@@ -71,7 +71,7 @@ struct CacheExtraView: View {
                             }
                         }
                     } header: {
-                        Text("CacheExtra Keys (\(filteredKeys.count))")
+                        Label("CacheExtra Keys (\(filteredKeys.count))", systemImage: "key")
                     }
                 }
             }

@@ -7,6 +7,11 @@ import UIKit
 // tweak order, same Subtype picker values, same spoofing model list.
 // Toggles mutate the in-memory MobileGestalt dictionary immediately
 // (mond: mg_tweak_binding); "Apply Tweaks" persists it via mg_apply.
+//
+// v2.0: modern iOS-Settings-style rows — every tweak gets its own
+// colored icon chip (see TweakCatalog.presentation) — and the tab
+// starts LOCKED until "Start Tweaks Feature" is turned on in the
+// Sandbox tab (UserDefaults wt.tweaksFeatureEnabled).
 
 struct TweaksView: View {
     // Not @ObservedObject on purpose: this view never displays console
@@ -15,8 +20,13 @@ struct TweaksView: View {
     // every tweak's read() — a self-sustaining lag/spam loop.
     let console: Console
     @ObservedObject var manager: GestaltManager
+    /// Switches the TabView to the Sandbox tab (RootView owns the
+    /// selection); used by the locked state's button.
+    var onOpenSandbox: () -> Void
 
     @AppStorage("atomic_write") private var atomicWrite = true
+    /// Master switch for this tab, flipped in the Sandbox tab.
+    @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
 
     @State private var infoTitle: String?
     @State private var infoMessage: String = ""
@@ -31,24 +41,12 @@ struct TweaksView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                statusSection
-
-                if manager.isValid || manager.isEmpty {
-                    if !manager.isValid || manager.isEmpty {
-                        warningSection
-                    }
+            Group {
+                if tweaksEnabled {
+                    tweakList
+                } else {
+                    lockedView
                 }
-
-                actionSection
-                artworkSection
-                softwareSection
-                hardwareSection
-                eligibilitySection
-                ipadSection
-                internalSection
-                writeSettingsSection
-                footerSection
             }
             .navigationTitle("WorkTweaks")
             .navigationBarTitleDisplayMode(.large)
@@ -56,6 +54,12 @@ struct TweaksView: View {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button { manager.load() } label: { Image(systemName: "arrow.clockwise") }
                         .disabled(manager.isLoading)
+                    NavigationLink {
+                        TutorialsView()
+                    } label: {
+                        Image(systemName: "book")
+                    }
+                    .accessibilityLabel("Tutorials")
                     NavigationLink {
                         LicenseView()
                     } label: {
@@ -106,14 +110,68 @@ struct TweaksView: View {
         }
     }
 
+    // MARK: Locked state (v2.0)
+
+    private var lockedView: some View {
+        VStack(spacing: 18) {
+            Spacer()
+            IconChip(systemImage: "lock.fill", color: .gray, size: 76)
+            VStack(spacing: 8) {
+                Text("Tweaks are locked")
+                    .font(.title3.weight(.bold))
+                Text("Go to the Sandbox tab and turn on Start Tweaks Feature to unlock the Tweaks tab.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Button {
+                onOpenSandbox()
+            } label: {
+                Label("Go to Sandbox Tab", systemImage: "shippingbox")
+                    .font(.headline)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            Spacer()
+        }
+        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemGroupedBackground))
+    }
+
+    // MARK: Tweak list
+
+    private var tweakList: some View {
+        List {
+            statusSection
+
+            if manager.isValid || manager.isEmpty {
+                if !manager.isValid || manager.isEmpty {
+                    warningSection
+                }
+            }
+
+            actionSection
+            artworkSection
+            softwareSection
+            hardwareSection
+            eligibilitySection
+            ipadSection
+            internalSection
+            writeSettingsSection
+            footerSection
+        }
+    }
+
     // MARK: Status
 
     private var statusSection: some View {
         Section {
             HStack(spacing: 12) {
-                Image(systemName: statusIcon)
-                    .font(.title2)
-                    .foregroundStyle(statusColor)
+                IconChip(systemImage: statusIcon, color: statusColor, size: 38)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(statusTitle)
                         .font(.subheadline.weight(.semibold))
@@ -175,20 +233,32 @@ struct TweaksView: View {
                 manager.apply()
                 console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
             } label: {
-                Label("Apply Tweaks", systemImage: "checkmark.circle.fill")
+                HStack(spacing: 12) {
+                    IconChip(systemImage: "checkmark.circle.fill", color: .green)
+                    Text("Apply Tweaks")
+                        .font(.subheadline.weight(.semibold))
+                }
             }
             .disabled(!manager.isValid)
 
             Button {
                 RespringCenter.shared.trigger()
             } label: {
-                Label("Respring", systemImage: "restart.circle")
+                HStack(spacing: 12) {
+                    IconChip(systemImage: "restart.circle.fill", color: .blue)
+                    Text("Respring")
+                        .font(.subheadline.weight(.semibold))
+                }
             }
 
             Button(role: .destructive) {
                 showRevertConfirm = true
             } label: {
-                Label("Revert Tweaks", systemImage: "arrow.uturn.backward.circle")
+                HStack(spacing: 12) {
+                    IconChip(systemImage: "arrow.uturn.backward.circle.fill", color: .red)
+                    Text("Revert Tweaks")
+                        .font(.subheadline.weight(.semibold))
+                }
             }
             .disabled(!manager.isValid)
         } footer: {
@@ -200,34 +270,41 @@ struct TweaksView: View {
 
     private var artworkSection: some View {
         Section {
-            Picker(selection: $manager.selectedST) {
-                Text("Original (\(manager.ogST))").tag("og")
+            HStack(spacing: 12) {
+                IconChip(systemImage: "apps.iphone", color: .blue)
+                Picker(selection: $manager.selectedST) {
+                    Text("Original (\(manager.ogST))").tag("og")
 
-                if isDeviceGoodForNoDynamicIsland() {
-                    Text("Disable Dynamic Island").tag("no_dynamic_island")
+                    if isDeviceGoodForNoDynamicIsland() {
+                        Text("Disable Dynamic Island").tag("no_dynamic_island")
+                    }
+
+                    Text("iPhone 14 Pro").tag("14p")
+                    Text("iPhone 14 Pro Max").tag("14pm")
+                    Text("iPhone 15 Pro Max").tag("15pm")
+
+                    if doubleSystemVersion() >= 18.0 {
+                        Text("iPhone 16 Pro").tag("16p")
+                        Text("iPhone 16 Pro Max").tag("16pm")
+                        Text("iPhone 18 Pro Max").tag("18pm")
+                    }
+
+                    if doubleSystemVersion() >= 26.0 {
+                        Text("iPhone Air").tag("air")
+                    }
+
+                    if hasHomeButton() {
+                        Text("iPhone X Gestures").tag("x")
+                    }
+                } label: {
+                    Text("Subtype")
                 }
-
-                Text("iPhone 14 Pro").tag("14p")
-                Text("iPhone 14 Pro Max").tag("14pm")
-                Text("iPhone 15 Pro Max").tag("15pm")
-
-                if doubleSystemVersion() >= 18.0 {
-                    Text("iPhone 16 Pro").tag("16p")
-                    Text("iPhone 16 Pro Max").tag("16pm")
-                }
-
-                if doubleSystemVersion() >= 26.0 {
-                    Text("iPhone Air").tag("air")
-                }
-
-                if hasHomeButton() {
-                    Text("iPhone X Gestures").tag("x")
-                }
-            } label: {
-                Text("Subtype")
             }
 
-            Toggle("Custom Device Name", isOn: $manager.enableDeviceName)
+            HStack(spacing: 12) {
+                IconChip(systemImage: "tag.fill", color: .orange)
+                Toggle("Custom Device Name", isOn: $manager.enableDeviceName)
+            }
 
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
@@ -275,7 +352,8 @@ struct TweaksView: View {
             TweakToggle(manager: manager, title: "Disable Region Restrictions", onInfo: showInfo(for:))
             TweakToggle(manager: manager, title: "Apple Intelligence", onInfo: showInfo(for:))
 
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
+                IconChip(systemImage: "theatermasks.fill", color: .purple)
                 Picker("Spoofing", selection: $manager.productType) {
                     Text("Default").tag(machineName())
                     if UIDevice.current.userInterfaceIdiom == .pad {
@@ -348,7 +426,10 @@ struct TweaksView: View {
     // mond SettingsView: "Persist after reboot" (atomic_write)
     private var writeSettingsSection: some View {
         Section {
-            Toggle("Persist after reboot", isOn: $atomicWrite)
+            HStack(spacing: 12) {
+                IconChip(systemImage: "tray.full.fill", color: .gray)
+                Toggle("Persist after reboot", isOn: $atomicWrite)
+            }
         } header: {
             Label("Write Method", systemImage: "pencil.and.outline")
         } footer: {
@@ -359,9 +440,23 @@ struct TweaksView: View {
     private var footerSection: some View {
         Section {
             NavigationLink {
+                TutorialsView()
+            } label: {
+                HStack(spacing: 12) {
+                    IconChip(systemImage: "book.fill", color: .blue)
+                    Text("Tutorials")
+                        .font(.subheadline.weight(.medium))
+                }
+            }
+
+            NavigationLink {
                 LicenseView()
             } label: {
-                Label("License & Credits", systemImage: "doc.text")
+                HStack(spacing: 12) {
+                    IconChip(systemImage: "doc.text.fill", color: .gray)
+                    Text("License & Credits")
+                        .font(.subheadline.weight(.medium))
+                }
             }
 
             HStack {
@@ -379,6 +474,9 @@ struct TweaksView: View {
 }
 
 // MARK: - Toggle row (mond: TweakToggle via mg_tweak_binding)
+//
+// v2.0 design: colored icon chip + title (+ "Requires iOS" subtitle
+// when the tweak needs a newer iOS) + optional info button + switch.
 
 struct TweakToggle: View {
     @ObservedObject var manager: GestaltManager
@@ -387,7 +485,8 @@ struct TweakToggle: View {
 
     var body: some View {
         if let tweak = TweakCatalog.tweak(title: title) {
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
+                IconChip(systemImage: tweak.icon, color: tweak.tint.color)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tweak.title)
                         .font(.subheadline.weight(.medium))

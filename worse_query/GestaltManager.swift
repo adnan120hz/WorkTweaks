@@ -601,6 +601,51 @@ enum TweakCatalog {
     }
 }
 
+// MARK: - Tweak presentation (v2.0: one icon + tint per tweak)
+//
+// Purely cosmetic metadata for the Tweaks list — every catalog tweak
+// has its OWN SF Symbol and tint color here, keyed by tweak id.
+// Nothing in this section touches keys, values, or read/write logic.
+
+enum TweakTint: String {
+    case blue, indigo, purple, pink, red, orange, yellow, green, mint, teal, cyan, brown, gray
+}
+
+extension GestaltTweak {
+    /// SF Symbol shown in this tweak's icon chip (Tweaks tab).
+    var icon: String { TweakCatalog.presentation[id]?.icon ?? "gearshape" }
+    /// Tint color of this tweak's icon chip (Tweaks tab).
+    var tint: TweakTint { TweakCatalog.presentation[id]?.tint ?? .gray }
+}
+
+extension TweakCatalog {
+    static let presentation: [String: (icon: String, tint: TweakTint)] = [
+        "enable_dynamic_island_capability": ("capsule.fill", .indigo),
+        "always_on_display": ("moon.fill", .purple),
+        "aod_vibrancy": ("sparkles", .yellow),
+        "disable_wallpaper_parallax": ("photo.fill", .teal),
+        "enable_liquid_glass_low_performance_mode": ("tortoise.fill", .cyan),
+        "disable_liquid_glass_low_performance_mode": ("hare.fill", .green),
+        "boot_shutdown_chime": ("bell.fill", .orange),
+        "charge_limit_menu": ("bolt.fill", .yellow),
+        "tap_to_wake": ("hand.tap.fill", .pink),
+        "iphone_16_camera_control_settings": ("camera.fill", .gray),
+        "apple_pencil_settings": ("applepencil", .brown),
+        "action_button_settings": ("button.programmable", .red),
+        "collision_sos": ("sos", .red),
+        "pulse_width_modulation": ("waveform.path.ecg", .pink),
+        "security_research_device_mode": ("lock.shield.fill", .blue),
+        "allow_ipad_apps": ("apps.ipad", .teal),
+        "stage_manager_support": ("rectangle.3.group.fill", .indigo),
+        "apple_internal_install": ("hammer.fill", .brown),
+        "internal_storage_view": ("internaldrive.fill", .gray),
+        "disable_region_restrictions": ("globe.americas.fill", .green),
+        "apple_intelligence": ("apple.intelligence", .purple),
+        "enable_ipados_mode": ("ipad", .blue),
+        "internal_features": ("ladybug.fill", .green),
+    ]
+}
+
 // MARK: - Plist value description (Backup tab)
 
 enum PlistValue {
@@ -737,6 +782,7 @@ final class GestaltManager: ObservableObject {
         case "14pm": return 2796
         case "15pm": return 2976
         case "16p": return 2622
+        case "18pm": return 2622
         case "16pm": return 2868
         case "air": return 2736
         case "x": return 2436

@@ -1,45 +1,36 @@
 import SwiftUI
 
+/// The five main tabs. RootView owns the selection so other views
+/// (e.g. the locked Tweaks tab) can ask to jump to a specific tab.
+enum AppTab: Hashable {
+    case tweaks, extra, backup, sandbox, log
+}
+
 struct RootView: View {
     @StateObject private var console = Console()
     @StateObject private var gestalt = GestaltManager.shared
     @StateObject private var respringCenter = RespringCenter.shared
-    /// Persists across launches: the intro is shown only until the
-    /// user taps "Get Started" once (and again only after a reinstall,
-    /// which wipes the app's defaults).
-    @AppStorage("wt.introSeen") private var introSeen = false
+    /// Persists across launches: the v2.0 Welcome is shown only
+    /// until the user taps "Get Started" once (and again only after
+    /// a reinstall, which wipes the app's defaults). A new key for
+    /// v2.0, so everyone sees the new Welcome once after updating.
+    @AppStorage("wt.welcomeV2Seen") private var welcomeSeen = false
+    @State private var selectedTab: AppTab = .tweaks
 
     var body: some View {
-        TabView {
-            TweaksView(console: console, manager: gestalt)
-                .tabItem { Label("Tweaks", systemImage: "slider.horizontal.3") }
-
-            CacheExtraView(manager: gestalt)
-                .tabItem { Label("Extra", systemImage: "key") }
-
-            BackupView(manager: gestalt)
-                .tabItem { Label("Backup", systemImage: "externaldrive.badge.timemachine") }
-
-            SandboxView(console: console)
-                .tabItem { Label("Sandbox", systemImage: "shippingbox") }
-
-            LogView(console: console)
-                .tabItem { Label("Log", systemImage: "terminal") }
+        Group {
+            if !welcomeSeen {
+                // 1. Welcome gate (first launch of v2.0).
+                WelcomeView { welcomeSeen = true }
+            } else if SupportInfo.isSupported {
+                // 2. Supported build → the app itself.
+                tabView
+            } else {
+                // 3. Unsupported build → no tab UI, ever.
+                UnsupportedView()
+            }
         }
         .tint(Color("AccentColor"))
-        .onAppear {
-            console.start()
-            gestalt.load()
-        }
-        // First-launch intro (developer + credits + compatibility):
-        // presented only while `introSeen` is false; tapping
-        // "Get Started" sets it once and for all on this install.
-        .fullScreenCover(isPresented: Binding(
-            get: { !introSeen },
-            set: { presented in if !presented { introSeen = true } }
-        )) {
-            IntroView { introSeen = true }
-        }
         // mond: root overlay presenting the respring web view.
         .overlay {
             if respringCenter.show {
@@ -63,6 +54,34 @@ struct RootView: View {
                     }
                 }
             }
+        }
+    }
+
+    private var tabView: some View {
+        TabView(selection: $selectedTab) {
+            TweaksView(console: console, manager: gestalt, onOpenSandbox: { selectedTab = .sandbox })
+                .tabItem { Label("Tweaks", systemImage: "slider.horizontal.3") }
+                .tag(AppTab.tweaks)
+
+            CacheExtraView(manager: gestalt)
+                .tabItem { Label("Extra", systemImage: "key") }
+                .tag(AppTab.extra)
+
+            BackupView(manager: gestalt)
+                .tabItem { Label("Backup", systemImage: "externaldrive.badge.timemachine") }
+                .tag(AppTab.backup)
+
+            SandboxView(console: console)
+                .tabItem { Label("Sandbox", systemImage: "shippingbox") }
+                .tag(AppTab.sandbox)
+
+            LogView(console: console)
+                .tabItem { Label("Log", systemImage: "terminal") }
+                .tag(AppTab.log)
+        }
+        .onAppear {
+            console.start()
+            gestalt.load()
         }
     }
 }
