@@ -49,10 +49,31 @@ struct GestaltTweak: Identifiable {
     let keys: [String]
     let value: TweakValue
     let warning: String?
+    /// Custom-value tweaks (Subtype, Device Spoofing) carry a user-chosen
+    /// value instead of a fixed one. `value` is then just the default.
+    var isCustomValue: Bool = false
 }
 
 enum TweakCatalog {
     static let all: [GestaltTweak] = [
+        .init(id: "dynamic_island_subtype",
+              title: "Dynamic Island Subtype",
+              subtitle: "Choose the Dynamic Island device subtype",
+              systemImage: "capsule.portrait",
+              keys: ["ArtworkDeviceSubType"],
+              value: .int(2556),
+              warning: "Common values: 2556 (Pro) or 2796 (Pro Max).",
+              isCustomValue: true),
+
+        .init(id: "device_spoofing",
+              title: "Device Spoofing",
+              subtitle: "Spoof the device ProductType",
+              systemImage: "iphone.gen3",
+              keys: ["h9jDsbgj7xIVeIQ8S3/X3Q"],
+              value: .string("iPhone16,2"),
+              warning: "High risk. Can affect Face ID, iCloud and other hardware features.",
+              isCustomValue: true),
+
         .init(id: "dynamic_island",
               title: "Dynamic Island",
               subtitle: "Enable Dynamic Island capability",
@@ -209,6 +230,8 @@ final class GestaltManager: ObservableObject {
     static let shared = GestaltManager()
 
     @Published var enabled: Set<String> = []
+    /// User-chosen values for custom-value tweaks, by tweak id.
+    @Published var customValues: [String: TweakValue] = [:]
     @Published var snapshots: [BackupSnapshot] = []
     @Published var isLoading = false
     @Published var isValid = false
@@ -257,9 +280,31 @@ final class GestaltManager: ObservableObject {
                 throw GestaltError.invalidPlist
             }
 
-            enabled = Set(TweakCatalog.all.filter { tweak in
-                tweak.keys.allSatisfy { key in tweak.value.matches(extra[key]) }
-            }.map(\.id))
+            var detected: Set<String> = []
+            for tweak in TweakCatalog.all {
+                if tweak.isCustomValue, let key = tweak.keys.first, let raw = extra[key] {
+                    // A custom-value tweak counts as ON when its key exists
+                    // with the right type; adopt the on-device value so the
+                    // picker / text field shows what the device really has.
+                    switch tweak.value {
+                    case .int:
+                        if let number = raw as? NSNumber {
+                            detected.insert(tweak.id)
+                            customValues[tweak.id] = .int(number.intValue)
+                        }
+                    case .string:
+                        if let string = raw as? String {
+                            detected.insert(tweak.id)
+                            customValues[tweak.id] = .string(string)
+                        }
+                    case .intArray:
+                        break
+                    }
+                } else if tweak.keys.allSatisfy({ key in tweak.value.matches(extra[key]) }) {
+                    detected.insert(tweak.id)
+                }
+            }
+            enabled = detected
 
             isValid = true
             lastError = nil
@@ -273,8 +318,22 @@ final class GestaltManager: ObservableObject {
     // MARK: Toggle (in-memory until Apply)
 
     func set(_ tweak: GestaltTweak, enabled: Bool) {
-        if enabled { self.enabled.insert(tweak.id) }
-        else { self.enabled.remove(tweak.id) }
+        if enabled {
+            self.enabled.insert(tweak.id)
+            if tweak.isCustomValue && customValues[tweak.id] == nil {
+                customValues[tweak.id] = tweak.value
+            }
+        } else {
+            self.enabled.remove(tweak.id)
+        }
+    }
+
+    func effectiveValue(for tweak: GestaltTweak) -> TweakValue {
+        customValues[tweak.id] ?? tweak.value
+    }
+
+    func updateValue(for tweakID: String, value: TweakValue) {
+        customValues[tweakID] = value
     }
 
     // MARK: Apply
@@ -301,8 +360,9 @@ final class GestaltManager: ObservableObject {
 
             for tweak in TweakCatalog.all {
                 if enabled.contains(tweak.id) {
+                    let valueToApply = effectiveValue(for: tweak)
                     for key in tweak.keys {
-                        extra[key] = tweak.value.plistValue
+                        extra[key] = valueToApply.plistValue
                     }
                 } else {
                     for key in tweak.keys {
@@ -541,7 +601,7 @@ final class GestaltManager: ObservableObject {
     // MARK: Sandbox Extension
 
     private func withExtension<T>(_ body: (URL) throws -> T) throws -> T {
-        let handle = worse_query(gestaltPath, workGestaltAppGroup, false, false)
+        let handle = worse_query(gestaltPath, AppGroupResolver.resolvedGroup, false, false)
         guard handle > 0 else { throw GestaltError.sandboxFailed(handle) }
         defer { worse_query_release(handle) }
         return try body(URL(fileURLWithPath: gestaltPath))
@@ -555,6 +615,9 @@ enum GestaltError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .sandboxFailed(let code):
+            if code == -1 {
+                return "Sandbox extension failed (code -1): no accessible App Group. Run App Group Diagnostics in the Sandbox tab, or set the exact group your signer assigned there."
+            }
             return "Sandbox extension failed (code \(code))."
         case .invalidPlist:
             return "MobileGestalt.plist is invalid or missing CacheExtra."

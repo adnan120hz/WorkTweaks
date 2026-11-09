@@ -12,6 +12,7 @@ struct TweaksView: View {
             List {
                 statusSection
                 actionSection
+                advancedSection
                 tweaksSection
                 footerSection
             }
@@ -85,9 +86,92 @@ struct TweaksView: View {
         }
     }
 
+    private var advancedSection: some View {
+        Section {
+            // Dynamic Island Subtype — custom value via segmented picker.
+            if let subtype = TweakCatalog.all.first(where: { $0.id == "dynamic_island_subtype" }) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 12) {
+                        Image(systemName: subtype.systemImage)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.tint)
+                            .frame(width: 32, height: 32)
+                            .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("DI Subtype").font(.subheadline.weight(.medium))
+                            Text(subtype.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        Spacer()
+                        Toggle("", isOn: Binding(
+                            get: { manager.enabled.contains(subtype.id) },
+                            set: { manager.set(subtype, enabled: $0) }
+                        )).labelsHidden()
+                    }
+
+                    if manager.enabled.contains(subtype.id) {
+                        Picker("Subtype", selection: Binding(
+                            get: {
+                                if case .int(let v) = manager.customValues[subtype.id] { return v }
+                                return 2556
+                            },
+                            set: { manager.updateValue(for: subtype.id, value: .int($0)) }
+                        )) {
+                            ForEach([2556, 2796, 2622, 2868], id: \.self) { val in
+                                Text("\(val)").tag(val)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            // Device Spoofing — custom value via text field.
+            if let spoof = TweakCatalog.all.first(where: { $0.id == "device_spoofing" }) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 12) {
+                        Image(systemName: spoof.systemImage)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.tint)
+                            .frame(width: 32, height: 32)
+                            .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Device Spoofing").font(.subheadline.weight(.medium))
+                            Text(spoof.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        Spacer()
+                        Button { infoTweak = spoof } label: {
+                            Image(systemName: "info.circle").foregroundStyle(.secondary)
+                        }.buttonStyle(.plain)
+                        Toggle("", isOn: Binding(
+                            get: { manager.enabled.contains(spoof.id) },
+                            set: { manager.set(spoof, enabled: $0) }
+                        )).labelsHidden()
+                    }
+
+                    if manager.enabled.contains(spoof.id) {
+                        TextField("Model (e.g. iPhone16,2)", text: Binding(
+                            get: {
+                                if case .string(let s) = manager.customValues[spoof.id] { return s }
+                                return "iPhone16,2"
+                            },
+                            set: { manager.updateValue(for: spoof.id, value: .string($0)) }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        } header: {
+            Label("Advanced Tweaks", systemImage: "gearshape.2")
+        }
+    }
+
     private var tweaksSection: some View {
         Section {
-            ForEach(TweakCatalog.all) { tweak in
+            ForEach(TweakCatalog.all.filter { !$0.isCustomValue }) { tweak in
                 TweakRow(
                     tweak: tweak,
                     isOn: Binding(

@@ -7,6 +7,66 @@ import Darwin
 /// the sandbox escape, so it stays as the original worse_query group.
 let workGestaltAppGroup = "group.cc.forcequit.worse-query"
 
+// MARK: - App Group resolution
+
+/// worse_query returns -1 ("failed to access group") when the app has no
+/// accessible container for the group identifier it is given. Which group
+/// the running app can actually access is decided by the entitlements it
+/// was *signed* with — sideload signers routinely rewrite or strip app
+/// groups — not by this source file. So instead of trusting one hardcoded
+/// string, probe the candidates and use the first one whose container
+/// resolves. The user can also type the exact group their signer assigned
+/// in the Sandbox tab; it is persisted and probed first.
+enum AppGroupResolver {
+    private static let defaultsKey = "worktweaks.appGroupID"
+
+    static var configuredGroup: String {
+        get {
+            let saved = UserDefaults.standard.string(forKey: defaultsKey)
+            return (saved?.isEmpty == false) ? saved! : workGestaltAppGroup
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: defaultsKey)
+        }
+    }
+
+    static var candidates: [String] {
+        var list = [configuredGroup,
+                    "group.cc.forcequit.worse-query",
+                    "group.cc.forcequit.workgestalt"]
+        var seen = Set<String>()
+        return list.filter { seen.insert($0).inserted }
+    }
+
+    static func probe() -> [(group: String, url: URL?)] {
+        candidates.map { group in
+            (group, FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group))
+        }
+    }
+
+    /// First candidate whose container actually resolves; falls back to the
+    /// configured value so the caller still surfaces the -1 error.
+    static var resolvedGroup: String {
+        for entry in probe() where entry.url != nil {
+            return entry.group
+        }
+        return configuredGroup
+    }
+
+    static func logDiagnostics() {
+        print("[AppGroup] bundle id: \(Bundle.main.bundleIdentifier ?? "?")")
+        print("[AppGroup] configured: \(configuredGroup)")
+        for entry in probe() {
+            if let url = entry.url {
+                print("[AppGroup] OK   \(entry.group) -> \(url.path)")
+            } else {
+                print("[AppGroup] FAIL \(entry.group) (no container — not in signed entitlements)")
+            }
+        }
+        print("[AppGroup] using: \(resolvedGroup)")
+    }
+}
+
 // MARK: - Sandbox Extension
 
 func consumeExtension(_ path: String) -> Int64 {
@@ -14,9 +74,9 @@ func consumeExtension(_ path: String) -> Int64 {
 
     if path.contains("/var/mobile/Containers/Shared/AppGroup") &&
         ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 26 {
-        handle = worse_query(path, workGestaltAppGroup, true, false)
+        handle = worse_query(path, AppGroupResolver.resolvedGroup, true, false)
     } else {
-        handle = worse_query(path, workGestaltAppGroup, false, false)
+        handle = worse_query(path, AppGroupResolver.resolvedGroup, false, false)
     }
 
     switch handle {
@@ -66,9 +126,15 @@ func leakPaths(_ filter: String) {
 
     print("This is gonna take a while...")
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        let paths = pathleak(filter, baselineInode) ?? []
-        print(paths.count)
+    // Run the enumeration on a background queue so the UI stays responsive.
+    // The baseline inode is passed in full on purpose: pathleak scans inode
+    // numbers up to that baseline (values in the tens of millions are normal — a
+    // temp file inode on a real device was 14,911,791), so capping it to a
+    // small number would make the scan find almost nothing.
+    let baseline = baselineInode
+    DispatchQueue.global(qos: .userInitiated).async {
+        let paths = pathleak(filter, baseline) ?? []
+        print("pathleak found \(paths.count) path(s).")
 
         for path in paths {
             let handle = consumeExtension(path)
