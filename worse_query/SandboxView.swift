@@ -30,7 +30,7 @@ struct SandboxView: View {
                 } header: {
                     Text("App Group")
                 } footer: {
-                    Text("Error -1 means the signed app cannot access its App Group container. The app auto-detects any accessible group; if your signer assigned a different one, enter it exactly here, Save, then reload the Tweaks tab.")
+                    Text("Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.")
                 }
 
                 Section("Target Path") {
