@@ -383,7 +383,7 @@ final class GestaltManager: ObservableObject {
     private func makeSnapshot(url: URL) -> BackupSnapshot? {
         guard let data = try? Data(contentsOf: url),
               let root = try? parseRoot(data),
-              let extra = root?["CacheExtra"] as? [String: Any] else {
+              let extra = root["CacheExtra"] as? [String: Any] else {
             return nil
         }
 
@@ -520,7 +520,7 @@ final class GestaltManager: ObservableObject {
     private func originalCacheExtra() -> [String: Any]? {
         guard let data = try? Data(contentsOf: originalBackupURL),
               let root = try? parseRoot(data) else { return nil }
-        return root?["CacheExtra"] as? [String: Any]
+        return root["CacheExtra"] as? [String: Any]
     }
 
     private func parseRoot(_ data: Data) throws -> [String: Any]? {
