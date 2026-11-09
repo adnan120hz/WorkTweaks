@@ -84,7 +84,9 @@ private var cacheDataOffsets: [String: Int] = [:]
 
 func cacheDataOffset(_ key: String) -> Int {
     if let cached = cacheDataOffsets[key] {
-        print("(cachedata) cached result for \(key): \(cached)")
+        // Silent on purpose: this runs inside tweak read(), which the UI
+        // calls on every pass. Printing here once created an endless
+        // log-spam loop (print -> console update -> re-render -> read).
         return cached
     }
 
@@ -167,12 +169,15 @@ func cacheDataOffset(_ key: String) -> Int {
 }
 
 func cacheDataSafeOffset(_ key: String, in data: NSMutableData) -> Int? {
+    // Silent on purpose (see cacheDataOffset): Internal Features'
+    // read() calls this on every UI pass, so printing here floods the
+    // Log endlessly even when the user touches nothing. Failures are
+    // surfaced once, via canApply's error string, when a toggle is
+    // actually attempted.
     let offset = cacheDataOffset(key)
     guard offset > 0, offset <= data.length - MemoryLayout<Int>.size else {
-        print("(cachedata) safe-offset REJECTED for \(key): offset \(offset), CacheData length \(data.length)")
         return nil
     }
-    print("(cachedata) safe-offset OK for \(key): \(offset) (CacheData length \(data.length))")
     return offset
 }
 

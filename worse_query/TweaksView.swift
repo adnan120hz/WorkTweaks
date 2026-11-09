@@ -9,7 +9,11 @@ import UIKit
 // (mond: mg_tweak_binding); "Apply Tweaks" persists it via mg_apply.
 
 struct TweaksView: View {
-    @ObservedObject var console: Console
+    // Not @ObservedObject on purpose: this view never displays console
+    // output (it only appends one line after Apply). Observing it made
+    // every log flush re-render the whole tweak list, which re-ran
+    // every tweak's read() — a self-sustaining lag/spam loop.
+    let console: Console
     @ObservedObject var manager: GestaltManager
 
     @AppStorage("atomic_write") private var atomicWrite = true

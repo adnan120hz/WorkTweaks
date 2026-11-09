@@ -4,6 +4,7 @@ struct RootView: View {
     @StateObject private var console = Console()
     @StateObject private var gestalt = GestaltManager.shared
     @StateObject private var respringCenter = RespringCenter.shared
+    @State private var showIntro = true
 
     var body: some View {
         TabView {
@@ -29,6 +30,11 @@ struct RootView: View {
         .onAppear {
             console.start()
             gestalt.load()
+        }
+        // Perkenalan: intro with developer + license credits, shown
+        // when the app opens (once per process launch).
+        .fullScreenCover(isPresented: $showIntro) {
+            IntroView()
         }
         // mond: root overlay presenting the respring web view.
         .overlay {
