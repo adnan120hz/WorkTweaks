@@ -3,6 +3,7 @@ import SwiftUI
 struct RootView: View {
     @StateObject private var console = Console()
     @StateObject private var gestalt = GestaltManager.shared
+    @StateObject private var respringCenter = RespringCenter.shared
 
     var body: some View {
         TabView {
@@ -22,6 +23,30 @@ struct RootView: View {
         .onAppear {
             console.start()
             gestalt.load()
+        }
+        // mond: root overlay presenting the respring web view.
+        .overlay {
+            if respringCenter.show {
+                ZStack {
+                    RespringView()
+                        .brightness(-1.0)
+                        .ignoresSafeArea()
+
+                    if respringCenter.canDismiss {
+                        VStack {
+                            Spacer()
+                            Text("Respring did not trigger on this device.")
+                                .font(.footnote)
+                                .foregroundStyle(.white)
+                            Button("Close — reboot manually instead") {
+                                respringCenter.dismiss()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .padding(.bottom, 40)
+                        }
+                    }
+                }
+            }
         }
     }
 }
