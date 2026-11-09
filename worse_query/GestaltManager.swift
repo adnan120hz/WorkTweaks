@@ -582,13 +582,13 @@ enum PlistValue {
 struct BackupSnapshot: Identifiable {
     enum Kind: String {
         case original
-        case preApply = "pre-apply"
+        case afterApply = "after-apply"
         case manual
 
         var label: String {
             switch self {
             case .original: return "Original"
-            case .preApply: return "Before Apply"
+            case .afterApply: return "After Apply Tweaks"
             case .manual: return "Manual"
             }
         }
@@ -933,11 +933,6 @@ final class GestaltManager: ObservableObject {
 
     func apply() {
         do {
-            // WorkTweaks add-on: snapshot the on-disk state before writing.
-            if let current = try? Data(contentsOf: URL(fileURLWithPath: MGPaths.gestalt)) {
-                _ = try? saveSnapshot(kind: .preApply, data: current)
-            }
-
             let extra = dictNow["CacheExtra"] as? NSMutableDictionary ?? NSMutableDictionary()
             dictNow["CacheExtra"] = extra
 
@@ -959,6 +954,12 @@ final class GestaltManager: ObservableObject {
             try mgWrite(data)
             reloadFromDisk()
             enableDeviceName = false
+
+            // WorkTweaks add-on: automatic backup of the state this
+            // Apply just produced — the "After Apply Tweaks" snapshot.
+            if let written = try? Data(contentsOf: URL(fileURLWithPath: MGPaths.gestalt)) {
+                _ = try? saveSnapshot(kind: .afterApply, data: written)
+            }
 
             print("(mg) successfully overwrote mobilegestalt!")
             lastError = nil
@@ -1163,7 +1164,7 @@ final class GestaltManager: ObservableObject {
         let name: String
         switch kind {
         case .original: name = "original.plist"
-        case .preApply: name = "preapply-\(formatter.string(from: Date()))-\(UUID().uuidString.prefix(6)).plist"
+        case .afterApply: name = "afterapply-\(formatter.string(from: Date()))-\(UUID().uuidString.prefix(6)).plist"
         case .manual: name = "manual-\(formatter.string(from: Date()))-\(UUID().uuidString.prefix(6)).plist"
         }
         let url = snapshotsDirectory.appendingPathComponent(name)
@@ -1204,8 +1205,10 @@ final class GestaltManager: ObservableObject {
         if name == "original.plist" {
             kind = .original
             date = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.creationDate] as? Date ?? Date()
-        } else if name.hasPrefix("preapply-") {
-            kind = .preApply
+        } else if name.hasPrefix("afterapply-") || name.hasPrefix("preapply-") {
+            // "preapply-" is the legacy prefix from before the rename;
+            // those snapshots stay listed under the same kind.
+            kind = .afterApply
             date = parseSnapshotDate(name) ?? Date()
         } else {
             kind = .manual
@@ -1238,7 +1241,7 @@ final class GestaltManager: ObservableObject {
     }
 
     private func parseSnapshotDate(_ name: String) -> Date? {
-        // preapply-yyyyMMdd-HHmmss-XXXXXX.plist / manual-...
+        // afterapply-yyyyMMdd-HHmmss-XXXXXX.plist / manual-...
         let parts = name.split(separator: "-")
         guard parts.count >= 3 else { return nil }
         let formatter = DateFormatter()
