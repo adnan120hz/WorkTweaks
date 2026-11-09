@@ -102,6 +102,12 @@ func cacheDataOffset(_ key: String) -> Int {
     // blocked CacheData tweak can be traced on-device from the Log tab.
     guard let header else {
         print("(cachedata) stage 1 FAILED: libMobileGestalt.dylib not in dyld image list (\( _dyld_image_count()) images)")
+        for i in 0..<_dyld_image_count() {
+            let name = String(cString: _dyld_get_image_name(i))
+            if name.contains("Gestalt") {
+                print("(cachedata) stage 1 candidate image: \(name)")
+            }
+        }
         return 0
     }
 
@@ -145,7 +151,17 @@ func cacheDataOffset(_ key: String) -> Int {
         }
     }
 
-    print("(cachedata) stage 5 FAILED: key pointer not found in \(constSegment),__const (\(constSize / 8) entries scanned)")
+    // Stage 5 failure analysis: on arm64e the table may hold authenticated
+    // pointers whose high bits differ from the plain address — count how
+    // many entries match once the high 16 bits are masked off.
+    let plainAddr = UInt(bitPattern: keyPtr)
+    var maskedMatches = 0
+    var firstRaw: UInt = 0
+    for i in 0..<constSize / 8 {
+        if i == 0 { firstRaw = ptr[i] }
+        if (ptr[i] & 0x0000_FFFF_FFFF_FFFF) == (plainAddr & 0x0000_FFFF_FFFF_FFFF) { maskedMatches += 1 }
+    }
+    print("(cachedata) stage 5 FAILED: key pointer not found in \(constSegment),__const (\(constSize / 8) entries scanned); masked(PAC-stripped) matches: \(maskedMatches); key addr: \(String(plainAddr, radix: 16)); first entry raw: \(String(firstRaw, radix: 16))")
     cacheDataOffsets[key] = 0
     return 0
 }
@@ -918,6 +934,27 @@ final class GestaltManager: ObservableObject {
             restartAlertMessage = "Automatic restart isn't available on this device — iOS does not give apps a way to restart the device directly.\n\n\(manualSteps)\n\nNote: some tweaks (especially Apple Intelligence) only take effect after a full restart, not a respring."
             print("(restart) no restart selector available — honest failure")
         }
+    }
+
+    // MARK: CacheData diagnostics (DIAG-3)
+
+    /// One-tap diagnostic: clears the offset cache so every scan re-runs,
+    /// then probes all four CacheData keys the binary-patch tweaks need
+    /// and prints a (cachedata) report to the Log.
+    func runCacheDataDiagnostics() {
+        cacheDataOffsets.removeAll()
+        print("(cachedata) === DIAG-3 run ===")
+        guard let cacheData = dictNow["CacheData"] as? NSMutableData else {
+            print("(cachedata) CacheData missing from the loaded MobileGestalt dictionary.")
+            print("(cachedata) === DIAG-3 end ===")
+            return
+        }
+        print("(cachedata) CacheData length: \(cacheData.length)")
+        for key in ["mtrAoWJ3gsq+I90ZnQ0vQw", "EqrsVvjcYDdxHBiQmGhAWw", "Oji6HRoPi7rH7HPdWVakuw", "LBJfwOEzExRxzlAnSuI7eg"] {
+            let off = cacheDataSafeOffset(key, in: cacheData)
+            print("(cachedata) result \(key): \(off != nil ? String(off!) : "NOT FOUND")")
+        }
+        print("(cachedata) === DIAG-3 end ===")
     }
 
     // MARK: Auto-respring
