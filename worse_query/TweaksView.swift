@@ -89,7 +89,7 @@ struct TweaksView: View {
             }
             .disabled(!manager.isValid || manager.originalSnapshot == nil)
         } footer: {
-            Text("Apply saves a backup of the current state first. Turning a tweak off restores its keys from the original backup. Respring after applying.")
+            Text("Apply saves a backup of the current state first. Turning a tweak off restores its keys from the original backup. The device resprings automatically after Apply, Revert, and Backup restores.")
         }
     }
 
