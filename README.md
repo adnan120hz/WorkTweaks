@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="icon.png" width="160" alt="WorkTweaks icon">
+  <img src="icon-rounded.png" width="160" alt="WorkTweaks icon">
 </p>
 
 <h1 align="center">WorkTweaks</h1>
