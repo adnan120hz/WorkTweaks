@@ -124,14 +124,14 @@ enum AppGroupResolver {
     }
 }
 
-func consumeExtension(_ path: String) -> Int64 {
+func consumeExtension(_ path: String, create: Bool = false) -> Int64 {
     var handle: Int64 = -255
 
     if path.contains("/var/mobile/Containers/Shared/AppGroup") &&
         ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 26 {
-        handle = worse_query(path, AppGroupResolver.resolvedGroup, true, false)
+        handle = worse_query(path, AppGroupResolver.resolvedGroup, true, create)
     } else {
-        handle = worse_query(path, AppGroupResolver.resolvedGroup, false, false)
+        handle = worse_query(path, AppGroupResolver.resolvedGroup, false, create)
     }
 
     switch handle {

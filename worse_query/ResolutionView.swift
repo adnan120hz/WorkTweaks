@@ -29,7 +29,12 @@ final class ResolutionManager: ObservableObject {
 
     func ensureAccess() {
         if handle <= 0 {
-            handle = consumeExtension(Self.directoryPath)
+            // create: true — /var/Managed Preferences/mobile may not
+            // exist on a device without managed profiles; worse_query
+            // can create the directory as part of the grant (mond does
+            // the same for its PosterBoard paths). With create off, a
+            // missing directory fails the grant with -255.
+            handle = consumeExtension(Self.directoryPath, create: true)
         }
         granted = handle > 0
         if granted {
