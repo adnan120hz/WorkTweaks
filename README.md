@@ -65,9 +65,13 @@ WorkTweaks is free software, licensed under the **GNU Affero General Public Lice
 
 Why AGPL and not plain GPL: the core system (worse_query) is GPL-3.0, but the tweak engine ported from mond and the CacheData method taken from Nugget are both AGPL-3.0. GPLv3 code may be combined into an AGPLv3 work (GPLv3 §13), and the AGPL terms then apply to the combined work as a whole — so WorkTweaks is distributed under AGPL-3.0.
 
+## Install
+
+WorkTweaks is distributed as an unsigned IPA and must be installed with **[iLoader](https://iloader.app)** — the free, open-source sideloading tool for Windows, macOS, and Linux (download it only from the official site, iloader.app). Open iLoader, sign in with your Apple ID, connect your device by USB, choose **Install IPA**, and select the WorkTweaks `.ipa`. With a free Apple ID, sideloaded apps expire after about 7 days and must be refreshed.
+
 ## Building & signing notes
 
 - Every push to `main` builds an unsigned IPA in GitHub Actions (artifact `WorkTweaks-unsigned-ipa`).
 - The Xcode target is intentionally still named `worse_query` — only the display name is WorkTweaks.
-- The app must keep an App Group entitlement when signed. Signers that rewrite the bundle id and append their team id to the group (e.g. ESign with a free certificate) work automatically: the app reads its own provisioning profile at runtime and uses the group it was actually signed with.
+- The app must keep an App Group entitlement when signed. WorkTweaks reads its own provisioning profile at runtime and uses the group it was actually signed with, so signer-rewritten bundle ids and team-suffixed groups work automatically.
 - Use at your own risk — tweaks modify system files. Keep your original backup.
