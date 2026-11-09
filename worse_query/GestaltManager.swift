@@ -97,33 +97,54 @@ func cacheDataOffset(_ key: String) -> Int {
             break
         }
     }
-    guard let header else { return 0 }
+    // Diagnostics (WorkTweaks addition): log which scan stage fails so a
+    // blocked CacheData tweak can be traced on-device from the Log tab.
+    guard let header else {
+        print("(cachedata) stage 1 FAILED: libMobileGestalt.dylib not in dyld image list (\( _dyld_image_count()) images)")
+        return 0
+    }
 
     var textSize = 0
-    guard let cstring = getsectiondata(header, "__TEXT", "__cstring", &textSize) else { return 0 }
+    guard let cstring = getsectiondata(header, "__TEXT", "__cstring", &textSize) else {
+        print("(cachedata) stage 2 FAILED: no __TEXT,__cstring section")
+        return 0
+    }
     let cstr = cstring.withMemoryRebound(to: CChar.self, capacity: textSize) { $0 }
 
     var keyPtr = cstr
+    var keyFound = false
     while Int(keyPtr - cstr) < textSize {
-        if String(cString: keyPtr) == key { break }
+        if String(cString: keyPtr) == key { keyFound = true; break }
         keyPtr += strlen(keyPtr) + 1
+    }
+    guard keyFound else {
+        print("(cachedata) stage 3 FAILED: key \(key) not found in __cstring (\(textSize) bytes scanned)")
+        cacheDataOffsets[key] = 0
+        return 0
     }
 
     var constSize = 0
+    var constSegment = "__AUTH_CONST"
     var ptr = getsectiondata(header, "__AUTH_CONST", "__const", &constSize)?.withMemoryRebound(to: UInt.self, capacity: constSize / 8) { $0 }
     if ptr == nil {
+        constSegment = "__DATA_CONST"
         ptr = getsectiondata(header, "__DATA_CONST", "__const", &constSize)?.withMemoryRebound(to: UInt.self, capacity: constSize / 8) { $0 }
     }
 
-    guard let ptr else { return 0 }
+    guard let ptr else {
+        print("(cachedata) stage 4 FAILED: no __const section in __AUTH_CONST or __DATA_CONST")
+        return 0
+    }
     for i in 0..<constSize / 8 {
         if ptr[i] == UInt(bitPattern: keyPtr) {
             let offset = Int((ptr.advanced(by: i).withMemoryRebound(to: UInt16.self, capacity: 1) { $0[0x9a / 2] }) << 3)
+            print("(cachedata) OK: \(key) -> offset \(offset) (via \(constSegment), entry \(i)/\(constSize / 8))")
             cacheDataOffsets[key] = offset
             return offset
         }
     }
 
+    print("(cachedata) stage 5 FAILED: key pointer not found in \(constSegment),__const (\(constSize / 8) entries scanned)")
     cacheDataOffsets[key] = 0
     return 0
 }
