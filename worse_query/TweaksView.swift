@@ -80,6 +80,12 @@ struct TweaksView: View {
             } message: {
                 Text("Some tweaks — especially Apple Intelligence — only take effect after a full restart, not a respring.")
             }
+            .confirmationDialog("Restart Required", isPresented: $manager.showRestartRequired, titleVisibility: .visible) {
+                Button("Restart Device") { manager.attemptRestart() }
+                Button("Later", role: .cancel) { }
+            } message: {
+                Text("Revert and restore changes only take effect after a full device restart — a respring is not enough. Choosing Later just postpones it; the changes stay pending until you restart.")
+            }
             .alert(manager.restartAlertTitle ?? "", isPresented: Binding(
                 get: { manager.restartAlertTitle != nil },
                 set: { if !$0 { manager.restartAlertTitle = nil } }
@@ -182,7 +188,7 @@ struct TweaksView: View {
             }
             .disabled(!manager.isValid)
         } footer: {
-            Text("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores respring automatically.")
+            Text("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores require a full device restart.")
         }
     }
 

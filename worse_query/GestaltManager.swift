@@ -665,6 +665,11 @@ final class GestaltManager: ObservableObject {
 
     /// Set when Apply succeeds: the Tweaks tab offers Respring / Restart.
     @Published var showPostApplyChoice = false
+    /// Set after a successful Revert or Backup restore: those changes
+    /// require a full device restart (user requirement — a respring is
+    /// not enough), so the presenting view shows the Restart Required
+    /// dialog instead of auto-respringing.
+    @Published var showRestartRequired = false
     /// Honest restart outcome popup (command sent / failed + manual guide).
     @Published var restartAlertTitle: String?
     @Published var restartAlertMessage: String = ""
@@ -682,7 +687,6 @@ final class GestaltManager: ObservableObject {
 
     private var mgHandle: Int64 = -255
     private var hasLoaded = false
-    private var pendingRespring: DispatchWorkItem?
 
     // MARK: Subtype tables (mond: selected_st_value / st_to_sel)
 
@@ -979,7 +983,7 @@ final class GestaltManager: ObservableObject {
             print("(mg) successfully reverted mobilegestalt!")
             lastError = nil
             refreshSnapshots()
-            scheduleRespring()
+            requireRestart()
         } catch {
             print("(mg) failed to revert mobilegestalt: \(error)")
             lastError = error.localizedDescription
@@ -1037,16 +1041,15 @@ final class GestaltManager: ObservableObject {
         }
     }
 
-    // MARK: Auto-respring
+    // MARK: Restart required (Revert / Restore)
 
-    private func scheduleRespring() {
-        pendingRespring?.cancel()
-        print("[WorkTweaks] Changes saved - auto-respring in 2 seconds...")
-        let item = DispatchWorkItem {
-            RespringCenter.shared.trigger()
-        }
-        pendingRespring = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: item)
+    /// Revert and Backup restores used to auto-respring; per the user
+    /// they now require a full restart. This just raises the flag — the
+    /// Tweaks / Backup views present the Restart Required dialog, whose
+    /// Restart Device button runs attemptRestart().
+    private func requireRestart() {
+        print("[WorkTweaks] Changes saved - a full restart is required.")
+        showRestartRequired = true
     }
 
     // MARK: mg_write (mond, verbatim logic)
@@ -1258,7 +1261,7 @@ final class GestaltManager: ObservableObject {
             print("[WorkTweaks] Restored backup \(snapshot.id).")
             reloadFromDisk()
             lastError = nil
-            scheduleRespring()
+            requireRestart()
         } catch {
             lastError = error.localizedDescription
         }
@@ -1300,7 +1303,7 @@ final class GestaltManager: ObservableObject {
             reloadFromDisk()
             lastError = nil
             print("[WorkTweaks] Restored \(keys.count) key(s) from \(snapshot.id).")
-            scheduleRespring()
+            requireRestart()
         } catch {
             lastError = error.localizedDescription
         }

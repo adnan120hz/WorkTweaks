@@ -128,7 +128,7 @@ struct BackupDetailView: View {
                 }
                 .disabled(!manager.isValid)
             } footer: {
-                Text("Menulis ulang seluruh MobileGestalt.plist dari backup ini. Respring setelah restore.")
+                Text("Menulis ulang seluruh MobileGestalt.plist dari backup ini. Wajib restart perangkat setelah restore.")
             }
 
             Section("Per Tweak") {
@@ -188,6 +188,20 @@ struct BackupDetailView: View {
             }
         } message: {
             Text("Seluruh MobileGestalt saat ini akan digantikan isi backup \(snapshot.kind.label) ini.")
+        }
+        .confirmationDialog("Restart Required", isPresented: $manager.showRestartRequired, titleVisibility: .visible) {
+            Button("Restart Device") { manager.attemptRestart() }
+            Button("Later", role: .cancel) { }
+        } message: {
+            Text("Restore changes only take effect after a full device restart — a respring is not enough. Choosing Later just postpones it; the changes stay pending until you restart.")
+        }
+        .alert(manager.restartAlertTitle ?? "", isPresented: Binding(
+            get: { manager.restartAlertTitle != nil },
+            set: { if !$0 { manager.restartAlertTitle = nil } }
+        )) {
+            Button("OK") { manager.restartAlertTitle = nil }
+        } message: {
+            Text(manager.restartAlertMessage)
         }
     }
 }
