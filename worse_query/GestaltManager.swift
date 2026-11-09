@@ -84,6 +84,7 @@ private var cacheDataOffsets: [String: Int] = [:]
 
 func cacheDataOffset(_ key: String) -> Int {
     if let cached = cacheDataOffsets[key] {
+        print("(cachedata) cached result for \(key): \(cached)")
         return cached
     }
 
@@ -151,7 +152,11 @@ func cacheDataOffset(_ key: String) -> Int {
 
 func cacheDataSafeOffset(_ key: String, in data: NSMutableData) -> Int? {
     let offset = cacheDataOffset(key)
-    guard offset > 0, offset <= data.length - MemoryLayout<Int>.size else { return nil }
+    guard offset > 0, offset <= data.length - MemoryLayout<Int>.size else {
+        print("(cachedata) safe-offset REJECTED for \(key): offset \(offset), CacheData length \(data.length)")
+        return nil
+    }
+    print("(cachedata) safe-offset OK for \(key): \(offset) (CacheData length \(data.length))")
     return offset
 }
 
