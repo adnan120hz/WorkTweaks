@@ -113,7 +113,7 @@ struct CacheExtraView: View {
                     .truncationMode(.tail)
             }
             Spacer()
-            Text(ExtraValueKind.of(value) ?.rawValue ?? "Complex")
+            Text(ExtraValueKind.of(value)?.rawValue ?? "Complex")
                 .font(.caption2.weight(.semibold))
                 .padding(.horizontal, 7).padding(.vertical, 3)
                 .background(Color.accentColor.opacity(0.12), in: Capsule())
