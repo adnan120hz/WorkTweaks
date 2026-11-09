@@ -71,7 +71,7 @@ struct CacheExtraView: View {
                             }
                         }
                     } header: {
-                        Label("CacheExtra Keys (\(filteredKeys.count))", systemImage: "key")
+                        Text("CacheExtra Keys (\(filteredKeys.count))")
                     }
                 }
             }
@@ -114,10 +114,8 @@ struct CacheExtraView: View {
             }
             Spacer()
             Text(ExtraValueKind.of(value)?.rawValue ?? "Complex")
-                .font(.caption2.weight(.semibold))
-                .padding(.horizontal, 7).padding(.vertical, 3)
-                .background(Color.accentColor.opacity(0.12), in: Capsule())
-                .foregroundStyle(Color.accentColor)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             Image(systemName: "chevron.right")
                 .font(.caption2).foregroundStyle(.tertiary)
         }

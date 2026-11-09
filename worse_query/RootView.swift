@@ -1,9 +1,11 @@
 import SwiftUI
 
-/// The five main tabs. RootView owns the selection so other views
-/// (e.g. the locked Tweaks tab) can ask to jump to a specific tab.
+/// The five main tabs, Sandbox first: it is the app's front door
+/// (it holds the "Start Tweaks Feature" master switch). RootView
+/// owns the selection so other views (e.g. the locked Tweaks tab)
+/// can ask to jump to a specific tab.
 enum AppTab: Hashable {
-    case tweaks, extra, backup, sandbox, log
+    case sandbox, tweaks, extra, backup, log
 }
 
 struct RootView: View {
@@ -15,7 +17,7 @@ struct RootView: View {
     /// a reinstall, which wipes the app's defaults). A new key for
     /// v2.0, so everyone sees the new Welcome once after updating.
     @AppStorage("wt.welcomeV2Seen") private var welcomeSeen = false
-    @State private var selectedTab: AppTab = .tweaks
+    @State private var selectedTab: AppTab = .sandbox
 
     var body: some View {
         Group {
@@ -59,6 +61,10 @@ struct RootView: View {
 
     private var tabView: some View {
         TabView(selection: $selectedTab) {
+            SandboxView(console: console)
+                .tabItem { Label("Sandbox", systemImage: "shippingbox") }
+                .tag(AppTab.sandbox)
+
             TweaksView(console: console, manager: gestalt, onOpenSandbox: { selectedTab = .sandbox })
                 .tabItem { Label("Tweaks", systemImage: "slider.horizontal.3") }
                 .tag(AppTab.tweaks)
@@ -70,10 +76,6 @@ struct RootView: View {
             BackupView(manager: gestalt)
                 .tabItem { Label("Backup", systemImage: "externaldrive.badge.timemachine") }
                 .tag(AppTab.backup)
-
-            SandboxView(console: console)
-                .tabItem { Label("Sandbox", systemImage: "shippingbox") }
-                .tag(AppTab.sandbox)
 
             LogView(console: console)
                 .tabItem { Label("Log", systemImage: "terminal") }

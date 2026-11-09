@@ -24,7 +24,7 @@ struct TutorialsView: View {
                 step(5, "If iOS asks, enable Developer Mode (Settings → Privacy & Security → Developer Mode) and trust the developer profile.")
                 step(6, "Open WorkTweaks and you're done.")
             } header: {
-                Label("Guide A — Install with iLoader (Desktop)", systemImage: "desktopcomputer")
+                Text("Guide A — Install with iLoader (Desktop)")
             } footer: {
                 Text("Free Apple ID installs expire after about 7 days — reinstall with iLoader to renew.")
             }
@@ -42,7 +42,7 @@ struct TutorialsView: View {
                 step(6, "Export the signed IPA and install it with ESign (or any IPA installer).")
                 step(7, "Open WorkTweaks and you're done.")
             } header: {
-                Label("Guide B — Sign with App Group By Adnan.120hz (Mobile)", systemImage: "iphone")
+                Text("Guide B — Sign with App Group By Adnan.120hz (Mobile)")
             }
 
             Section {
@@ -50,7 +50,7 @@ struct TutorialsView: View {
                 note("Never share your certificate .p12 file with anyone — it contains your private signing key.")
                 note("A signed IPA only works on the device registered in its profile.")
             } header: {
-                Label("Good to Know", systemImage: "lightbulb")
+                Text("Good to Know")
             }
         }
         .navigationTitle("Tutorials")

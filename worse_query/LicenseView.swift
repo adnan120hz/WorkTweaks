@@ -23,46 +23,9 @@ struct LicenseView: View {
                     SupportedReleaseRow(release: release)
                 }
             } header: {
-                Label("Compatibility — Supported iOS Versions & Builds", systemImage: "checkmark.shield")
+                Text("Compatibility — Supported iOS Versions & Builds")
             } footer: {
                 Text("WorkTweaks v2.0 only opens on the builds listed above: the app checks your device's build at launch, and any other build gets the \"not supported\" screen instead of the app. Developed and tested on iOS 27.0.1 (24A446).")
-            }
-
-            Section {
-                creditRow(
-                    title: "ForceQuit OS — worse_query",
-                    detail: "The core system: the sandbox escape and MobileGestalt access this whole app is built on.",
-                    url: "https://github.com/forcequitOS/worse_query"
-                )
-                creditRow(
-                    title: "mond — by rooootdev",
-                    detail: "The tweak engine: the tweak catalog and commands, and the load / apply / write system (mg.swift), ported from mond.",
-                    url: "https://github.com/rooootdev/mond"
-                )
-                creditRow(
-                    title: "Nugget — by leminlimez",
-                    detail: "The file-based CacheData pattern method used by Enable iPadOS Mode (MobileGestaltCacheDataTweak).",
-                    url: "https://github.com/leminlimez/Nugget"
-                )
-            } header: {
-                Label("Core System & Tweak Engine", systemImage: "cpu")
-            }
-
-            Section {
-                creditRow(
-                    title: "@neonmodder123",
-                    detail: "Developer of the web-based respring approach used by this app (via mond).",
-                    url: "https://jailbreak.party"
-                )
-                creditRow(
-                    title: "@skadz108",
-                    detail: "Swift implementation of the respring web view (via mond / jailbreak.party).",
-                    url: "https://jailbreak.party"
-                )
-            } header: {
-                Label("Respring", systemImage: "restart.circle")
-            } footer: {
-                Text("Credit as written in mond's source: \"Web approach developed by @neonmodder123, implemented in Swift here by @skadz108.\" — jailbreak.party")
             }
 
             Section {
@@ -82,7 +45,44 @@ struct LicenseView: View {
                     url: "https://github.com/adnan120hz/WorkTweaks"
                 )
             } header: {
-                Label("Developer", systemImage: "person.crop.circle")
+                Text("Developer")
+            }
+
+            Section {
+                creditRow(
+                    title: "ForceQuit OS — worse_query",
+                    detail: "The core system: the sandbox escape and MobileGestalt access this whole app is built on.",
+                    url: "https://github.com/forcequitOS/worse_query"
+                )
+                creditRow(
+                    title: "mond — by rooootdev",
+                    detail: "The tweak engine: the tweak catalog and commands, and the load / apply / write system (mg.swift), ported from mond.",
+                    url: "https://github.com/rooootdev/mond"
+                )
+                creditRow(
+                    title: "Nugget — by leminlimez",
+                    detail: "The file-based CacheData pattern method used by Enable iPadOS Mode (MobileGestaltCacheDataTweak).",
+                    url: "https://github.com/leminlimez/Nugget"
+                )
+            } header: {
+                Text("Core System & Tweak Engine")
+            }
+
+            Section {
+                creditRow(
+                    title: "@neonmodder123",
+                    detail: "Developer of the web-based respring approach used by this app (via mond).",
+                    url: "https://jailbreak.party"
+                )
+                creditRow(
+                    title: "@skadz108",
+                    detail: "Swift implementation of the respring web view (via mond / jailbreak.party).",
+                    url: "https://jailbreak.party"
+                )
+            } header: {
+                Text("Respring")
+            } footer: {
+                Text("Credit as written in mond's source: \"Web approach developed by @neonmodder123, implemented in Swift here by @skadz108.\" — jailbreak.party")
             }
 
             Section {
@@ -91,7 +91,7 @@ struct LicenseView: View {
                 LabeledContent("mond — rooootdev", value: "AGPL-3.0")
                 LabeledContent("Nugget — leminlimez", value: "AGPL-3.0")
             } header: {
-                Label("License", systemImage: "doc.text")
+                Text("License")
             } footer: {
                 Text("WorkTweaks is free software under the GNU Affero General Public License v3.0. The core (worse_query) is GPL-3.0, but the tweak engine from mond and the CacheData method from Nugget are AGPL-3.0 — GPLv3 code may be combined into an AGPLv3 work, and the AGPL terms then cover the combined work as a whole.")
             }

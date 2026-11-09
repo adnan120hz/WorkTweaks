@@ -24,43 +24,39 @@ struct WelcomeView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            // Soft blue glow washing down from the top of the screen.
-            LinearGradient(
-                colors: [Color.blue.opacity(0.20), Color.blue.opacity(0.05), .clear],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 360)
-            .ignoresSafeArea(edges: .top)
-
-            ScrollView {
-                VStack(spacing: 22) {
-                    header
-                        .padding(.top, 36)
-
-                    installCard
-                    developerCard
-                    creditsCard
-                    compatibilityCard
-
-                    Button {
-                        showLicense = true
-                    } label: {
-                        Label("View Full License & Credits", systemImage: "doc.text")
-                            .font(.subheadline.weight(.semibold))
-                    }
-                    .padding(.top, 2)
-
-                    Text(versionText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.bottom, 10)
-                }
-                .padding(.horizontal, 22)
-                .frame(maxWidth: .infinity)
+        List {
+            Section {
+                header
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
             }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
+            installSection
+            developerSection
+            creditsSection
+            compatibilitySection
+
+            Section {
+                Button {
+                    showLicense = true
+                } label: {
+                    Label("View Full License & Credits", systemImage: "doc.text")
+                        .font(.subheadline.weight(.semibold))
+                }
+            }
+
+            Section {
+                Text(versionText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
+        .listStyle(.insetGrouped)
         .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
@@ -77,7 +73,6 @@ struct WelcomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .shadow(color: .blue.opacity(0.30), radius: 10, y: 4)
 
                 Button {
                     showTutorials = true
@@ -132,7 +127,6 @@ struct WelcomeView: View {
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
                 )
-                .shadow(color: .blue.opacity(0.30), radius: 16, y: 8)
                 .accessibilityLabel("WorkTweaks")
 
             VStack(spacing: 8) {
@@ -159,40 +153,36 @@ struct WelcomeView: View {
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Color(.secondarySystemGroupedBackground), in: Capsule())
-            .overlay(Capsule().strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
+            .background(Color(.systemGroupedBackground), in: Capsule())
     }
 
-    // MARK: Cards
+    // MARK: Sections
 
-    private var installCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("Please Install It the Right Way", systemImage: "arrow.down.app")
-                .font(.headline)
-            Text("WorkTweaks must be installed with iLoader, or by signing the IPA with App Group By Adnan.120hz, so that its App Group works correctly.")
-                .font(.subheadline)
-                .fixedSize(horizontal: false, vertical: true)
-            Text("Installed any other way, the signed profile leaves the App Group out — and without it, the tweaks can't run. Tap Tutorials below for both step-by-step guides.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+    private var installSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Please Install It the Right Way")
+                    .font(.subheadline.weight(.semibold))
+                Text("WorkTweaks must be installed with iLoader, or by signing the IPA with App Group By Adnan.120hz, so that its App Group works correctly.")
+                    .font(.subheadline)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Installed any other way, the signed profile leaves the App Group out — and without it, the tweaks can't run. Tap Tutorials below for both step-by-step guides.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.vertical, 4)
+        } header: {
+            Text("Installation")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard()
     }
 
-    private var developerCard: some View {
-        VStack(spacing: 14) {
+    private var developerSection: some View {
+        Section {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color(red: 0.15, green: 0.45, blue: 1.0), Color(red: 0.0, green: 0.25, blue: 0.85)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Color.accentColor)
                         .frame(width: 46, height: 46)
                     Text("A")
                         .font(.title3.weight(.bold))
@@ -207,6 +197,7 @@ struct WelcomeView: View {
                 }
                 Spacer()
             }
+            .padding(.vertical, 2)
 
             HStack(spacing: 10) {
                 Link(destination: URL(string: "https://www.tiktok.com/@adnan.120hz")!) {
@@ -224,50 +215,44 @@ struct WelcomeView: View {
                 }
                 .buttonStyle(.bordered)
             }
+            .padding(.vertical, 2)
+        } header: {
+            Text("Developer")
         }
-        .wtCard()
     }
 
-    private var creditsCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Label("Credits & License", systemImage: "scroll")
-                .font(.headline)
-                .padding(.bottom, 6)
-
+    private var creditsSection: some View {
+        Section {
             creditRow(icon: "terminal", name: "ForceQuit OS", role: "worse_query — the core system (sandbox escape)")
-            Divider()
             creditRow(icon: "slider.horizontal.3", name: "mond — rooootdev", role: "the tweak engine & MobileGestalt apply system")
-            Divider()
             creditRow(icon: "cube", name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode)")
-            Divider()
             creditRow(icon: "arrow.counterclockwise", name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
-
+        } header: {
+            Text("Credits & License")
+        } footer: {
             Text("This app is free software under the GNU AGPL v3 license, following the licenses of the projects above.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.top, 10)
         }
-        .wtCard()
     }
 
-    private var compatibilityCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("Compatibility", systemImage: "checkmark.shield")
-                .font(.headline)
-            Text("iOS 26.7.2 (23H128) — iOS 27.3 Beta 1 (24C5037i)")
-                .font(.subheadline.weight(.semibold))
-            Text("v2.0 checks your device's build at launch and only opens on the supported builds. The full version & build list lives in License & Credits.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+    private var compatibilitySection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("iOS 26.7.2 (23H128) — iOS 27.3 Beta 1 (24C5037i)")
+                    .font(.subheadline.weight(.semibold))
+                Text("v2.0 checks your device's build at launch and only opens on the supported builds. The full version & build list lives in License & Credits.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.vertical, 4)
+        } header: {
+            Text("Compatibility")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard()
     }
 
     private func creditRow(icon: String, name: String, role: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            IconChip(systemImage: icon, color: .accentColor)
+            RowIcon(systemImage: icon)
             VStack(alignment: .leading, spacing: 1) {
                 Text(name)
                     .font(.subheadline.weight(.semibold))
@@ -278,6 +263,6 @@ struct WelcomeView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 9)
+        .padding(.vertical, 4)
     }
 }

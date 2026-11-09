@@ -612,9 +612,10 @@ enum TweakTint: String {
 }
 
 extension GestaltTweak {
-    /// SF Symbol shown in this tweak's icon chip (Tweaks tab).
+    /// SF Symbol shown as this tweak's row icon (Tweaks tab).
     var icon: String { TweakCatalog.presentation[id]?.icon ?? "gearshape" }
-    /// Tint color of this tweak's icon chip (Tweaks tab).
+    /// Catalog tint (data only — row icons render in the single
+    /// app accent color, so this is not used for rendering).
     var tint: TweakTint { TweakCatalog.presentation[id]?.tint ?? .gray }
 }
 

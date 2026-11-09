@@ -8,10 +8,10 @@ import UIKit
 // Toggles mutate the in-memory MobileGestalt dictionary immediately
 // (mond: mg_tweak_binding); "Apply Tweaks" persists it via mg_apply.
 //
-// v2.0: modern iOS-Settings-style rows — every tweak gets its own
-// colored icon chip (see TweakCatalog.presentation) — and the tab
-// starts LOCKED until "Start Tweaks Feature" is turned on in the
-// Sandbox tab (UserDefaults wt.tweaksFeatureEnabled).
+// Every tweak keeps its own SF Symbol (see TweakCatalog
+// .presentation), rendered uniformly as a plain accent-colored
+// row icon. The tab starts LOCKED until "Start Tweaks Feature"
+// is turned on in the Sandbox tab (wt.tweaksFeatureEnabled).
 
 struct TweaksView: View {
     // Not @ObservedObject on purpose: this view never displays console
@@ -115,7 +115,9 @@ struct TweaksView: View {
     private var lockedView: some View {
         VStack(spacing: 18) {
             Spacer()
-            IconChip(systemImage: "lock.fill", color: .gray, size: 76)
+            Image(systemName: "lock.fill")
+                .font(.system(size: 52))
+                .foregroundStyle(.secondary)
             VStack(spacing: 8) {
                 Text("Tweaks are locked")
                     .font(.title3.weight(.bold))
@@ -171,7 +173,10 @@ struct TweaksView: View {
     private var statusSection: some View {
         Section {
             HStack(spacing: 12) {
-                IconChip(systemImage: statusIcon, color: statusColor, size: 38)
+                Image(systemName: statusIcon)
+                    .font(.system(size: 20))
+                    .foregroundStyle(statusColor)
+                    .frame(width: 30)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(statusTitle)
                         .font(.subheadline.weight(.semibold))
@@ -219,7 +224,7 @@ struct TweaksView: View {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
             }
         } header: {
-            Label("Warning", systemImage: "exclamationmark.triangle")
+            Text("Warning")
         } footer: {
             Text("Rebooting now might cause a bootloop. Try pressing 'Revert Tweaks'.")
         }
@@ -233,32 +238,23 @@ struct TweaksView: View {
                 manager.apply()
                 console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
             } label: {
-                HStack(spacing: 12) {
-                    IconChip(systemImage: "checkmark.circle.fill", color: .green)
-                    Text("Apply Tweaks")
-                        .font(.subheadline.weight(.semibold))
-                }
+                Text("Apply Tweaks")
+                    .font(.subheadline.weight(.semibold))
             }
             .disabled(!manager.isValid)
 
             Button {
                 RespringCenter.shared.trigger()
             } label: {
-                HStack(spacing: 12) {
-                    IconChip(systemImage: "restart.circle.fill", color: .blue)
-                    Text("Respring")
-                        .font(.subheadline.weight(.semibold))
-                }
+                Text("Respring")
+                    .font(.subheadline.weight(.semibold))
             }
 
             Button(role: .destructive) {
                 showRevertConfirm = true
             } label: {
-                HStack(spacing: 12) {
-                    IconChip(systemImage: "arrow.uturn.backward.circle.fill", color: .red)
-                    Text("Revert Tweaks")
-                        .font(.subheadline.weight(.semibold))
-                }
+                Text("Revert Tweaks")
+                    .font(.subheadline.weight(.semibold))
             }
             .disabled(!manager.isValid)
         } footer: {
@@ -270,48 +266,42 @@ struct TweaksView: View {
 
     private var artworkSection: some View {
         Section {
-            HStack(spacing: 12) {
-                IconChip(systemImage: "apps.iphone", color: .blue)
-                Picker(selection: $manager.selectedST) {
-                    Text("Original (\(manager.ogST))").tag("og")
+            Picker(selection: $manager.selectedST) {
+                Text("Original (\(manager.ogST))").tag("og")
 
-                    if isDeviceGoodForNoDynamicIsland() {
-                        Text("Disable Dynamic Island").tag("no_dynamic_island")
-                    }
-
-                    Text("iPhone 14 Pro").tag("14p")
-                    Text("iPhone 14 Pro Max").tag("14pm")
-                    Text("iPhone 15 Pro Max").tag("15pm")
-
-                    if doubleSystemVersion() >= 18.0 {
-                        Text("iPhone 16 Pro").tag("16p")
-                        Text("iPhone 16 Pro Max").tag("16pm")
-                        Text("iPhone 18 Pro Max").tag("18pm")
-                    }
-
-                    if doubleSystemVersion() >= 26.0 {
-                        Text("iPhone Air").tag("air")
-                    }
-
-                    if hasHomeButton() {
-                        Text("iPhone X Gestures").tag("x")
-                    }
-                } label: {
-                    Text("Subtype")
+                if isDeviceGoodForNoDynamicIsland() {
+                    Text("Disable Dynamic Island").tag("no_dynamic_island")
                 }
+
+                Text("iPhone 14 Pro").tag("14p")
+                Text("iPhone 14 Pro Max").tag("14pm")
+                Text("iPhone 15 Pro Max").tag("15pm")
+
+                if doubleSystemVersion() >= 18.0 {
+                    Text("iPhone 16 Pro").tag("16p")
+                    Text("iPhone 16 Pro Max").tag("16pm")
+                    Text("iPhone 18 Pro Max").tag("18pm")
+                }
+
+                if doubleSystemVersion() >= 26.0 {
+                    Text("iPhone Air").tag("air")
+                }
+
+                if hasHomeButton() {
+                    Text("iPhone X Gestures").tag("x")
+                }
+            } label: {
+                Text("Subtype")
             }
 
-            HStack(spacing: 12) {
-                IconChip(systemImage: "tag.fill", color: .orange)
-                Toggle("Custom Device Name", isOn: $manager.enableDeviceName)
-            }
+            Toggle("Custom Device Name", isOn: $manager.enableDeviceName)
 
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
             }
         } header: {
-            Label("Device Artwork", systemImage: "paintbrush.pointed")
+            Text("Device Artwork")
         }
     }
 
@@ -328,7 +318,7 @@ struct TweaksView: View {
             TweakToggle(manager: manager, title: "Enable Liquid Glass Low-Performance Mode", onInfo: showInfo(for:))
             TweakToggle(manager: manager, title: "Disable Liquid Glass Low-Performance Mode", onInfo: showInfo(for:))
         } header: {
-            Label("Software-Oriented Features", systemImage: "gearshape")
+            Text("Software-Oriented Features")
         }
     }
 
@@ -342,7 +332,7 @@ struct TweaksView: View {
             }
             TweakToggle(manager: manager, title: "Pulse Width Modulation", onInfo: showInfo(for:))
         } header: {
-            Label("Hardware-Oriented Features", systemImage: "iphone")
+            Text("Hardware-Oriented Features")
         }
     }
 
@@ -352,8 +342,7 @@ struct TweaksView: View {
             TweakToggle(manager: manager, title: "Disable Region Restrictions", onInfo: showInfo(for:))
             TweakToggle(manager: manager, title: "Apple Intelligence", onInfo: showInfo(for:))
 
-            HStack(spacing: 12) {
-                IconChip(systemImage: "theatermasks.fill", color: .purple)
+            HStack(spacing: 8) {
                 Picker("Spoofing", selection: $manager.productType) {
                     Text("Default").tag(machineName())
                     if UIDevice.current.userInterfaceIdiom == .pad {
@@ -390,7 +379,7 @@ struct TweaksView: View {
                 .buttonStyle(.plain)
             }
         } header: {
-            Label("Eligibility", systemImage: "checklist")
+            Text("Eligibility")
         }
     }
 
@@ -409,7 +398,7 @@ struct TweaksView: View {
                     return extra?["+3Uf0Pm5F8Xy7Onyvko0vA"] as? String != "iPhone"
                 }())
         } header: {
-            Label("iPadOS Features", systemImage: "ipad")
+            Text("iPadOS Features")
         }
     }
 
@@ -419,19 +408,16 @@ struct TweaksView: View {
             TweakToggle(manager: manager, title: "Internal Features", onInfo: showInfo(for:))
             TweakToggle(manager: manager, title: "Apple Internal Install", onInfo: showInfo(for:))
         } header: {
-            Label("Internal", systemImage: "ant")
+            Text("Internal")
         }
     }
 
     // mond SettingsView: "Persist after reboot" (atomic_write)
     private var writeSettingsSection: some View {
         Section {
-            HStack(spacing: 12) {
-                IconChip(systemImage: "tray.full.fill", color: .gray)
-                Toggle("Persist after reboot", isOn: $atomicWrite)
-            }
+            Toggle("Persist after reboot", isOn: $atomicWrite)
         } header: {
-            Label("Write Method", systemImage: "pencil.and.outline")
+            Text("Write Method")
         } footer: {
             Text("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead. (mond's default: enabled.)")
         }
@@ -442,28 +428,19 @@ struct TweaksView: View {
             NavigationLink {
                 TutorialsView()
             } label: {
-                HStack(spacing: 12) {
-                    IconChip(systemImage: "book.fill", color: .blue)
-                    Text("Tutorials")
-                        .font(.subheadline.weight(.medium))
-                }
+                Text("Tutorials")
+                    .font(.subheadline.weight(.medium))
             }
 
             NavigationLink {
                 LicenseView()
             } label: {
-                HStack(spacing: 12) {
-                    IconChip(systemImage: "doc.text.fill", color: .gray)
-                    Text("License & Credits")
-                        .font(.subheadline.weight(.medium))
-                }
+                Text("License & Credits")
+                    .font(.subheadline.weight(.medium))
             }
 
-            HStack {
-                Image(systemName: "info.circle").foregroundStyle(.secondary)
-                Text("Tweak engine ported from mond (mg.swift); core exploit from work-gestalt (worse_query).")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
+            Text("Tweak engine ported from mond (mg.swift); core exploit from work-gestalt (worse_query).")
+                .font(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -475,8 +452,10 @@ struct TweaksView: View {
 
 // MARK: - Toggle row (mond: TweakToggle via mg_tweak_binding)
 //
-// v2.0 design: colored icon chip + title (+ "Requires iOS" subtitle
-// when the tweak needs a newer iOS) + optional info button + switch.
+// Row design: the tweak's own SF Symbol as a plain accent-colored
+// icon (uniform size/weight/color for every tweak) + title
+// (+ "Requires iOS" subtitle when the tweak needs a newer iOS)
+// + optional info button + switch.
 
 struct TweakToggle: View {
     @ObservedObject var manager: GestaltManager
@@ -486,7 +465,7 @@ struct TweakToggle: View {
     var body: some View {
         if let tweak = TweakCatalog.tweak(title: title) {
             HStack(spacing: 12) {
-                IconChip(systemImage: tweak.icon, color: tweak.tint.color)
+                RowIcon(systemImage: tweak.icon)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tweak.title)
                         .font(.subheadline.weight(.medium))

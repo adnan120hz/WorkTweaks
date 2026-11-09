@@ -19,11 +19,11 @@ struct BackupView: View {
                     Button {
                         manager.createManualSnapshot()
                     } label: {
-                        Label("Back Up Now", systemImage: "externaldrive.badge.plus")
+                        Text("Back Up Now")
                     }
                     .disabled(!manager.isValid)
                 } header: {
-                    Label("Snapshots", systemImage: "externaldrive")
+                    Text("Snapshots")
                 } footer: {
                     Text("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")
                 }
@@ -32,7 +32,7 @@ struct BackupView: View {
                     Section {
                         snapshotRow(original)
                     } header: {
-                        Label("Original", systemImage: "lock.shield")
+                        Text("Original")
                     }
                 }
 
@@ -42,7 +42,7 @@ struct BackupView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } header: {
-                        Label("Apply Snapshots", systemImage: "clock.arrow.circlepath")
+                        Text("Apply Snapshots")
                     }
                 } else {
                     Section {
@@ -55,7 +55,7 @@ struct BackupView: View {
                             }
                         }
                     } header: {
-                        Label("Apply Snapshots", systemImage: "clock.arrow.circlepath")
+                        Text("Apply Snapshots")
                     }
                 }
 
@@ -89,11 +89,7 @@ struct BackupView: View {
             BackupDetailView(manager: manager, snapshot: snapshot)
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: snapshot.kind == .original ? "lock.shield" : "clock.arrow.circlepath")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.tint)
-                    .frame(width: 32, height: 32)
-                    .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                RowIcon(systemImage: snapshot.kind == .original ? "lock.shield" : "clock.arrow.circlepath")
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(snapshot.kind.label)
@@ -132,7 +128,7 @@ struct BackupDetailView: View {
                 Button(role: .destructive) {
                     showRestoreAllConfirm = true
                 } label: {
-                    Label("Restore Everything", systemImage: "arrow.uturn.backward.circle.fill")
+                    Text("Restore Everything")
                 }
                 .disabled(!manager.isValid)
             } footer: {
@@ -160,7 +156,7 @@ struct BackupDetailView: View {
                     .padding(.vertical, 2)
                 }
             } header: {
-                Label("By Tweak", systemImage: "slider.horizontal.3")
+                Text("By Tweak")
             }
 
             Section {
@@ -189,7 +185,7 @@ struct BackupDetailView: View {
                     .padding(.vertical, 2)
                 }
             } header: {
-                Label("By Key", systemImage: "key")
+                Text("By Key")
             }
         }
         .navigationTitle("Backup Details")

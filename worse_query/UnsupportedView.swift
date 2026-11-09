@@ -12,30 +12,32 @@ struct UnsupportedView: View {
     @State private var showLicense = false
 
     var body: some View {
-        ZStack(alignment: .top) {
-            LinearGradient(
-                colors: [Color.orange.opacity(0.18), Color.orange.opacity(0.05), .clear],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 320)
-            .ignoresSafeArea(edges: .top)
+        List {
+            Section {
+                header
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
 
-            ScrollView {
-                VStack(spacing: 22) {
-                    header
-                        .padding(.top, 40)
-
-                    SupportedReleasesCard()
-
-                    actions
-                        .padding(.bottom, 12)
+            Section {
+                ForEach(SupportInfo.supportedReleases) { release in
+                    SupportedReleaseRow(release: release)
                 }
-                .padding(.horizontal, 22)
-                .frame(maxWidth: .infinity)
+            } header: {
+                Text("Supported iOS Versions")
             }
         }
+        .listStyle(.insetGrouped)
         .background(Color(.systemGroupedBackground))
+        .safeAreaInset(edge: .bottom) {
+            actions
+                .padding(.horizontal, 22)
+                .padding(.top, 10)
+                .padding(.bottom, 12)
+                .background(.ultraThinMaterial)
+        }
         .sheet(isPresented: $showTutorials) {
             NavigationStack {
                 TutorialsView()
@@ -60,7 +62,9 @@ struct UnsupportedView: View {
 
     private var header: some View {
         VStack(spacing: 16) {
-            IconChip(systemImage: "iphone.slash", color: .orange, size: 76)
+            Image(systemName: "iphone.slash")
+                .font(.system(size: 52))
+                .foregroundStyle(.orange)
 
             VStack(spacing: 8) {
                 Text("This iOS Version Isn't Supported")

@@ -18,36 +18,42 @@ struct SandboxView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // v2.0: master switch for the Tweaks feature.
+                // Front door identity: app icon, name, and this
+                // device's support status.
                 Section {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack(spacing: 12) {
-                            IconChip(systemImage: tweaksEnabled ? "lock.open.fill" : "lock.fill",
-                                     color: tweaksEnabled ? .green : .gray)
-                            Toggle("Start Tweaks Feature", isOn: $tweaksEnabled)
-                                .font(.subheadline.weight(.semibold))
+                    HStack(spacing: 14) {
+                        Image("AppIconDisplay")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 52, height: 52)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("WorkTweaks")
+                                .font(.headline)
+                            HStack(spacing: 5) {
+                                Image(systemName: SupportInfo.isSupported ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                                    .foregroundStyle(SupportInfo.isSupported ? Color.accentColor : .orange)
+                                Text(SupportInfo.isSupported
+                                     ? "Supported iOS • \(SupportInfo.deviceSummary)"
+                                     : "Unsupported iOS • \(SupportInfo.deviceSummary)")
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         }
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                // Master switch for the Tweaks feature.
+                Section {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Toggle("Start Tweaks Feature", isOn: $tweaksEnabled)
+                            .font(.subheadline.weight(.semibold))
                         Text("Unlocks the Tweaks tab. Turn this on to start using tweaks.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 4)
-                }
-                .listRowBackground(Color.accentColor.opacity(0.07))
-
-                // v2.0: this device's support status.
-                Section {
-                    Label {
-                        Text(SupportInfo.isSupported
-                             ? "Supported iOS • \(SupportInfo.deviceSummary)"
-                             : "Unsupported iOS • \(SupportInfo.deviceSummary)")
-                            .font(.subheadline.weight(.medium))
-                    } icon: {
-                        Image(systemName: SupportInfo.isSupported ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                            .foregroundStyle(SupportInfo.isSupported ? .green : .orange)
-                    }
-                } header: {
-                    Label("Device", systemImage: "iphone")
+                    .padding(.vertical, 2)
                 }
 
                 Section {
@@ -65,7 +71,7 @@ struct SandboxView: View {
                         AppGroupResolver.logDiagnostics()
                     }
                 } header: {
-                    Label("App Group", systemImage: "link")
+                    Text("App Group")
                 } footer: {
                     Text("Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.")
                 }
@@ -76,7 +82,7 @@ struct SandboxView: View {
                         .disableAutocorrection(true)
                         .textInputAutocapitalization(.never)
                 } header: {
-                    Label("Target Path", systemImage: "folder")
+                    Text("Target Path")
                 }
 
                 Section {
@@ -93,7 +99,7 @@ struct SandboxView: View {
                     }
                     .disabled(!isConsumed)
                 } header: {
-                    Label("Escape", systemImage: "escape")
+                    Text("Escape")
                 }
 
                 Section {
@@ -102,7 +108,7 @@ struct SandboxView: View {
                     }
                     .disabled(path.isEmpty)
                 } header: {
-                    Label("Utilities", systemImage: "wrench.and.screwdriver")
+                    Text("Utilities")
                 }
 
                 Section {
@@ -116,7 +122,7 @@ struct SandboxView: View {
                         listPaths(path)
                     }
                 } header: {
-                    Label("Enumeration", systemImage: "list.bullet.indent")
+                    Text("Enumeration")
                 }
                 .disabled(path.isEmpty)
 
@@ -142,11 +148,10 @@ struct SandboxView: View {
                         console.output = ""
                     }
                 } header: {
-                    Label("Log", systemImage: "terminal")
+                    Text("Log")
                 }
             }
             .navigationTitle("Sandbox")
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
