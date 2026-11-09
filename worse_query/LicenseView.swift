@@ -38,6 +38,7 @@ struct LicenseView: View {
                 LabeledContent("iOS 27.2 Beta 4", value: "24B5110a")
                 LabeledContent("iOS 27.2 RC", value: "24B115")
                 LabeledContent("iOS 27.2", value: "24B119")
+                LabeledContent("iOS 27.3 Beta 1", value: "24C5037i")
             } header: {
                 Label("Compatibility — Supported iOS Versions & Builds", systemImage: "checkmark.shield")
             } footer: {

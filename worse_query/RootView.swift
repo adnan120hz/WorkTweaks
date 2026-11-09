@@ -4,7 +4,10 @@ struct RootView: View {
     @StateObject private var console = Console()
     @StateObject private var gestalt = GestaltManager.shared
     @StateObject private var respringCenter = RespringCenter.shared
-    @State private var showIntro = true
+    /// Persists across launches: the intro is shown only until the
+    /// user taps "Get Started" once (and again only after a reinstall,
+    /// which wipes the app's defaults).
+    @AppStorage("wt.introSeen") private var introSeen = false
 
     var body: some View {
         TabView {
@@ -31,10 +34,14 @@ struct RootView: View {
             console.start()
             gestalt.load()
         }
-        // Perkenalan: intro with developer + license credits, shown
-        // when the app opens (once per process launch).
-        .fullScreenCover(isPresented: $showIntro) {
-            IntroView()
+        // First-launch intro (developer + credits + compatibility):
+        // presented only while `introSeen` is false; tapping
+        // "Get Started" sets it once and for all on this install.
+        .fullScreenCover(isPresented: Binding(
+            get: { !introSeen },
+            set: { presented in if !presented { introSeen = true } }
+        )) {
+            IntroView { introSeen = true }
         }
         // mond: root overlay presenting the respring web view.
         .overlay {
