@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Combine
 
 // MARK: - Resolution manager (Nugget: CustomResolution / RdarFix)
 //
