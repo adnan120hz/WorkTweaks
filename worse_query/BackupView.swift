@@ -19,11 +19,11 @@ struct BackupView: View {
                     Button {
                         manager.createManualSnapshot()
                     } label: {
-                        Label("Backup Sekarang", systemImage: "externaldrive.badge.plus")
+                        Label("Back Up Now", systemImage: "externaldrive.badge.plus")
                     }
                     .disabled(!manager.isValid)
                 } footer: {
-                    Text("Snapshot juga otomatis dibuat setiap kali Apply, berisi data persis sebelum perubahan ditulis. Original backup dibuat sekali, saat pertama kali MobileGestalt berhasil dibaca.")
+                    Text("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")
                 }
 
                 if let original = manager.originalSnapshot {
@@ -33,13 +33,13 @@ struct BackupView: View {
                 }
 
                 if manager.otherSnapshots.isEmpty {
-                    Section("Snapshot Apply") {
-                        Text("Belum ada snapshot. Tekan Apply Tweaks atau Backup Sekarang.")
+                    Section("Apply Snapshots") {
+                        Text("No snapshots yet. Apply some tweaks or tap Back Up Now.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 } else {
-                    Section("Snapshot Apply") {
+                    Section("Apply Snapshots") {
                         ForEach(manager.otherSnapshots) { snapshot in
                             snapshotRow(snapshot)
                         }
@@ -93,7 +93,7 @@ struct BackupView: View {
                     Text(snapshot.date, format: .dateTime.day().month().year().hour().minute())
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("\(snapshot.enabledTweakIDs.count) tweak aktif · \(snapshot.cacheExtraCount) key di CacheExtra")
+                    Text("\(snapshot.enabledTweakIDs.count) active tweaks · \(snapshot.cacheExtraCount) CacheExtra keys")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -114,30 +114,30 @@ struct BackupDetailView: View {
     var body: some View {
         List {
             Section {
-                LabeledContent("Jenis", value: snapshot.kind.label)
-                LabeledContent("Tanggal", value: snapshot.date.formatted(date: .abbreviated, time: .standard))
-                LabeledContent("Total key CacheExtra", value: "\(snapshot.cacheExtraCount)")
-                LabeledContent("Tweak aktif", value: "\(snapshot.enabledTweakIDs.count) dari \(TweakCatalog.all.count)")
+                LabeledContent("Type", value: snapshot.kind.label)
+                LabeledContent("Date", value: snapshot.date.formatted(date: .abbreviated, time: .standard))
+                LabeledContent("Total CacheExtra keys", value: "\(snapshot.cacheExtraCount)")
+                LabeledContent("Active tweaks", value: "\(snapshot.enabledTweakIDs.count) of \(TweakCatalog.all.count)")
             }
 
             Section {
                 Button(role: .destructive) {
                     showRestoreAllConfirm = true
                 } label: {
-                    Label("Restore Semua", systemImage: "arrow.uturn.backward.circle.fill")
+                    Label("Restore Everything", systemImage: "arrow.uturn.backward.circle.fill")
                 }
                 .disabled(!manager.isValid)
             } footer: {
-                Text("Menulis ulang seluruh MobileGestalt.plist dari backup ini. Wajib restart perangkat setelah restore.")
+                Text("Rewrites the entire MobileGestalt.plist from this backup. A device restart is required after restoring.")
             }
 
-            Section("Per Tweak") {
+            Section("By Tweak") {
                 ForEach(TweakCatalog.all) { tweak in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(tweak.title)
                                 .font(.subheadline.weight(.medium))
-                            Text(snapshot.enabledTweakIDs.contains(tweak.id) ? "Aktif di backup ini" : "Mati di backup ini")
+                            Text(snapshot.enabledTweakIDs.contains(tweak.id) ? "On in this backup" : "Off in this backup")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -153,7 +153,7 @@ struct BackupDetailView: View {
                 }
             }
 
-            Section("Per Key") {
+            Section("By Key") {
                 ForEach(snapshot.entries) { entry in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
@@ -164,7 +164,7 @@ struct BackupDetailView: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
-                            Text(entry.present ? "Nilai: \(entry.valueDescription)" : "Tidak ada di backup ini")
+                            Text(entry.present ? "Value: \(entry.valueDescription)" : "Not present in this backup")
                                 .font(.caption)
                                 .foregroundStyle(entry.present ? .primary : .secondary)
                         }
@@ -180,14 +180,14 @@ struct BackupDetailView: View {
                 }
             }
         }
-        .navigationTitle("Detail Backup")
+        .navigationTitle("Backup Details")
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("Restore seluruh backup ini?", isPresented: $showRestoreAllConfirm) {
-            Button("Restore Semua", role: .destructive) {
+        .confirmationDialog("Restore this entire backup?", isPresented: $showRestoreAllConfirm) {
+            Button("Restore Everything", role: .destructive) {
                 manager.restore(snapshot)
             }
         } message: {
-            Text("Seluruh MobileGestalt saat ini akan digantikan isi backup \(snapshot.kind.label) ini.")
+            Text("The current MobileGestalt will be entirely replaced with this \(snapshot.kind.label) backup.")
         }
         .confirmationDialog("Restart Required", isPresented: $manager.showRestartRequired, titleVisibility: .visible) {
             Button("Restart Device") { manager.attemptRestart() }

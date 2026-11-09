@@ -24,10 +24,10 @@ struct IntroView: View {
                         .padding(.top, 28)
 
                     VStack(spacing: 8) {
-                        Text("Selamat Datang di WorkTweaks")
+                        Text("Welcome to WorkTweaks")
                             .font(.title2.weight(.bold))
                             .multilineTextAlignment(.center)
-                        Text("Alat tweak MobileGestalt untuk iOS 26 & 27 — membuka fitur tersembunyi perangkatmu tanpa jailbreak, ditenagai sandbox escape worse_query.")
+                        Text("A MobileGestalt tweak tool for iOS 26 & 27 — unlock your device's hidden features without a jailbreak, powered by the worse_query sandbox escape.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -39,7 +39,7 @@ struct IntroView: View {
                     Button {
                         showLicense = true
                     } label: {
-                        Label("Lihat License & Credits Lengkap", systemImage: "doc.text")
+                        Label("View Full License & Credits", systemImage: "doc.text")
                             .font(.subheadline.weight(.medium))
                     }
 
@@ -56,7 +56,7 @@ struct IntroView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Text("Mulai")
+                    Text("Get Started")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
@@ -73,7 +73,7 @@ struct IntroView: View {
                     LicenseView()
                         .toolbar {
                             ToolbarItem(placement: .navigationBarTrailing) {
-                                Button("Tutup") { showLicense = false }
+                                Button("Close") { showLicense = false }
                             }
                         }
                 }
@@ -131,13 +131,13 @@ struct IntroView: View {
 
     private var creditsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Kredit & Lisensi", systemImage: "scroll")
+            Label("Credits & License", systemImage: "scroll")
                 .font(.headline)
-            creditLine(name: "ForceQuit OS", role: "worse_query — sistem inti (sandbox escape)")
-            creditLine(name: "mond — rooootdev", role: "mesin tweak & sistem apply MobileGestalt")
-            creditLine(name: "Nugget — leminlimez", role: "metode file CacheData (iPadOS Mode) & resolusi kustom")
-            creditLine(name: "@neonmodder123 & @skadz108", role: "teknik respring (jailbreak.party)")
-            Text("Aplikasi ini perangkat lunak bebas di bawah lisensi GNU GPL v3, mengikuti lisensi proyek-proyek di atas.")
+            creditLine(name: "ForceQuit OS", role: "worse_query — the core system (sandbox escape)")
+            creditLine(name: "mond — rooootdev", role: "the tweak engine & MobileGestalt apply system")
+            creditLine(name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode) & custom resolution")
+            creditLine(name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
+            Text("This app is free software under the GNU GPL v3 license, following the licenses of the projects above.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
