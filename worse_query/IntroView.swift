@@ -35,6 +35,7 @@ struct IntroView: View {
 
                     developerCard
                     creditsCard
+                    compatibilityCard
 
                     Button {
                         showLicense = true
@@ -138,6 +139,22 @@ struct IntroView: View {
             creditLine(name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode) & custom resolution")
             creditLine(name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
             Text("This app is free software under the GNU GPL v3 license, following the licenses of the projects above.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var compatibilityCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Compatibility", systemImage: "checkmark.shield")
+                .font(.headline)
+            Text("iOS 26.7 (23H24) · iOS 27.0 — 27.2 (24A437 — 24B119)")
+                .font(.subheadline.weight(.semibold))
+            Text("Includes every iOS 27.0 and 27.2 developer beta and RC, iOS 27.0.1, and iOS 27.1 on iPhone Duo. The full version & build list lives in License & Credits.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

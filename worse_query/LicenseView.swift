@@ -19,6 +19,32 @@ struct LicenseView: View {
             }
 
             Section {
+                LabeledContent("iOS 26.7", value: "23H24")
+                LabeledContent("iOS 27.0 Developer Beta 1", value: "24A5355q")
+                LabeledContent("iOS 27.0 Developer Beta 2", value: "24A5370h")
+                LabeledContent("iOS 27.0 Developer Beta 3", value: "24A5380h")
+                LabeledContent("iOS 27.0 Developer Beta 4", value: "24A5390f")
+                LabeledContent("iOS 27.0 Developer Beta 5", value: "24A5408d")
+                LabeledContent("iOS 27.0 Developer Beta 6", value: "24A5418b")
+                LabeledContent("iOS 27.0 Developer Beta 7", value: "24A5424a")
+                LabeledContent("iOS 27.0 Developer Beta 8", value: "24A5430a")
+                LabeledContent("iOS 27.0 RC", value: "24A437")
+                LabeledContent("iOS 27.0", value: "24A437")
+                LabeledContent("iOS 27.0.1", value: "24A446")
+                LabeledContent("iOS 27.1", value: "iPhone Duo only")
+                LabeledContent("iOS 27.2 Beta 1", value: "24B5084k")
+                LabeledContent("iOS 27.2 Beta 2", value: "24B5089g")
+                LabeledContent("iOS 27.2 Beta 3", value: "24B5099f")
+                LabeledContent("iOS 27.2 Beta 4", value: "24B5110a")
+                LabeledContent("iOS 27.2 RC", value: "24B115")
+                LabeledContent("iOS 27.2", value: "24B119")
+            } header: {
+                Label("Compatibility — Supported iOS Versions & Builds", systemImage: "checkmark.shield")
+            } footer: {
+                Text("WorkTweaks is built for iOS 26 and 27 — the worse_query core targets both major versions — and installs on iOS 26.0 or later. Later iOS 27.x releases are covered by the same major-version support. Developed and tested on iOS 27.0.1 (24A446).")
+            }
+
+            Section {
                 creditRow(
                     title: "ForceQuit OS — worse_query",
                     detail: "The core system: the sandbox escape and MobileGestalt access this whole app is built on.",
