@@ -520,6 +520,13 @@ final class GestaltManager: ObservableObject {
     /// Transient user-facing notice (replaces mond's Alertinator pop-ups).
     @Published var notice: String?
 
+    /// Set when Apply succeeds: the Tweaks tab offers Respring / Restart.
+    @Published var showPostApplyChoice = false
+    /// Honest restart outcome popup (command sent / failed + manual guide).
+    @Published var restartAlertTitle: String?
+    @Published var restartAlertMessage: String = ""
+    private var restartCheckItem: DispatchWorkItem?
+
     // Device Artwork state (mond globals: og_st, selected_st, product_type,
     // enable_device_name, mg_device_name)
     @Published var selectedST: String = "og"
@@ -748,6 +755,28 @@ final class GestaltManager: ObservableObject {
         )
     }
 
+    // MARK: Raw CacheExtra editing (Extra tab)
+
+    /// The live CacheExtra dictionary inside dictNow (same in-memory
+    /// model as the toggles: edits are staged until Apply writes them).
+    var cacheExtra: NSMutableDictionary? {
+        dictNow["CacheExtra"] as? NSMutableDictionary
+    }
+
+    func setExtraValue(_ value: Any, forKey key: String) {
+        guard let extra = cacheExtra else { return }
+        extra[key] = value
+        dictVersion += 1
+        print("(extra) set \(key) = \(PlistValue.describe(value))")
+    }
+
+    func removeExtraKey(_ key: String) {
+        guard let extra = cacheExtra else { return }
+        extra.removeObject(forKey: key)
+        dictVersion += 1
+        print("(extra) removed \(key)")
+    }
+
     func isOn(_ tweak: GestaltTweak) -> Bool {
         _ = dictVersion
         return tweak.isOn(in: dictNow)
@@ -787,7 +816,10 @@ final class GestaltManager: ObservableObject {
             print("(mg) successfully overwrote mobilegestalt!")
             lastError = nil
             refreshSnapshots()
-            scheduleRespring()
+            // The user chooses: some tweaks (especially Apple
+            // Intelligence) need a full restart, not just a respring —
+            // the Tweaks tab presents the Respring / Restart choice.
+            showPostApplyChoice = true
         } catch {
             print("(mg) failed to apply mobilegestalt: \(error)")
             lastError = error.localizedDescription
@@ -808,6 +840,57 @@ final class GestaltManager: ObservableObject {
         } catch {
             print("(mg) failed to revert mobilegestalt: \(error)")
             lastError = error.localizedDescription
+        }
+    }
+
+    // MARK: Restart attempt (post-Apply choice)
+
+    /// Attempt a full device restart via FrontBoard's system service.
+    ///
+    /// Honest by design: stock iOS gives apps no public restart API, so
+    /// this only fires when the private service actually responds to a
+    /// restart selector. Either way the user gets a popup — "command
+    /// sent" plus a 10-second honesty check (if the app is still alive
+    /// then, the restart did NOT happen), or an immediate failure popup.
+    /// Both failure paths include the manual restart steps.
+    func attemptRestart() {
+        _ = dlopen("/System/Library/PrivateFrameworks/FrontBoardServices.framework/FrontBoardServices", RTLD_NOW)
+
+        var invoked = false
+        if let serviceClass = NSClassFromString("FBSSystemService"),
+           let sharedMethod = class_getClassMethod(serviceClass, NSSelectorFromString("sharedService")) {
+            typealias SharedFactory = @convention(c) (AnyObject, Selector) -> AnyObject
+            let factory = unsafeBitCast(method_getImplementation(sharedMethod), to: SharedFactory.self)
+            let service = factory(serviceClass, NSSelectorFromString("sharedService"))
+            for name in ["reboot", "restart", "shutdown"] {
+                let sel = NSSelectorFromString(name)
+                if service.responds(to: sel) {
+                    _ = service.perform(sel)
+                    invoked = true
+                    print("(restart) invoked FBSSystemService.\(name)")
+                    break
+                }
+            }
+        }
+
+        let manualSteps = "Restart manually: press Volume Up, then Volume Down, then hold the Side button until the Apple logo appears — or go to Settings > General > Shut Down, slide to power off, then turn the device back on."
+
+        if invoked {
+            restartAlertTitle = "Restart Command Sent"
+            restartAlertMessage = "Your device should restart within a few seconds. If you're still seeing this after 10 seconds, the restart did not actually happen.\n\n\(manualSteps)"
+            restartCheckItem?.cancel()
+            let item = DispatchWorkItem { [weak self] in
+                guard let self, self.restartAlertTitle != nil else { return }
+                self.restartAlertTitle = "Restart Failed"
+                self.restartAlertMessage = "The device did not restart, so the automatic restart failed — iOS does not give apps a reliable way to restart the device.\n\n\(manualSteps)"
+                print("(restart) still alive after 10s — restart did not happen")
+            }
+            restartCheckItem = item
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: item)
+        } else {
+            restartAlertTitle = "Restart Failed"
+            restartAlertMessage = "Automatic restart isn't available on this device — iOS does not give apps a way to restart the device directly.\n\n\(manualSteps)\n\nNote: some tweaks (especially Apple Intelligence) only take effect after a full restart, not a respring."
+            print("(restart) no restart selector available — honest failure")
         }
     }
 

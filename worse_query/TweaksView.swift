@@ -67,6 +67,21 @@ struct TweaksView: View {
             } message: {
                 Text(manager.notice ?? "")
             }
+            .confirmationDialog("Tweaks Applied", isPresented: $manager.showPostApplyChoice, titleVisibility: .visible) {
+                Button("Respring") { RespringCenter.shared.trigger() }
+                Button("Restart Device") { manager.attemptRestart() }
+                Button("Later", role: .cancel) { }
+            } message: {
+                Text("Some tweaks — especially Apple Intelligence — only take effect after a full restart, not a respring.")
+            }
+            .alert(manager.restartAlertTitle ?? "", isPresented: Binding(
+                get: { manager.restartAlertTitle != nil },
+                set: { if !$0 { manager.restartAlertTitle = nil } }
+            )) {
+                Button("OK") { manager.restartAlertTitle = nil }
+            } message: {
+                Text(manager.restartAlertMessage)
+            }
             .confirmationDialog("Revert all tweaks?", isPresented: $showRevertConfirm) {
                 Button("Revert", role: .destructive) { manager.revert() }
             } message: {
@@ -161,7 +176,7 @@ struct TweaksView: View {
             }
             .disabled(!manager.isValid)
         } footer: {
-            Text("WARNING: These tweaks can break features on your device or softbrick it if misused. The device resprings automatically after Apply, Revert, and Backup restores.")
+            Text("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores respring automatically.")
         }
     }
 

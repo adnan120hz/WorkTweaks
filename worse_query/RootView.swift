@@ -10,6 +10,9 @@ struct RootView: View {
             TweaksView(console: console, manager: gestalt)
                 .tabItem { Label("Tweaks", systemImage: "slider.horizontal.3") }
 
+            CacheExtraView(manager: gestalt)
+                .tabItem { Label("Extra", systemImage: "key") }
+
             BackupView(manager: gestalt)
                 .tabItem { Label("Backup", systemImage: "externaldrive.badge.timemachine") }
 
