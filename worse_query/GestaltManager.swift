@@ -176,6 +176,106 @@ func cacheDataSafeOffset(_ key: String, in data: NSMutableData) -> Int? {
     return offset
 }
 
+// MARK: - iPadOS CacheData locator (Nugget: MobileGestaltCacheDataTweak)
+//
+// Port of leminlimez/Nugget's MobileGestaltCacheDataTweak — a purely
+// file-based way to find the iPadOS device-class slot inside CacheData:
+// it pattern-matches the CacheData hex string instead of scanning
+// libMobileGestalt.dylib in memory (mond's approach, whose scan fails
+// on this device/iOS). WorkGestalt/worse_query contain no tweak code,
+// so per the user's direction this tweak uses the file method.
+// sliceStart/sliceLength are Nugget's constants; every offset below is
+// a HEX-STRING character index, exactly as in Nugget's implementation.
+
+enum NuggetIPadOSLocator {
+    static let sliceStart = 1616
+    static let sliceLength = 200
+
+    static func hexString(of data: NSData) -> String {
+        (data as Data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Finds the "left" device-class slot. Returns (slot, currentValue)
+    /// or (nil, error) with Nugget's error messages when the pattern
+    /// does not hold on this CacheData.
+    static func locate(in cacheData: NSData) -> (slot: Int?, value: Character?, error: String?) {
+        let hex = hexString(of: cacheData)
+        let chars = Array(hex)
+        guard hex.count > sliceStart else {
+            return (nil, nil, "CacheData is too short!")
+        }
+
+        // Nugget: find `0+(?:5555)*([0-9a-f]{4})` in the slice; the first
+        // capture whose 4 hex chars contain >= 3 non-zero chars anchors
+        // the offsets.
+        let sliceEnd = min(sliceStart + sliceLength, hex.count)
+        let slice = String(chars[sliceStart..<sliceEnd])
+        let regex = try! NSRegularExpression(pattern: "0+(?:5555)*([0-9a-f]{4})")
+        var offset: Int?
+        for match in regex.matches(in: slice, range: NSRange(slice.startIndex..., in: slice)) {
+            let group = (slice as NSString).substring(with: match.range(at: 1))
+            if group.filter({ $0 != "0" }).count >= 3 {
+                offset = sliceStart + match.range(at: 1).location
+                break
+            }
+        }
+        guard let offset else {
+            return (nil, nil, "Pattern not found in CacheData.")
+        }
+
+        let roffset = offset + 13
+        let loffset = offset - 67 // Nugget: "real" left offset
+        if roffset >= hex.count - 1 || roffset - 1 < 0 {
+            return (nil, nil, "Right offset out of range. Right Offset: \(roffset), Data Length: \(hex.count)")
+        }
+        if loffset <= 0 || loffset + 1 >= hex.count {
+            return (nil, nil, "Left offset out of range. Left Offset: \(loffset), Data Length: \(hex.count)")
+        }
+
+        for (sideOffset, name) in [(roffset, "right"), (loffset, "left")] {
+            if chars[sideOffset] != "1" && chars[sideOffset] != "3" {
+                return (nil, nil, "Value at \(name) offset is not 1 or 3. Value[\(sideOffset)] = \(chars[sideOffset]), Data Length: \(hex.count)")
+            }
+            if chars[sideOffset - 1] != "0" || chars[sideOffset + 1] != "0" {
+                return (nil, nil, "Values of \(name) offset neighbors are not 0. Value[\(sideOffset - 1)] = \(chars[sideOffset - 1]), Value[\(sideOffset + 1)] = \(chars[sideOffset + 1]), Data Length: \(hex.count)")
+            }
+        }
+
+        print("(ipados) Nugget locator: slot \(loffset), current value \(chars[loffset]) (anchor offset \(offset))")
+        return (loffset, chars[loffset], nil)
+    }
+
+    /// Sets the device-class slot to "3" (iPadOS on) or "1" (off) inside
+    /// the dictionary's CacheData. Returns an error string or nil.
+    static func setSlot(in dict: NSMutableDictionary, enabled: Bool) -> String? {
+        guard let cacheData = dict["CacheData"] as? NSMutableData else {
+            return "CacheData is missing from MobileGestalt."
+        }
+        let located = locate(in: cacheData)
+        if let error = located.error { return error }
+        guard let slot = located.slot else { return "Pattern not found in CacheData." }
+
+        var chars = Array(hexString(of: cacheData))
+        chars[slot] = enabled ? "3" : "1"
+        let newHex = String(chars)
+
+        var bytes = [UInt8]()
+        bytes.reserveCapacity(newHex.count / 2)
+        var index = newHex.startIndex
+        while index < newHex.endIndex {
+            let next = newHex.index(index, offsetBy: 2)
+            guard let byte = UInt8(newHex[index..<next], radix: 16) else {
+                return "Failed to rebuild CacheData."
+            }
+            bytes.append(byte)
+            index = next
+        }
+        dict["CacheData"] = NSMutableData(bytes: bytes, length: bytes.count)
+        print("(ipados) Nugget locator: slot \(slot) set to \(enabled ? "3" : "1")")
+        return nil
+    }
+}
+
 // MARK: - Tweak model (mond: mg_tweak)
 
 struct GestaltTweak: Identifiable {
@@ -342,7 +442,10 @@ enum TweakCatalog {
             }
         ),
 
-        // mond: Enable iPadOS Mode (custom closures, patches CacheData)
+        // Enable iPadOS Mode — CacheExtra keys from mond/Nugget (same 5),
+        // but the CacheData device-class slot is located with Nugget's
+        // file-based pattern method (per the user's direction for this
+        // tweak), NOT mond's libMobileGestalt.dylib scan.
         GestaltTweak(
             id: slug("Enable iPadOS Mode"),
             title: "Enable iPadOS Mode",
@@ -354,13 +457,15 @@ enum TweakCatalog {
                 guard let cacheData = dict["CacheData"] as? NSMutableData else {
                     return "CacheData is missing from MobileGestalt."
                 }
-                guard cacheDataSafeOffset("mtrAoWJ3gsq+I90ZnQ0vQw", in: cacheData) != nil else {
-                    return "CacheData offset not found for this device/iOS version. iPadOS Mode binary patch is not supported."
+                let located = NuggetIPadOSLocator.locate(in: cacheData)
+                if let error = located.error {
+                    return "Failed to enable iPadOS: \(error)"
                 }
                 return nil
             },
             read: { dict in
-                guard let extra = dict["CacheExtra"] as? NSMutableDictionary else { return false }
+                guard let extra = dict["CacheExtra"] as? NSMutableDictionary,
+                      let cacheData = dict["CacheData"] as? NSMutableData else { return false }
                 let values: [String: Int] = [
                     "mG0AnH/Vy1veoqoLRAIgTA": 1,
                     "UCG5MkVahJxG1YULbbd5Bg": 1,
@@ -368,17 +473,15 @@ enum TweakCatalog {
                     "nVh/gwNpy7Jv1NOk00CMrw": 1,
                     "uKc7FPnEO++lVhHWHFlGbQ": 1,
                 ]
-                return values.allSatisfy { key, value in
-                    (extra[key] as? Int) == value
-                }
+                guard values.allSatisfy({ key, value in (extra[key] as? Int) == value }) else { return false }
+                return NuggetIPadOSLocator.locate(in: cacheData).value == "3"
             },
             writeOn: { dict in
-                guard let cacheData = dict["CacheData"] as? NSMutableData,
-                      let extra = dict["CacheExtra"] as? NSMutableDictionary,
-                      let valueOff = cacheDataSafeOffset("mtrAoWJ3gsq+I90ZnQ0vQw", in: cacheData) else { return }
-
-                cacheData.mutableBytes.storeBytes(of: 3, toByteOffset: valueOff, as: Int.self)
-
+                guard let extra = dict["CacheExtra"] as? NSMutableDictionary else { return }
+                if let error = NuggetIPadOSLocator.setSlot(in: dict, enabled: true) {
+                    print("(ipados) write failed: \(error)")
+                    return
+                }
                 let values: [String: Int] = [
                     "mG0AnH/Vy1veoqoLRAIgTA": 1,
                     "UCG5MkVahJxG1YULbbd5Bg": 1,
@@ -391,12 +494,10 @@ enum TweakCatalog {
                 }
             },
             writeOff: { dict in
-                guard let cacheData = dict["CacheData"] as? NSMutableData,
-                      let extra = dict["CacheExtra"] as? NSMutableDictionary,
-                      let valueOff = cacheDataSafeOffset("mtrAoWJ3gsq+I90ZnQ0vQw", in: cacheData) else { return }
-
-                cacheData.mutableBytes.storeBytes(of: 1, toByteOffset: valueOff, as: Int.self)
-
+                // Restore the slot when locatable, but always remove the
+                // CacheExtra keys so the tweak can be cleaned up.
+                _ = NuggetIPadOSLocator.setSlot(in: dict, enabled: false)
+                guard let extra = dict["CacheExtra"] as? NSMutableDictionary else { return }
                 let keys = ["mG0AnH/Vy1veoqoLRAIgTA", "UCG5MkVahJxG1YULbbd5Bg", "ZYqko/XM5zD3XBfN5RmaXA", "nVh/gwNpy7Jv1NOk00CMrw", "uKc7FPnEO++lVhHWHFlGbQ"]
                 for key in keys {
                     extra.removeObject(forKey: key)
@@ -934,27 +1035,6 @@ final class GestaltManager: ObservableObject {
             restartAlertMessage = "Automatic restart isn't available on this device — iOS does not give apps a way to restart the device directly.\n\n\(manualSteps)\n\nNote: some tweaks (especially Apple Intelligence) only take effect after a full restart, not a respring."
             print("(restart) no restart selector available — honest failure")
         }
-    }
-
-    // MARK: CacheData diagnostics (DIAG-3)
-
-    /// One-tap diagnostic: clears the offset cache so every scan re-runs,
-    /// then probes all four CacheData keys the binary-patch tweaks need
-    /// and prints a (cachedata) report to the Log.
-    func runCacheDataDiagnostics() {
-        cacheDataOffsets.removeAll()
-        print("(cachedata) === DIAG-3 run ===")
-        guard let cacheData = dictNow["CacheData"] as? NSMutableData else {
-            print("(cachedata) CacheData missing from the loaded MobileGestalt dictionary.")
-            print("(cachedata) === DIAG-3 end ===")
-            return
-        }
-        print("(cachedata) CacheData length: \(cacheData.length)")
-        for key in ["mtrAoWJ3gsq+I90ZnQ0vQw", "EqrsVvjcYDdxHBiQmGhAWw", "Oji6HRoPi7rH7HPdWVakuw", "LBJfwOEzExRxzlAnSuI7eg"] {
-            let off = cacheDataSafeOffset(key, in: cacheData)
-            print("(cachedata) result \(key): \(off != nil ? String(off!) : "NOT FOUND")")
-        }
-        print("(cachedata) === DIAG-3 end ===")
     }
 
     // MARK: Auto-respring

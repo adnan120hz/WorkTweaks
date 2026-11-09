@@ -28,7 +28,6 @@ struct TweaksView: View {
     var body: some View {
         NavigationStack {
             List {
-                diagnosticSection
                 statusSection
 
                 if manager.isValid || manager.isEmpty {
@@ -50,9 +49,15 @@ struct TweaksView: View {
             .navigationTitle("WorkTweaks")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button { manager.load() } label: { Image(systemName: "arrow.clockwise") }
                         .disabled(manager.isLoading)
+                    NavigationLink {
+                        LicenseView()
+                    } label: {
+                        Image(systemName: "doc.text")
+                    }
+                    .accessibilityLabel("License & Credits")
                 }
             }
             .alert(infoTitle ?? "", isPresented: showInfo) {
@@ -88,24 +93,6 @@ struct TweaksView: View {
             } message: {
                 Text("This restores the MobileGestalt backup saved on first launch (mond: SavedGestalt.plist).")
             }
-        }
-    }
-
-    // MARK: Diagnostics (temporary, DIAG-3)
-
-    private var diagnosticSection: some View {
-        Section {
-            Label("Diagnostic build DIAG-3", systemImage: "stethoscope")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.orange)
-            Button {
-                manager.runCacheDataDiagnostics()
-            } label: {
-                Label("Run CacheData Diagnostic", systemImage: "waveform.path.ecg")
-            }
-            .disabled(!manager.isValid)
-        } footer: {
-            Text("If you don't see the orange DIAG-3 label, this is NOT the diagnostic build. The diagnostic writes (cachedata) lines to the Log tab — it traces why iPadOS Mode and Internal Features are blocked.")
         }
     }
 

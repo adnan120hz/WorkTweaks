@@ -29,6 +29,11 @@ struct LicenseView: View {
                     detail: "The tweak engine: the tweak catalog and commands, and the load / apply / write system (mg.swift), ported from mond.",
                     url: "https://github.com/rooootdev/mond"
                 )
+                creditRow(
+                    title: "Nugget — by leminlimez",
+                    detail: "The file-based CacheData pattern method used by Enable iPadOS Mode (MobileGestaltCacheDataTweak), and the IOMobileGraphicsFamily resolution file used by resolution tweaks.",
+                    url: "https://github.com/leminlimez/Nugget"
+                )
             } header: {
                 Label("Core System & Tweak Engine", systemImage: "cpu")
             }
