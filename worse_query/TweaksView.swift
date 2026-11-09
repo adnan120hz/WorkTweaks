@@ -369,7 +369,7 @@ struct TweakToggle: View {
                     }
                     .buttonStyle(.plain)
                 }
-                Toggle("", isOn: manager.binding(for: tweak))
+                Toggle("", isOn: manager.toggleBinding(for: tweak))
                     .labelsHidden()
                     .disabled(!manager.isValid || !tweak.supported())
             }

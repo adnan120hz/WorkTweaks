@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 import Darwin
 import MachO
 import UIKit
@@ -723,7 +724,7 @@ final class GestaltManager: ObservableObject {
 
     // MARK: Toggles (mond: mg_tweak_binding)
 
-    func binding(for tweak: GestaltTweak) -> Binding<Bool> {
+    func toggleBinding(for tweak: GestaltTweak) -> Binding<Bool> {
         Binding(
             get: { [weak self] in
                 guard let self else { return false }
