@@ -17,9 +17,6 @@ struct RootView: View {
             CacheExtraView(manager: gestalt)
                 .tabItem { Label("Extra", systemImage: "key") }
 
-            ResolutionView(manager: gestalt)
-                .tabItem { Label("Resolution", systemImage: "aspectratio") }
-
             BackupView(manager: gestalt)
                 .tabItem { Label("Backup", systemImage: "externaldrive.badge.timemachine") }
 

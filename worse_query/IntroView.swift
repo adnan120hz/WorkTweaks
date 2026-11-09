@@ -200,7 +200,7 @@ struct IntroView: View {
             Divider()
             creditRow(icon: "slider.horizontal.3", name: "mond — rooootdev", role: "the tweak engine & MobileGestalt apply system")
             Divider()
-            creditRow(icon: "cube", name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode) & custom resolution")
+            creditRow(icon: "cube", name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode)")
             Divider()
             creditRow(icon: "arrow.counterclockwise", name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
 

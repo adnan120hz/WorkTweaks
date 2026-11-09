@@ -58,7 +58,7 @@ struct LicenseView: View {
                 )
                 creditRow(
                     title: "Nugget — by leminlimez",
-                    detail: "The file-based CacheData pattern method used by Enable iPadOS Mode (MobileGestaltCacheDataTweak), and the IOMobileGraphicsFamily resolution file used by resolution tweaks.",
+                    detail: "The file-based CacheData pattern method used by Enable iPadOS Mode (MobileGestaltCacheDataTweak).",
                     url: "https://github.com/leminlimez/Nugget"
                 )
             } header: {
