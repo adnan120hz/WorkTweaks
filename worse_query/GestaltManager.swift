@@ -377,6 +377,24 @@ final class GestaltManager: ObservableObject {
 
             root["CacheExtra"] = extra
             try writeRoot(root)
+
+            // Verify against ground truth: re-read the file that was just
+            // written and confirm each enabled tweak's value is really in
+            // there. (A respring/reboot is still needed before the system
+            // acts on the new values.)
+            do {
+                let verifyData = try readCurrentData()
+                if let verifyExtra = try parseRoot(verifyData)?["CacheExtra"] as? [String: Any] {
+                    for tweak in TweakCatalog.all where enabled.contains(tweak.id) {
+                        let expected = effectiveValue(for: tweak)
+                        let ok = tweak.keys.allSatisfy { expected.matches(verifyExtra[$0]) }
+                        print("[WorkTweaks] \(tweak.title): \(ok ? "OK - value confirmed in MobileGestalt.plist" : "NOT FOUND in file after write!")")
+                    }
+                }
+            } catch {
+                print("[WorkTweaks] Post-apply verification failed: \(error.localizedDescription)")
+            }
+
             lastError = nil
             print("[WorkTweaks] Tweaks applied. Pre-apply snapshot saved. Respring required.")
         } catch {

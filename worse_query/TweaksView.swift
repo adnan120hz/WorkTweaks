@@ -6,6 +6,7 @@ struct TweaksView: View {
 
     @State private var infoTweak: GestaltTweak?
     @State private var showRevertConfirm = false
+    @State private var showRespringPrompt = false
 
     var body: some View {
         NavigationStack {
@@ -42,6 +43,16 @@ struct TweaksView: View {
             } message: {
                 Text("This restores the original MobileGestalt backup.")
             }
+            .confirmationDialog("Tweaks applied", isPresented: $showRespringPrompt) {
+                Button("Respring Now") {
+                    if !respringDevice() {
+                        console.output += "\n[WorkTweaks] Respring unavailable on this iOS — please reboot the device manually to apply the tweaks.\n"
+                    }
+                }
+                Button("Later", role: .cancel) { }
+            } message: {
+                Text("The tweaks are written to MobileGestalt.plist (see the Log tab for per-tweak verification). They only take effect after a respring or reboot.")
+            }
         }
     }
 
@@ -69,11 +80,21 @@ struct TweaksView: View {
         Section {
             Button {
                 manager.apply()
-                console.output += "\n[WorkTweaks] Apply finished. A pre-apply backup was saved — see the Backup tab. Respring required.\n"
+                if manager.lastError == nil {
+                    showRespringPrompt = true
+                }
             } label: {
                 Label("Apply Tweaks", systemImage: "checkmark.circle.fill")
             }
             .disabled(!manager.isValid)
+
+            Button {
+                if !respringDevice() {
+                    console.output += "\n[WorkTweaks] Respring unavailable on this iOS — please reboot the device manually.\n"
+                }
+            } label: {
+                Label("Respring", systemImage: "restart.circle")
+            }
 
             Button(role: .destructive) {
                 showRevertConfirm = true
