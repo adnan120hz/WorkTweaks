@@ -342,6 +342,12 @@ struct TweaksView: View {
 
     private var footerSection: some View {
         Section {
+            NavigationLink {
+                LicenseView()
+            } label: {
+                Label("License & Credits", systemImage: "doc.text")
+            }
+
             HStack {
                 Image(systemName: "info.circle").foregroundStyle(.secondary)
                 Text("Tweak engine ported from mond (mg.swift); core exploit from work-gestalt (worse_query).")
