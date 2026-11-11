@@ -114,6 +114,10 @@ struct SandboxView: View {
                         utilityRow("App Data", systemImage: "folder") {
                             AppDataView()
                         }
+                        Divider().padding(.leading, 14)
+                        utilityRow("PosterBoard", systemImage: "photo") {
+                            PosterBoardView()
+                        }
                     }
                 }
 

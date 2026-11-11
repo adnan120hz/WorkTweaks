@@ -263,7 +263,7 @@ final class DeployManager: ObservableObject {
     /// Stored + deflate entries only. Encryption, ZIP64 and
     /// other compression methods are honest errors naming the
     /// limitation — they are never silently mishandled.
-    private static func zipEntries(from data: Data) -> Result<[String: Data], DeployError> {
+    static func zipEntries(from data: Data) -> Result<[String: Data], DeployError> {
         let bytes = [UInt8](data)
         func u16(_ offset: Int) -> Int {
             Int(bytes[offset]) | (Int(bytes[offset + 1]) << 8)
