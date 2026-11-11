@@ -61,7 +61,7 @@ struct LicenseView: View {
                 )
                 creditRow(
                     title: "Nugget — by leminlimez",
-                    detail: "The file-based CacheData pattern method used by Enable iPadOS Mode (MobileGestaltCacheDataTweak), and the daemon catalog knowledge — the launchd label research the Daemons page is built on.",
+                    detail: "The file-based CacheData pattern method used by Enable iPadOS Mode (MobileGestaltCacheDataTweak).",
                     url: "https://github.com/leminlimez/Nugget"
                 )
             } header: {
@@ -93,7 +93,7 @@ struct LicenseView: View {
             } header: {
                 Text("License")
             } footer: {
-                Text("WorkTweaks is free software under the GNU Affero General Public License v3.0. The core (worse_query) is GPL-3.0, but the CacheExtra key knowledge from mond and the CacheData method and daemon catalog knowledge from Nugget are AGPL-3.0 — GPLv3 code may be combined into an AGPLv3 work, and the AGPL terms then cover the combined work as a whole.")
+                Text("WorkTweaks is free software under the GNU Affero General Public License v3.0. The core (worse_query) is GPL-3.0, but the CacheExtra key knowledge from mond and the CacheData method from Nugget are AGPL-3.0 — GPLv3 code may be combined into an AGPLv3 work, and the AGPL terms then cover the combined work as a whole.")
             }
 
             Section {

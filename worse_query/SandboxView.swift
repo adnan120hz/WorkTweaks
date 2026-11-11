@@ -82,9 +82,9 @@ struct SandboxView: View {
                     }
 
                     NavigationLink {
-                        DaemonsView()
+                        AppDataView()
                     } label: {
-                        Label("Daemons", systemImage: "gearshape.2")
+                        Label("App Data", systemImage: "folder")
                     }
                 } header: {
                     Text("Utilities")
