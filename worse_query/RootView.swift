@@ -65,7 +65,10 @@ struct RootView: View {
                 .tabItem { Label("Sandbox", systemImage: "shippingbox") }
                 .tag(AppTab.sandbox)
 
-            TweaksView(console: console, manager: gestalt, onOpenSandbox: { selectedTab = .sandbox })
+            TweaksView(console: console, manager: gestalt,
+                       onOpenSandbox: { selectedTab = .sandbox },
+                       onOpenExtra: { selectedTab = .extra },
+                       onOpenBackup: { selectedTab = .backup })
                 .tabItem { Label("Tweaks", systemImage: "slider.horizontal.3") }
                 .tag(AppTab.tweaks)
 

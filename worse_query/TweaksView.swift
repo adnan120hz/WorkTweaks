@@ -97,6 +97,12 @@ struct TweaksView: View {
     /// Switches the TabView to the Sandbox tab (RootView owns the
     /// selection); used by the locked state's button.
     var onOpenSandbox: () -> Void
+    /// Switches the TabView to the Extra tab (RootView owns the
+    /// selection); used by the Menus card in the right column.
+    var onOpenExtra: () -> Void
+    /// Switches the TabView to the Backup tab (RootView owns the
+    /// selection); used by the Menus card in the right column.
+    var onOpenBackup: () -> Void
 
     @AppStorage("atomic_write") private var atomicWrite = true
     /// Master switch for this tab, flipped in the Sandbox tab.
@@ -246,15 +252,18 @@ struct TweaksView: View {
             }
             .scrollIndicators(.hidden)
 
-            // The Sections card is vertically centered in the
-            // right column: the column spans the full height of
-            // the row (driven by the ScrollView beside it), and
-            // spacers above and below hold the card in the middle
-            // while the left column scrolls.
+            // The right column is filled top-to-bottom: a mini
+            // identity card at the top, the Sections card held in
+            // the middle by spacers, and a Menus quick-access card
+            // at the bottom. The column spans the full height of
+            // the row (driven by the ScrollView beside it) while
+            // the left column scrolls.
             VStack(spacing: 0) {
+                identityMiniCard
                 Spacer(minLength: 0)
                 sectionsCard
                 Spacer(minLength: 0)
+                menusCard
             }
             .frame(width: 150)
             .frame(maxHeight: .infinity)
@@ -304,6 +313,81 @@ struct TweaksView: View {
             Color(.secondarySystemGroupedBackground),
             in: RoundedRectangle(cornerRadius: 16, style: .continuous)
         )
+    }
+
+    // MARK: Right-column companion cards (identity + menus)
+
+    /// This build's version as recorded in the bundle
+    /// (CFBundleShortVersionString), e.g. "3.5".
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+
+    // Mini identity card at the top of the right column: app
+    // name, version, device model, and iOS version + build.
+    // Quiet and display-only — no buttons.
+    private var identityMiniCard: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text("WorkTweaks")
+                .font(.subheadline.weight(.semibold))
+            Text("Version \(appVersion)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(machineName())
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(SupportInfo.deviceSummary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+        )
+    }
+
+    // Menus quick-access card at the bottom of the right column:
+    // navigation rows styled like the Sections rows, but plain —
+    // they switch tabs instead of selecting a section. App Data
+    // lives in the Sandbox tab's Utilities menu.
+    private var menusCard: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Menus")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 4)
+
+            menuRow(title: "App Data", systemImage: "folder") { onOpenSandbox() }
+            menuRow(title: "CacheExtra", systemImage: "key") { onOpenExtra() }
+            menuRow(title: "Backup", systemImage: "externaldrive.badge.timemachine") { onOpenBackup() }
+        }
+        .padding(10)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+        )
+    }
+
+    private func menuRow(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 9) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 22)
+                Text(title)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: Status card
