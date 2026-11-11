@@ -504,6 +504,43 @@ struct TweaksView: View {
             deviceNameCard
             persistCard
         }
+
+        if selectedSection == .addFeature {
+            footnoteCard
+        }
+    }
+
+    /// Lock Screen Footnote: a standalone feature card (not a
+    /// catalog tweak) trailing the Add feature section. It
+    /// pushes the same editor as the App Data page's entry.
+    private var footnoteCard: some View {
+        NavigationLink {
+            FootnoteView()
+        } label: {
+            HStack(spacing: 8) {
+                RowIcon(systemImage: "text.bubble")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Lock Screen Footnote")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Custom text shown at the bottom of the Lock Screen.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                Color(.secondarySystemGroupedBackground),
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     /// Enable iPadOS Mode stays locked unless the device class in

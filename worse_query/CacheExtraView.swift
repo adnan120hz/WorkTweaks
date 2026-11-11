@@ -40,6 +40,7 @@ struct CacheExtraView: View {
     @State private var search = ""
     @State private var editing: KeyRef?
     @State private var showAdd = false
+    @State private var showResetConfirm = false
 
     var body: some View {
         let _ = manager.dictVersion // re-render when the dict changes
@@ -74,6 +75,18 @@ struct CacheExtraView: View {
                         Text("CacheExtra Keys (\(filteredKeys.count))")
                     }
                 }
+
+                if manager.isValid {
+                    Section {
+                        Button(role: .destructive) {
+                            showResetConfirm = true
+                        } label: {
+                            Label("Reset Extra", systemImage: "arrow.counterclockwise")
+                        }
+                    } footer: {
+                        Text("Undoes everything changed or added in this tab: edited and deleted keys return to the values they had when MobileGestalt was loaded, and added keys disappear. Tweak states are not affected, and — like the edits — the reset is only written when you press Apply Tweaks.")
+                    }
+                }
             }
             .navigationTitle("Cache Extra")
             .searchable(text: $search, prompt: "Search keys")
@@ -88,6 +101,12 @@ struct CacheExtraView: View {
             }
             .sheet(item: $editing) { ref in
                 ExtraKeyEditor(manager: manager, existingKey: ref.key)
+            }
+            .confirmationDialog("Reset Extra?", isPresented: $showResetConfirm) {
+                Button("Reset Extra", role: .destructive) { manager.resetExtraEdits() }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("All changes and additions made in the Extra tab will be removed, and edited keys return to the values they had when MobileGestalt was loaded. Tweak states are not affected. The reset takes effect when you press Apply Tweaks.")
             }
         }
     }

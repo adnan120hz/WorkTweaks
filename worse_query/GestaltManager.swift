@@ -739,6 +739,15 @@ final class GestaltManager: ObservableObject {
     /// Bumped on every in-memory mutation so SwiftUI re-reads toggle states.
     @Published var dictVersion: Int = 0
 
+    /// Reset Extra bookkeeping: the pre-edit value of every
+    /// CacheExtra key the Extra tab has touched since dictNow
+    /// was loaded, recorded at first touch (deep-copied, so
+    /// later in-place mutations can't rewrite it). Keys the
+    /// Extra tab added — they had no loaded value — are in
+    /// extraEditAddedKeys instead.
+    private var extraEditBaseline: [String: Any] = [:]
+    private var extraEditAddedKeys: Set<String> = []
+
     @Published var isLoading = false
     @Published var isValid = false
     @Published var isEmpty = false
@@ -923,6 +932,7 @@ final class GestaltManager: ObservableObject {
                     self.isLoading = false
                     self.hasLoaded = true
                     self.lastError = nil
+                    self.clearExtraEditTracking()
                     self.dictVersion += 1
                     self.refreshSnapshots()
                 }
@@ -945,6 +955,7 @@ final class GestaltManager: ObservableObject {
         guard let dict = try? NSMutableDictionary(contentsOf: URL(fileURLWithPath: MGPaths.gestalt), error: ()) else { return }
         dictNow = dict
         deriveArtworkState(from: dict)
+        clearExtraEditTracking()
         dictVersion += 1
     }
 
@@ -998,6 +1009,7 @@ final class GestaltManager: ObservableObject {
 
     func setExtraValue(_ value: Any, forKey key: String) {
         guard let extra = cacheExtra else { return }
+        noteExtraEditBaseline(forKey: key)
         extra[key] = value
         dictVersion += 1
         print("(extra) set \(key) = \(PlistValue.describe(value))")
@@ -1005,9 +1017,69 @@ final class GestaltManager: ObservableObject {
 
     func removeExtraKey(_ key: String) {
         guard let extra = cacheExtra else { return }
+        noteExtraEditBaseline(forKey: key)
         extra.removeObject(forKey: key)
         dictVersion += 1
         print("(extra) removed \(key)")
+    }
+
+    /// Remember a key's loaded value the first time the Extra
+    /// tab touches it, before the edit lands. Only the Extra
+    /// mutators above call this — tweak staging writes through
+    /// writeOn / writeOff directly, so it is never recorded
+    /// here and Reset Extra can never touch a tweak's state.
+    private func noteExtraEditBaseline(forKey key: String) {
+        guard extraEditBaseline[key] == nil, !extraEditAddedKeys.contains(key) else { return }
+        if let current = cacheExtra?[key] {
+            extraEditBaseline[key] = extraValueSnapshot(current)
+        } else {
+            extraEditAddedKeys.insert(key)
+        }
+    }
+
+    /// Deep copy for container values (scalars are immutable
+    /// and stored as-is), via a plist round-trip.
+    private func extraValueSnapshot(_ value: Any) -> Any {
+        if value is NSDictionary || value is NSArray,
+           let data = try? PropertyListSerialization.data(fromPropertyList: value, format: .binary, options: 0),
+           let copy = try? PropertyListSerialization.propertyList(from: data, options: .mutableContainersAndLeaves, format: nil) {
+            return copy
+        }
+        return value
+    }
+
+    /// Forget the recorded Extra baseline — a fresh dictionary
+    /// was loaded, so the baseline starts empty again.
+    private func clearExtraEditTracking() {
+        extraEditBaseline.removeAll()
+        extraEditAddedKeys.removeAll()
+    }
+
+    /// Reset Extra: undo every change and addition made in the
+    /// Extra tab since the dictionary was loaded. Keys added
+    /// in Extra are removed; keys edited or deleted in Extra
+    /// return to their loaded values, so CacheExtra is exactly
+    /// what it would be with zero Extra edits. Like the edits
+    /// themselves, this only mutates the in-memory dictionary:
+    /// nothing is written to disk, and it takes effect through
+    /// the normal Apply Tweaks flow.
+    func resetExtraEdits() {
+        guard let extra = cacheExtra else { return }
+        let edited = extraEditBaseline
+        let added = extraEditAddedKeys
+        guard !edited.isEmpty || !added.isEmpty else {
+            print("(extra) Reset Extra — no Extra edits to undo.")
+            return
+        }
+        for (key, original) in edited {
+            extra[key] = extraValueSnapshot(original)
+        }
+        for key in added {
+            extra.removeObject(forKey: key)
+        }
+        clearExtraEditTracking()
+        dictVersion += 1
+        print("(extra) Reset Extra — undid \(edited.count + added.count) Extra edit(s); those keys match their loaded state again.")
     }
 
     func isOn(_ tweak: GestaltTweak) -> Bool {
