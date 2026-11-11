@@ -22,6 +22,7 @@ struct LogView: View {
                         Button("Clear") {
                             console.output = ""
                         }
+                        .buttonStyle(.plain)
                     }
                 }
                 .onChange(of: console.output) { _, _ in

@@ -85,8 +85,12 @@ struct LicenseView: View {
                         detail: "The file-based CacheData pattern method used by Enable iPadOS Mode (MobileGestaltCacheDataTweak).",
                         url: "https://github.com/leminlimez/Nugget"
                     )
-                    Divider()
-                        .padding(.leading, 14)
+                }
+                .padding(.vertical, 4)
+            }
+
+            WTSectionCard(header: "Reference") {
+                VStack(alignment: .leading, spacing: 0) {
                     creditRow(
                         title: "3105 — YangJiii",
                         detail: "Reference — app-data browsing and portable patches",
@@ -158,7 +162,7 @@ struct LicenseView: View {
                     Text(detail)
                         .font(.caption).foregroundStyle(.secondary)
                     Text(url)
-                        .font(.caption2).foregroundStyle(Color.accentColor)
+                        .font(.caption2).foregroundStyle(.secondary)
                         .lineLimit(1).truncationMode(.middle)
                 }
                 Spacer()
@@ -169,5 +173,6 @@ struct LicenseView: View {
             .padding(.vertical, 7)
             .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 }

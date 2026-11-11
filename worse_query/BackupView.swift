@@ -29,6 +29,7 @@ struct BackupView: View {
                             .padding(.vertical, 11)
                             .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     .disabled(!manager.isValid)
                 }
 
