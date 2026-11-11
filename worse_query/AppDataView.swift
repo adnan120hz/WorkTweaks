@@ -200,7 +200,8 @@ struct AppDataDirectoryView: View {
                                         manager: manager,
                                         path: entry.path,
                                         name: entry.name,
-                                        isNew: false
+                                        isNew: false,
+                                        knownSize: entry.size
                                     )
                                 } label: {
                                     entryRow(entry)
@@ -324,6 +325,10 @@ struct AppDataFileView: View {
     let path: String
     let name: String
     let isNew: Bool
+    /// The size from the directory listing, when the listing
+    /// could stat the file (0 = not known). Only used by the
+    /// read-failure page, where the real size is unavailable.
+    var knownSize: Int64 = 0
 
     @State private var loaded = false
     @State private var fileExists = false
@@ -349,11 +354,31 @@ struct AppDataFileView: View {
                     .padding(.vertical, 10)
                 }
             } else if readFailed {
+                WTSectionCard(header: "File", footer: path) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        LabeledContent("Name", value: name)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                        if knownSize > 0 {
+                            Divider()
+                                .padding(.leading, 14)
+                            LabeledContent("Size", value: wtFormatSize(knownSize))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                        }
+                    }
+                }
+
                 WTSectionCard {
-                    Label("Couldn't read this file.", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label("Couldn't read this file.", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text(readFailureNote)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                 }
             } else if isText {
                 WTSectionCard(header: "Contents", footer: path) {
@@ -423,6 +448,17 @@ struct AppDataFileView: View {
         .onAppear {
             load()
         }
+    }
+
+    /// Why a file may be unreadable, shown on the read-failure
+    /// page. The container-manager metadata plist present at
+    /// every container root is system-managed: iOS does not let
+    /// other processes read its contents at all.
+    private var readFailureNote: String {
+        if name == ".com.apple.mobile_container_manager.metadata.plist" {
+            return "This is the container's system-managed metadata file. iOS doesn't allow other processes to read its contents, so it can't be opened or edited here."
+        }
+        return "The file couldn't be read under the container's sandbox extension — the details are in the Log. Nothing was written to it."
     }
 
     private func load() {

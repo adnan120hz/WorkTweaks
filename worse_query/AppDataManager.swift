@@ -227,8 +227,12 @@ final class AppDataManager: ObservableObject {
     }
 
     func readFileData(_ path: String) -> Data? {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
-            print("[AppData] read failed: \(path)")
+        let data: Data
+        do {
+            data = try Data(contentsOf: URL(fileURLWithPath: path))
+        } catch {
+            let nsError = error as NSError
+            print("[AppData] read failed: \(path) — \(nsError.domain) \(nsError.code)")
             return nil
         }
         print("[AppData] read \(path) (\(data.count) bytes)")
