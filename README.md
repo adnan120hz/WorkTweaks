@@ -8,36 +8,35 @@
   A MobileGestalt tweak app for iOS 26 &amp; 27 — unlock your device's hidden features without a jailbreak, powered by the <strong>worse_query</strong> sandbox escape.
 </p>
 
+<p align="center">
+  WorkTweaks is an original app by Adnan. This repository also documents its companion signer, <strong>Signed Apps</strong> — the two apps are separate projects with separate credits and separate licenses, listed below.
+</p>
+
 ---
 
 ## Features
 
-- **Tweaks** — the tweak catalog ported from [mond](https://github.com/rooootdev/mond): Dynamic Island, Always-On Display, Apple Intelligence, Stage Manager, Charge Limit, Action Button, iPadOS Mode, device spoofing, and more — applied with mond's in-place MobileGestalt write system, so tweaks persist across resprings and reboots.
-- **Extra** — a free-form CacheExtra editor: add, edit, or delete any MobileGestalt key directly.
-- **Backup** — an original backup is saved on first read, an automatic **After Apply Tweaks** snapshot is taken at every Apply, and manual snapshots can be created at any time. Every snapshot shows which tweaks were on and the value of every tweak key, and can be restored as a whole, per tweak, or per key.
+- **Tweaks** — WorkTweaks' own catalog of 23 tweaks: Dynamic Island, Always-On Display, Apple Intelligence, Stage Manager, Charge Limit, Action Button, Camera Control, iPadOS Mode, device spoofing, and more — applied with WorkTweaks' own in-place MobileGestalt write system, so tweaks persist across resprings and reboots. The catalog is organized into sections (All, Dynamic Island, Tweaks, Apple Intelligence, Add feature, Apply/Revert) with a search page.
+- **App Data** — browse the data containers of the apps on your device, open and edit text files in place, edit binary files byte by byte with the hex editor (a pristine backup is taken before the first byte edit), and add files and folders.
+- **Cache Data Cleaner** *(new in v3.13)* — Sandbox → Utilities: pick an app, see how much cache it keeps in `Library/Caches` and `tmp`, and empty those two folders after a confirmation. Only the contents of those two cache folders are deleted — Documents and the rest of Library are never touched — and the freed space is measured, not estimated.
+- **PosterBoard** — import `.tendies` wallpaper packages into PosterBoard's data store and remove the wallpapers you imported, tracked by receipts.
+- **Deploy** — install file packages (`.deploy` / folders / `.zip` with a `manifest.json`) into app containers, App Groups, and internal daemon containers, with per-file backups and a restore history. The built-in **Package Builder** lets you create and edit packages on-device.
+- **Lock Screen Footnote** — set the footnote text shown on the Lock Screen, as a card in Tweaks → Add feature.
+- **Extra** — a free-form CacheExtra editor: add, edit, or delete any MobileGestalt key directly, with a Reset that restores exactly the keys you edited.
+- **Backup** — an original backup is saved on first read, an automatic **After Apply Tweaks** snapshot is taken at every Apply, and manual snapshots can be created at any time. Every snapshot can be restored as a whole, per tweak, or per key.
 - **Sandbox & Log** — the original worse_query escape / path tools and the live console output.
-- **First-launch intro** — developer and credits welcome screen, shown once per install.
-- Light, dark, and tinted app icons.
+- **First-launch welcome & tutorials** — install and signing guides (iLoader on desktop, or the Signed Apps companion), shown once per install.
+- Liquid Glass cards throughout (except the Log, which stays solid). Light, dark, and tinted app icons.
 
 ## Supported iOS versions
 
-WorkTweaks is built for **iOS 26 and 27** — the worse_query core targets both major versions — and installs on iOS 26.0 or later. Later iOS 27.x releases are covered by the same major-version support. Developed and tested on **iOS 27.0.1 (24A446)**.
+WorkTweaks checks your exact iOS version and build at launch — only the builds below are supported, and unsupported devices stop at an "unsupported" screen instead of running with unknown keys:
 
 | Version | Build |
 | --- | --- |
-| iOS 26.7 | 23H24 |
-| iOS 27.0 Developer Beta 1 | 24A5355q |
-| iOS 27.0 Developer Beta 2 | 24A5370h |
-| iOS 27.0 Developer Beta 3 | 24A5380h |
-| iOS 27.0 Developer Beta 4 | 24A5390f |
-| iOS 27.0 Developer Beta 5 | 24A5408d |
-| iOS 27.0 Developer Beta 6 | 24A5418b |
-| iOS 27.0 Developer Beta 7 | 24A5424a |
-| iOS 27.0 Developer Beta 8 | 24A5430a |
-| iOS 27.0 RC | 24A437 |
+| iOS 26.7.2 | 23H128 |
 | iOS 27.0 | 24A437 |
 | iOS 27.0.1 | 24A446 |
-| iOS 27.1 | iPhone Duo only |
 | iOS 27.2 Beta 1 | 24B5084k |
 | iOS 27.2 Beta 2 | 24B5089g |
 | iOS 27.2 Beta 3 | 24B5099f |
@@ -46,28 +45,62 @@ WorkTweaks is built for **iOS 26 and 27** — the worse_query core targets both 
 | iOS 27.2 | 24B119 |
 | iOS 27.3 Beta 1 | 24C5037i |
 
+Developed and tested on **iOS 27.0.1 (24A446)**.
+
+## Companion app — Signed Apps
+
+**Signed Apps** (by adnan.120hz) is the companion signer for WorkTweaks: an on-device app that signs IPAs with your own Apple ID — GrandSlam sign-in and anisette, provisioning (certificate, App ID, and the App Group WorkTweaks needs) under your own team, then in-app signing and export of the signed IPA.
+
+Signed Apps is a **separate, closed-source app**. Its repository is **private** and its source code is not published here or anywhere else — see its own license section below. It is documented in this README only so WorkTweaks users know what it is and which terms apply to it.
+
 ## Credits
 
-WorkTweaks is built on open-source work:
+The two apps' credits are kept separate — they are different projects built on different work.
+
+### WorkTweaks
 
 | Project | Author | What it provides | License |
 | --- | --- | --- | --- |
 | [worse_query](https://github.com/forcequitOS/worse_query) | ForceQuit OS | The core system: the sandbox escape and MobileGestalt access this whole app is built on | GPL-3.0 |
-| [mond](https://github.com/rooootdev/mond) | rooootdev | The tweak engine: the tweak catalog and the load / apply / write system | AGPL-3.0 |
+| [mond](https://github.com/rooootdev/mond) | rooootdev | CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on | AGPL-3.0 |
 | [Nugget](https://github.com/leminlimez/Nugget) | leminlimez | The file-based CacheData pattern method used by Enable iPadOS Mode | AGPL-3.0 |
-| Respring technique | @neonmodder123 & @skadz108 | The web-based respring approach and its Swift implementation (via jailbreak.party) | — |
+| [3105](https://github.com/YangJiiii/3105) | YangJiii | Reference — app-data browsing and portable patches | — |
+| Xo File | — | Reference — cache data cleaner | — |
+| Respring technique | neonmodder123 & skadz108 | The web-based respring approach and its Swift implementation (via jailbreak.party) | — |
 
-**Developer:** Adnan — [TikTok @adnan.120hz](https://www.tiktok.com/@adnan.120hz) · [GitHub @adnan120hz](https://github.com/adnan120hz)
+### Signed Apps
+
+| Project | Author | What it provides | License |
+| --- | --- | --- | --- |
+| [iLoader](https://iloader.app) | iLoader team | System — Signed Apps implements iLoader's signing system on-device: the same isideload-based flow (GrandSlam sign-in, anisette, provisioning with App Groups, and signing) | — |
+| SideInstaller | FrizzleM | Implementation — the code Signed Apps was built from | Custom (see below) |
+| isideload | Nicholas Sharp | Core — the Rust library for Apple ID sign-in and provisioning | MIT |
+
+**Developer (both apps):** Adnan — [TikTok @adnan.120hz](https://www.tiktok.com/@adnan.120hz) · [GitHub @adnan120hz](https://github.com/adnan120hz)
 
 ## License
 
+### WorkTweaks — AGPL-3.0 (open source)
+
 WorkTweaks is free software, licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see [LICENSE](LICENSE) for the full text.
 
-Why AGPL and not plain GPL: the core system (worse_query) is GPL-3.0, but the tweak engine ported from mond and the CacheData method taken from Nugget are both AGPL-3.0. GPLv3 code may be combined into an AGPLv3 work (GPLv3 §13), and the AGPL terms then apply to the combined work as a whole — so WorkTweaks is distributed under AGPL-3.0.
+Why AGPL and not plain GPL: the core system (worse_query) is GPL-3.0, but the CacheExtra key knowledge from mond and the CacheData method from Nugget are AGPL-3.0. GPLv3 code may be combined into an AGPLv3 work (GPLv3 §13), and the AGPL terms then apply to the combined work as a whole — so WorkTweaks is distributed under AGPL-3.0.
+
+### Signed Apps — proprietary (NOT open source)
+
+Signed Apps is **not open source**. It is closed-source software under a **custom license** (Copyright 2026 Adnan):
+
+- Personal, non-commercial use only. Commercial use is prohibited.
+- The source code is not published; the app's repository is private.
+- Redistribution of the app is not permitted except as the developer authorizes.
+
+These terms mirror the license of SideInstaller by FrizzleM, the implementation Signed Apps was built from, whose license likewise allows personal, non-commercial use and prohibits commercial use. One component inside Signed Apps is open source: its core, **isideload** by Nicholas Sharp, is MIT-licensed, and that MIT license applies to isideload itself — it does not make Signed Apps open source.
+
+The AGPL-3.0 license above covers **WorkTweaks only**. It does not apply to Signed Apps, and Signed Apps' custom license does not apply to WorkTweaks.
 
 ## Install
 
-WorkTweaks is distributed as an unsigned IPA and must be installed with **[iLoader](https://iloader.app)** — the free, open-source sideloading tool for Windows, macOS, and Linux (download it only from the official site, iloader.app). Open iLoader, sign in with your Apple ID, connect your device by USB, choose **Install IPA**, and select the WorkTweaks `.ipa`. With a free Apple ID, sideloaded apps expire after about 7 days and must be refreshed.
+WorkTweaks is distributed as an unsigned IPA and must be installed with **[iLoader](https://iloader.app)** — the free sideloading tool for Windows, macOS, and Linux (download it only from the official site, iloader.app). Open iLoader, sign in with your Apple ID, connect your device by USB, choose **Install IPA**, and select the WorkTweaks `.ipa`. Alternatively, the IPA can be signed on-device with the **Signed Apps** companion. With a free Apple ID, sideloaded apps expire after about 7 days and must be refreshed.
 
 ## Building & signing notes
 
