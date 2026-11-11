@@ -465,6 +465,12 @@ final class DeployManager: ObservableObject {
             DispatchQueue.main.async {
                 self?.isDeploying = false
                 self?.lastResult = result
+                // Container contents changed: the cached App
+                // Data scan is stale, so the next App Data
+                // visit rescans.
+                if result.succeeded > 0 {
+                    AppDataManager.shared.invalidateScanCache()
+                }
             }
         }
     }
@@ -625,6 +631,12 @@ final class DeployManager: ObservableObject {
             DispatchQueue.main.async {
                 self?.isRestoring = false
                 self?.restoreResult = result
+                // Container contents changed: the cached App
+                // Data scan is stale, so the next App Data
+                // visit rescans.
+                if result.succeeded > 0 {
+                    AppDataManager.shared.invalidateScanCache()
+                }
             }
         }
     }

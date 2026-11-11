@@ -8,6 +8,10 @@ import SwiftUI
 // read-modify-write in place, verify by re-reading). When the
 // directory grant or the read fails, the page shows an honest
 // blocked state and nothing can be written from here.
+//
+// Since v3.8 the page renders as Liquid Glass cards
+// (WTGlassPage/WTSectionCard), like every other page —
+// presentation only; the editor behaves exactly as before.
 
 struct FootnoteView: View {
     @StateObject private var manager = FootnoteManager()
@@ -17,9 +21,9 @@ struct FootnoteView: View {
     @State private var writeFailed = false
 
     var body: some View {
-        Form {
+        WTGlassPage {
             if case .blocked(let reason) = manager.state {
-                Section {
+                WTSectionCard(footer: "Nothing was written.") {
                     VStack(alignment: .leading, spacing: 3) {
                         Label("Lock Screen Footnote is unavailable", systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
@@ -27,52 +31,67 @@ struct FootnoteView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                } footer: {
-                    Text("Nothing was written.")
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                 }
             } else if case .ready = manager.state {
-                Section {
+                WTSectionCard(header: "Footnote", footer: "\(text.count) character(s). The text appears in small type at the bottom of the Lock Screen. Leave it empty and tap Apply Footnote to remove the footnote.") {
                     TextField("Footnote text", text: $text, axis: .vertical)
                         .lineLimit(1...3)
                         .disableAutocorrection(true)
-                } header: {
-                    Text("Footnote")
-                } footer: {
-                    Text("\(text.count) character(s). The text appears in small type at the bottom of the Lock Screen. Leave it empty and tap Apply Footnote to remove the footnote.")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
                 }
 
-                Section {
-                    Button("Apply Footnote") {
-                        if manager.apply(text: text) {
-                            showRestartChoice = true
-                        } else {
-                            writeFailed = true
-                        }
-                    }
-                    .disabled(manager.isWriting)
-
-                    if manager.hasFootnote {
-                        Button("Remove Footnote", role: .destructive) {
-                            if manager.removeFootnote() {
-                                text = ""
+                WTSectionCard(footer: "Writes SharedDeviceConfiguration.plist in place, keeping every other key in the file. SpringBoard reads the file when it starts, so a respring or restart is needed to see the change.") {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Button {
+                            if manager.apply(text: text) {
                                 showRestartChoice = true
                             } else {
                                 writeFailed = true
                             }
+                        } label: {
+                            Text("Apply Footnote")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 11)
+                                .contentShape(Rectangle())
                         }
                         .disabled(manager.isWriting)
+
+                        if manager.hasFootnote {
+                            Divider()
+                                .padding(.leading, 14)
+
+                            Button(role: .destructive) {
+                                if manager.removeFootnote() {
+                                    text = ""
+                                    showRestartChoice = true
+                                } else {
+                                    writeFailed = true
+                                }
+                            } label: {
+                                Text("Remove Footnote")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 11)
+                                    .contentShape(Rectangle())
+                            }
+                            .disabled(manager.isWriting)
+                        }
                     }
-                } footer: {
-                    Text("Writes SharedDeviceConfiguration.plist in place, keeping every other key in the file. SpringBoard reads the file when it starts, so a respring or restart is needed to see the change.")
                 }
             } else {
-                Section {
+                WTSectionCard {
                     HStack(spacing: 10) {
                         ProgressView()
                         Text("Opening the configuration profiles…")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                 }
             }
         }

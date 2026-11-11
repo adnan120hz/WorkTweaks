@@ -9,61 +9,72 @@ import SwiftUI
 /// - a whole snapshot,
 /// - a single tweak from a snapshot,
 /// - a single key from a snapshot.
+///
+/// Since v3.8 the tab renders as Liquid Glass cards (WTGlassPage),
+/// like every other page. The List's swipe-to-delete on snapshots
+/// becomes a long-press context menu — same delete, same rows.
 struct BackupView: View {
     @ObservedObject var manager: GestaltManager
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
+            WTGlassPage {
+                WTSectionCard(header: "Snapshots", footer: "A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.") {
                     Button {
                         manager.createManualSnapshot()
                     } label: {
                         Text("Back Up Now")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
                     }
                     .disabled(!manager.isValid)
-                } header: {
-                    Text("Snapshots")
-                } footer: {
-                    Text("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")
                 }
 
                 if let original = manager.originalSnapshot {
-                    Section {
+                    WTSectionCard(header: "Original") {
                         snapshotRow(original)
-                    } header: {
-                        Text("Original")
                     }
                 }
 
                 if manager.otherSnapshots.isEmpty {
-                    Section {
+                    WTSectionCard(header: "Apply Snapshots") {
                         Text("No snapshots yet. Apply some tweaks or tap Back Up Now.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                    } header: {
-                        Text("Apply Snapshots")
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
                     }
                 } else {
-                    Section {
-                        ForEach(manager.otherSnapshots) { snapshot in
-                            snapshotRow(snapshot)
-                        }
-                        .onDelete { offsets in
-                            for index in offsets {
-                                manager.deleteSnapshot(manager.otherSnapshots[index])
+                    WTSectionCard(header: "Apply Snapshots") {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(manager.otherSnapshots.enumerated()), id: \.element.id) { index, snapshot in
+                                if index > 0 {
+                                    Divider()
+                                        .padding(.leading, 14)
+                                }
+                                snapshotRow(snapshot)
+                                    .contextMenu {
+                                        Button(role: .destructive) {
+                                            manager.deleteSnapshot(snapshot)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
                             }
                         }
-                    } header: {
-                        Text("Apply Snapshots")
+                        .padding(.vertical, 4)
                     }
                 }
 
                 if let error = manager.lastError {
-                    Section {
+                    WTSectionCard {
                         Text(error)
                             .font(.caption)
                             .foregroundStyle(.red)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
                     }
                 }
             }
@@ -101,9 +112,17 @@ struct BackupView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
             }
-            .padding(.vertical, 4)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 }
 
@@ -116,76 +135,103 @@ struct BackupDetailView: View {
     @State private var showRestoreAllConfirm = false
 
     var body: some View {
-        List {
-            Section {
-                LabeledContent("Type", value: snapshot.kind.label)
-                LabeledContent("Date", value: snapshot.date.formatted(date: .abbreviated, time: .standard))
-                LabeledContent("Total CacheExtra keys", value: "\(snapshot.cacheExtraCount)")
-                LabeledContent("Active tweaks", value: "\(snapshot.enabledTweakIDs.count) of \(TweakCatalog.all.count)")
+        WTGlassPage {
+            WTSectionCard {
+                VStack(alignment: .leading, spacing: 0) {
+                    LabeledContent("Type", value: snapshot.kind.label)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider().padding(.leading, 14)
+                    LabeledContent("Date", value: snapshot.date.formatted(date: .abbreviated, time: .standard))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider().padding(.leading, 14)
+                    LabeledContent("Total CacheExtra keys", value: "\(snapshot.cacheExtraCount)")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider().padding(.leading, 14)
+                    LabeledContent("Active tweaks", value: "\(snapshot.enabledTweakIDs.count) of \(TweakCatalog.all.count)")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                }
             }
 
-            Section {
+            WTSectionCard(footer: "Rewrites the entire MobileGestalt.plist from this backup. A device restart is required after restoring.") {
                 Button(role: .destructive) {
                     showRestoreAllConfirm = true
                 } label: {
                     Text("Restore Everything")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .contentShape(Rectangle())
                 }
                 .disabled(!manager.isValid)
-            } footer: {
-                Text("Rewrites the entire MobileGestalt.plist from this backup. A device restart is required after restoring.")
             }
 
-            Section {
-                ForEach(TweakCatalog.all) { tweak in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(tweak.title)
-                                .font(.subheadline.weight(.medium))
-                            Text(snapshot.enabledTweakIDs.contains(tweak.id) ? "On in this backup" : "Off in this backup")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+            WTSectionCard(header: "By Tweak") {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(TweakCatalog.all.enumerated()), id: \.element.id) { index, tweak in
+                        if index > 0 {
+                            Divider()
+                                .padding(.leading, 14)
                         }
-                        Spacer()
-                        Button("Restore") {
-                            manager.restoreTweak(tweak, from: snapshot)
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(tweak.title)
+                                    .font(.subheadline.weight(.medium))
+                                Text(snapshot.enabledTweakIDs.contains(tweak.id) ? "On in this backup" : "Off in this backup")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Restore") {
+                                manager.restoreTweak(tweak, from: snapshot)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(!manager.isValid)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(!manager.isValid)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
                     }
-                    .padding(.vertical, 2)
                 }
-            } header: {
-                Text("By Tweak")
+                .padding(.vertical, 4)
             }
 
-            Section {
-                ForEach(snapshot.entries) { entry in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(entry.tweakTitle)
-                                .font(.caption.weight(.semibold))
-                            Text(entry.key)
-                                .font(.system(.caption2, design: .monospaced))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                            Text(entry.present ? "Value: \(entry.valueDescription)" : "Not present in this backup")
-                                .font(.caption)
-                                .foregroundStyle(entry.present ? .primary : .secondary)
+            WTSectionCard(header: "By Key") {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(snapshot.entries.enumerated()), id: \.element.id) { index, entry in
+                        if index > 0 {
+                            Divider()
+                                .padding(.leading, 14)
                         }
-                        Spacer()
-                        Button("Restore") {
-                            manager.restoreKey(entry, from: snapshot)
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(entry.tweakTitle)
+                                    .font(.caption.weight(.semibold))
+                                Text(entry.key)
+                                    .font(.system(.caption2, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                Text(entry.present ? "Value: \(entry.valueDescription)" : "Not present in this backup")
+                                    .font(.caption)
+                                    .foregroundStyle(entry.present ? .primary : .secondary)
+                            }
+                            Spacer()
+                            Button("Restore") {
+                                manager.restoreKey(entry, from: snapshot)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(!manager.isValid)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(!manager.isValid)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
                     }
-                    .padding(.vertical, 2)
                 }
-            } header: {
-                Text("By Key")
+                .padding(.vertical, 4)
             }
         }
         .navigationTitle("Backup Details")

@@ -55,6 +55,16 @@ struct AppDataEntry: Identifiable {
 final class AppDataManager: ObservableObject {
     static let rootPath = "/var/mobile/Containers/Data/Application"
 
+    /// The one session-wide instance. The scan takes about a
+    /// minute, so its result is cached for the whole app
+    /// session: this shared manager outlives any single App
+    /// Data page, and navigating away and back never rescans.
+    /// The cache lives in memory only — a relaunch starts
+    /// fresh — and it is invalidated when a Deploy or a Deploy
+    /// Restore changes container contents (see
+    /// invalidateScanCache), besides the manual Rescan button.
+    static let shared = AppDataManager()
+
     @Published var containers: [AppContainer] = []
     @Published var isScanning = false
     @Published var didScan = false
@@ -67,6 +77,16 @@ final class AppDataManager: ObservableObject {
         if !didScan && !isScanning {
             rescan()
         }
+    }
+
+    /// Marks the cached scan stale after container contents
+    /// changed (a Deploy or Deploy Restore wrote files), so
+    /// the next scanIfNeeded() — e.g. returning to the App
+    /// Data page — rescans instead of trusting the old list.
+    func invalidateScanCache() {
+        guard didScan else { return }
+        didScan = false
+        print("[AppData] scan cache invalidated — container contents changed")
     }
 
     func rescan() {

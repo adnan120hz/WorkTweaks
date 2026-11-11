@@ -9,66 +9,90 @@ import SwiftUI
 // (ContainerSupport.swift + SandboxBridge): the container list
 // is a pathleak scan, and each opened container is browsed
 // under a single consumeExtension grant on its directory.
+//
+// Since v3.8 the pages render as Liquid Glass cards
+// (WTGlassPage/WTSectionCard), like every other page —
+// presentation only; browsing and editing behave as before.
 
 struct AppDataView: View {
-    @StateObject private var manager = AppDataManager()
+    // The shared, session-persistent manager: its completed
+    // scan stays cached across navigation for the whole app
+    // session (a per-view manager would forget it on every
+    // pop and rescan for a minute each time).
+    @ObservedObject private var manager = AppDataManager.shared
 
     var body: some View {
-        Form {
-            Section {
-                if manager.isScanning {
-                    HStack(spacing: 10) {
-                        ProgressView()
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(manager.scanPhase)
-                                .font(.subheadline)
-                            Text("The pathleak scan reads inodes one by one — this can take a few minutes.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                } else if let summary = manager.scanSummary {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(summary)
-                            .font(.subheadline)
-                        if manager.containers.isEmpty {
-                            Text("The scan of \(AppDataManager.rootPath) found no containers. The scan's baseline and counts are in the Log.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                } else {
-                    Text("Preparing the container scan…")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            } header: {
-                Text("Containers")
-            } footer: {
-                Text("Containers are enumerated with the fork's pathleak scan — the kernel refuses a grant on the container root itself, so there is no faster way to list them.")
-            }
-
-            if !manager.containers.isEmpty {
-                Section {
-                    ForEach(manager.containers) { container in
-                        NavigationLink {
-                            AppDataDirectoryView(
-                                manager: manager,
-                                container: container,
-                                path: container.path,
-                                title: container.bundleID
-                            )
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(container.bundleID)
-                                    .font(.subheadline.weight(.semibold))
-                                Text(containerSubtitle(container))
+        WTGlassPage {
+            WTSectionCard(header: "Containers", footer: "Containers are enumerated with the fork's pathleak scan — the kernel refuses a grant on the container root itself, so there is no faster way to list them.") {
+                Group {
+                    if manager.isScanning {
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(manager.scanPhase)
+                                    .font(.subheadline)
+                                Text("The pathleak scan reads inodes one by one — this can take a few minutes.")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                            .padding(.vertical, 2)
+                        }
+                    } else if let summary = manager.scanSummary {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(summary)
+                                .font(.subheadline)
+                            if manager.containers.isEmpty {
+                                Text("The scan of \(AppDataManager.rootPath) found no containers. The scan's baseline and counts are in the Log.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    } else {
+                        Text("Preparing the container scan…")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+            }
+
+            if !manager.containers.isEmpty {
+                WTSectionCard {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(manager.containers.enumerated()), id: \.element.id) { index, container in
+                            if index > 0 {
+                                Divider()
+                                    .padding(.leading, 14)
+                            }
+                            NavigationLink {
+                                AppDataDirectoryView(
+                                    manager: manager,
+                                    container: container,
+                                    path: container.path,
+                                    title: container.bundleID
+                                )
+                            } label: {
+                                HStack(spacing: 10) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(container.bundleID)
+                                            .font(.subheadline.weight(.semibold))
+                                        Text(containerSubtitle(container))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer(minLength: 0)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(.tertiary)
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
+                    .padding(.vertical, 4)
                 }
             }
         }
@@ -137,9 +161,9 @@ struct AppDataDirectoryView: View {
     @State private var newFilePath: String?
 
     var body: some View {
-        Form {
+        WTGlassPage {
             if grantFailed {
-                Section {
+                WTSectionCard {
                     VStack(alignment: .leading, spacing: 3) {
                         Label("Couldn't open this container", systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
@@ -147,38 +171,45 @@ struct AppDataDirectoryView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                 }
             } else {
-                Section {
-                    ForEach(entries) { entry in
-                        if entry.isDirectory {
-                            NavigationLink {
-                                AppDataDirectoryView(
-                                    manager: manager,
-                                    container: container,
-                                    path: entry.path,
-                                    title: entry.name
-                                )
-                            } label: {
-                                entryRow(entry)
+                WTSectionCard(header: "Contents", footer: path) {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                            if index > 0 {
+                                Divider()
+                                    .padding(.leading, 14)
                             }
-                        } else {
-                            NavigationLink {
-                                AppDataFileView(
-                                    manager: manager,
-                                    path: entry.path,
-                                    name: entry.name,
-                                    isNew: false
-                                )
-                            } label: {
-                                entryRow(entry)
+                            if entry.isDirectory {
+                                NavigationLink {
+                                    AppDataDirectoryView(
+                                        manager: manager,
+                                        container: container,
+                                        path: entry.path,
+                                        title: entry.name
+                                    )
+                                } label: {
+                                    entryRow(entry)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                NavigationLink {
+                                    AppDataFileView(
+                                        manager: manager,
+                                        path: entry.path,
+                                        name: entry.name,
+                                        isNew: false
+                                    )
+                                } label: {
+                                    entryRow(entry)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
-                } header: {
-                    Text("Contents")
-                } footer: {
-                    Text(path)
+                    .padding(.vertical, 4)
                 }
             }
         }
@@ -262,8 +293,14 @@ struct AppDataDirectoryView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
-        .padding(.vertical, 2)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
     }
 
     private func isValidName(_ name: String) -> Bool {
@@ -299,71 +336,80 @@ struct AppDataFileView: View {
     @State private var saveFailed = false
 
     var body: some View {
-        Form {
+        WTGlassPage {
             if !loaded {
-                Section {
+                WTSectionCard {
                     HStack(spacing: 10) {
                         ProgressView()
                         Text("Reading…")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                 }
             } else if readFailed {
-                Section {
+                WTSectionCard {
                     Label("Couldn't read this file.", systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
                 }
             } else if isText {
-                Section {
+                WTSectionCard(header: "Contents", footer: path) {
                     TextEditor(text: $text)
                         .font(.system(.body, design: .monospaced))
                         .frame(minHeight: 280)
+                        .padding(6)
                         .onChange(of: text) { _, _ in
                             saved = false
                         }
-                } header: {
-                    Text("Contents")
-                } footer: {
-                    Text(path)
                 }
 
-                Section {
-                    Button(saved ? "Saved" : "Save") {
+                WTSectionCard(footer: "Saving writes the file in place, under the container's sandbox extension.") {
+                    Button {
                         if manager.saveText(path: path, text: text, isNew: !fileExists) {
                             fileExists = true
                             saved = true
                         } else {
                             saveFailed = true
                         }
+                    } label: {
+                        Text(saved ? "Saved" : "Save")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
                     }
-                    .frame(maxWidth: .infinity)
-                } footer: {
-                    Text("Saving writes the file in place, under the container's sandbox extension.")
                 }
             } else {
-                Section {
-                    LabeledContent("Name", value: name)
-                    LabeledContent("Size", value: wtFormatSize(size))
-                } header: {
-                    Text("File")
-                } footer: {
-                    Text(path)
+                WTSectionCard(header: "File", footer: path) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        LabeledContent("Name", value: name)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                        Divider()
+                            .padding(.leading, 14)
+                        LabeledContent("Size", value: wtFormatSize(size))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                    }
                 }
 
                 if !hexPreview.isEmpty {
-                    Section {
+                    WTSectionCard(header: "First Bytes") {
                         Text(hexPreview)
                             .font(.system(.caption, design: .monospaced))
-                    } header: {
-                        Text("First Bytes")
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
                     }
                 }
 
-                Section {
+                WTSectionCard {
                     Text("This file isn't UTF-8 text, so it can't be edited here. Nothing is ever written to it from this page.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
                 }
             }
         }

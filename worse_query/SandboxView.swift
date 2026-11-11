@@ -8,6 +8,11 @@ import SwiftUI
 // opens its own page holding exactly the controls it had when
 // they were stacked sections here. The console stays on the
 // home, below the menu rows.
+//
+// Since v3.8 the pages render as free-standing Liquid Glass
+// cards over the grouped background (WTGlassPage/WTSectionCard),
+// the same construction as the Tweaks tab — presentation only;
+// every control behaves exactly as before.
 
 struct SandboxView: View {
     @ObservedObject var console: Console
@@ -29,50 +34,57 @@ struct SandboxView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            WTGlassPage {
                 // Front door identity: app icon, name, and this
                 // device's support status.
-                Section {
-                    HStack(spacing: 14) {
-                        Image("AppIconDisplay")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 52, height: 52)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        VStack(alignment: .leading, spacing: 3) {
-                            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                                Text("WorkTweaks")
-                                    .font(.headline)
-                                Text("v\(appVersion)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                WTSectionCard {
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(spacing: 14) {
+                            Image("AppIconDisplay")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 52, height: 52)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            VStack(alignment: .leading, spacing: 3) {
+                                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                    Text("WorkTweaks")
+                                        .font(.headline)
+                                    Text("v\(appVersion)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                HStack(spacing: 5) {
+                                    Image(systemName: SupportInfo.isSupported ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                                        .foregroundStyle(SupportInfo.isSupported ? Color.accentColor : .orange)
+                                    Text(SupportInfo.isSupported
+                                         ? "Supported iOS • \(SupportInfo.deviceSummary)"
+                                         : "Unsupported iOS • \(SupportInfo.deviceSummary)")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             }
-                            HStack(spacing: 5) {
-                                Image(systemName: SupportInfo.isSupported ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                                    .foregroundStyle(SupportInfo.isSupported ? Color.accentColor : .orange)
-                                Text(SupportInfo.isSupported
-                                     ? "Supported iOS • \(SupportInfo.deviceSummary)"
-                                     : "Unsupported iOS • \(SupportInfo.deviceSummary)")
-                            }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                         }
-                    }
-                    .padding(.vertical, 4)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
 
-                    // Compact device details, from the same data
-                    // the support gate already computes.
-                    VStack(alignment: .leading, spacing: 6) {
-                        deviceInfoRow("Model", machineName())
-                        deviceInfoRow("iOS Version", SupportInfo.deviceVersion)
-                        deviceInfoRow("Build", SupportInfo.deviceBuild)
-                        deviceInfoRow("Support", SupportInfo.isSupported ? "Supported" : "Unsupported")
+                        Divider()
+                            .padding(.leading, 14)
+
+                        // Compact device details, from the same data
+                        // the support gate already computes.
+                        VStack(alignment: .leading, spacing: 6) {
+                            deviceInfoRow("Model", machineName())
+                            deviceInfoRow("iOS Version", SupportInfo.deviceVersion)
+                            deviceInfoRow("Build", SupportInfo.deviceBuild)
+                            deviceInfoRow("Support", SupportInfo.isSupported ? "Supported" : "Unsupported")
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
                     }
-                    .padding(.vertical, 2)
                 }
 
                 // Master switch for the Tweaks feature.
-                Section {
+                WTSectionCard {
                     VStack(alignment: .leading, spacing: 6) {
                         Toggle("Start Tweaks Feature", isOn: $tweaksEnabled)
                             .font(.subheadline.weight(.semibold))
@@ -80,65 +92,91 @@ struct SandboxView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                 }
 
                 // Utility menus — each opens its own page.
-                Section {
-                    NavigationLink {
-                        SandboxEscapePage(path: $path, sandboxHandle: $sandboxHandle)
-                    } label: {
-                        Label("Sandbox Escape", systemImage: "lock.open")
+                WTSectionCard(header: "Utilities") {
+                    VStack(alignment: .leading, spacing: 0) {
+                        utilityRow("Sandbox Escape", systemImage: "lock.open") {
+                            SandboxEscapePage(path: $path, sandboxHandle: $sandboxHandle)
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Path Enumeration", systemImage: "list.bullet.indent") {
+                            PathEnumerationPage(path: path)
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("App Group", systemImage: "person.2") {
+                            AppGroupPage(groupText: $groupText)
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("App Data", systemImage: "folder") {
+                            AppDataView()
+                        }
                     }
-
-                    NavigationLink {
-                        PathEnumerationPage(path: path)
-                    } label: {
-                        Label("Path Enumeration", systemImage: "list.bullet.indent")
-                    }
-
-                    NavigationLink {
-                        AppGroupPage(groupText: $groupText)
-                    } label: {
-                        Label("App Group", systemImage: "person.2")
-                    }
-
-                    NavigationLink {
-                        AppDataView()
-                    } label: {
-                        Label("App Data", systemImage: "folder")
-                    }
-                } header: {
-                    Text("Utilities")
                 }
 
-                Section {
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            Text(console.output)
-                                .font(.system(.footnote, design: .monospaced))
-                                .textSelection(.enabled)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .id("bottom")
-                        }
-                        .frame(height: 240)
-                        .onChange(of: console.output) { _, _ in
-                            withAnimation {
-                                proxy.scrollTo("bottom", anchor: .bottom)
+                WTSectionCard(header: "Log") {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                Text(console.output)
+                                    .font(.system(.footnote, design: .monospaced))
+                                    .textSelection(.enabled)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .id("bottom")
+                            }
+                            .frame(height: 240)
+                            .onChange(of: console.output) { _, _ in
+                                withAnimation {
+                                    proxy.scrollTo("bottom", anchor: .bottom)
+                                }
                             }
                         }
-                    }
+                        .padding(.horizontal, 14)
+                        .padding(.top, 10)
+                        .padding(.bottom, 6)
 
-                    Button("Clear") {
-                        console.output = ""
+                        Divider()
+                            .padding(.leading, 14)
+
+                        Button {
+                            console.output = ""
+                        } label: {
+                            Text("Clear")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .contentShape(Rectangle())
+                        }
                     }
-                } header: {
-                    Text("Log")
                 }
             }
             .navigationTitle("Sandbox")
         }
+    }
+
+    /// One Sandbox home utility row: the row's label on the
+    /// left, a chevron on the right, the whole row tappable.
+    private func utilityRow<Destination: View>(_ title: String, systemImage: String, @ViewBuilder destination: () -> Destination) -> some View {
+        NavigationLink {
+            destination()
+        } label: {
+            HStack(spacing: 10) {
+                Label(title, systemImage: systemImage)
+                    .font(.subheadline)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     /// One label/value line of the identity card's device-details
@@ -168,40 +206,57 @@ struct SandboxEscapePage: View {
     }
 
     var body: some View {
-        Form {
-            Section {
+        WTGlassPage {
+            WTSectionCard(header: "Target Path") {
                 TextField("Target", text: $path)
                     .disabled(isConsumed)
                     .disableAutocorrection(true)
                     .textInputAutocapitalization(.never)
-            } header: {
-                Text("Target Path")
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
             }
 
-            Section {
-                Button("Consume Sandbox Extension") {
-                    sandboxHandle = consumeExtension(path)
-                }
-                .disabled(path.isEmpty || isConsumed)
-
-                Button("Release Sandbox Extension") {
-                    if let handle = sandboxHandle {
-                        releaseExtension(handle)
+            WTSectionCard(header: "Escape") {
+                VStack(alignment: .leading, spacing: 0) {
+                    Button {
+                        sandboxHandle = consumeExtension(path)
+                    } label: {
+                        Text("Consume Sandbox Extension")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
                     }
-                    sandboxHandle = nil
+                    .disabled(path.isEmpty || isConsumed)
+
+                    Divider()
+                        .padding(.leading, 14)
+
+                    Button {
+                        if let handle = sandboxHandle {
+                            releaseExtension(handle)
+                        }
+                        sandboxHandle = nil
+                    } label: {
+                        Text("Release Sandbox Extension")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                    }
+                    .disabled(!isConsumed)
                 }
-                .disabled(!isConsumed)
-            } header: {
-                Text("Escape")
             }
 
-            Section {
+            WTSectionCard(header: "Utilities") {
                 ShareLink(item: URL(fileURLWithPath: path)) {
                     Label("Share Contents", systemImage: "square.and.arrow.up")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .contentShape(Rectangle())
                 }
                 .disabled(path.isEmpty)
-            } header: {
-                Text("Utilities")
             }
         }
         .navigationTitle("Sandbox Escape")
@@ -217,21 +272,37 @@ struct PathEnumerationPage: View {
     let path: String
 
     var body: some View {
-        Form {
-            Section {
-                // Reliable, but insanely slow
-                Button("Get Paths (pathleak)") {
-                    leakPaths(path)
+        WTGlassPage {
+            WTSectionCard(header: "Enumeration") {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Reliable, but insanely slow
+                    Button {
+                        leakPaths(path)
+                    } label: {
+                        Text("Get Paths (pathleak)")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                    }
+
+                    Divider()
+                        .padding(.leading, 14)
+
+                    // Only works on directories that can get a parent
+                    // directory extension (AppGroup and System on 27.x)
+                    Button {
+                        listPaths(path)
+                    } label: {
+                        Text("Get Paths (parentdir)")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                    }
                 }
-                // Only works on directories that can get a parent
-                // directory extension (AppGroup and System on 27.x)
-                Button("Get Paths (parentdir)") {
-                    listPaths(path)
-                }
-            } header: {
-                Text("Enumeration")
+                .disabled(path.isEmpty)
             }
-            .disabled(path.isEmpty)
         }
         .navigationTitle("Path Enumeration")
         .navigationBarTitleDisplayMode(.inline)
@@ -247,25 +318,43 @@ struct AppGroupPage: View {
     @Binding var groupText: String
 
     var body: some View {
-        Form {
-            Section {
-                TextField("App Group ID", text: $groupText)
-                    .disableAutocorrection(true)
-                    .textInputAutocapitalization(.never)
+        WTGlassPage {
+            WTSectionCard(header: "App Group", footer: "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.") {
+                VStack(alignment: .leading, spacing: 0) {
+                    TextField("App Group ID", text: $groupText)
+                        .disableAutocorrection(true)
+                        .textInputAutocapitalization(.never)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
 
-                Button("Save App Group ID") {
-                    AppGroupResolver.configuredGroup = groupText
-                    print("[AppGroup] configured group set to: \(groupText)")
-                    AppGroupResolver.logDiagnostics()
-                }
+                    Divider()
+                        .padding(.leading, 14)
 
-                Button("App Group Diagnostics") {
-                    AppGroupResolver.logDiagnostics()
+                    Button {
+                        AppGroupResolver.configuredGroup = groupText
+                        print("[AppGroup] configured group set to: \(groupText)")
+                        AppGroupResolver.logDiagnostics()
+                    } label: {
+                        Text("Save App Group ID")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                    }
+
+                    Divider()
+                        .padding(.leading, 14)
+
+                    Button {
+                        AppGroupResolver.logDiagnostics()
+                    } label: {
+                        Text("App Group Diagnostics")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                    }
                 }
-            } header: {
-                Text("App Group")
-            } footer: {
-                Text("Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.")
             }
         }
         .navigationTitle("App Group")

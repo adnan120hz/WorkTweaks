@@ -112,9 +112,10 @@ struct TweaksView: View {
     @State private var infoMessage: String = ""
     @State private var showRevertConfirm = false
     @State private var selectedSection: TweakSection = .all
-    /// Search (toolbar pill): while active, the field bar sits
-    /// above the columns; while the query is non-empty, the
-    /// left column lists matches from the whole catalog.
+    /// Search (toolbar pill): the pill presents a dedicated
+    /// full-screen search cover with its own header and results
+    /// list, so the columns layout underneath is never
+    /// remeasured or overlapped while searching.
     @State private var searchActive = false
     @State private var searchText = ""
     @FocusState private var searchFocused: Bool
@@ -130,13 +131,7 @@ struct TweaksView: View {
         NavigationStack {
             Group {
                 if tweaksEnabled {
-                    VStack(spacing: 0) {
-                        if searchActive {
-                            searchBar
-                        }
-                        columnsView
-                    }
-                    .background(Color(.systemGroupedBackground))
+                    columnsView
                 } else {
                     lockedView
                 }
@@ -147,11 +142,7 @@ struct TweaksView: View {
                 if tweaksEnabled {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
-                            if searchActive {
-                                closeSearch()
-                            } else {
-                                searchActive = true
-                            }
+                            searchActive = true
                         } label: {
                             Label("Search", systemImage: "magnifyingglass")
                         }
@@ -174,6 +165,9 @@ struct TweaksView: View {
                     }
                     .accessibilityLabel("License & Credits")
                 }
+            }
+            .fullScreenCover(isPresented: $searchActive) {
+                searchCover
             }
             .alert(infoTitle ?? "", isPresented: showInfo) {
                 Button("OK") { infoTitle = nil }
@@ -266,9 +260,7 @@ struct TweaksView: View {
                     // The Apply/Revert section's content is the
                     // action cards; every other section shows its
                     // tweak cards.
-                    if isSearching {
-                        searchResultCards
-                    } else if selectedSection == .applyRevert {
+                    if selectedSection == .applyRevert {
                         actionsBlock
                     } else {
                         sectionCards
@@ -301,44 +293,67 @@ struct TweaksView: View {
         .background(Color(.systemGroupedBackground))
     }
 
-    // MARK: Search (toolbar pill + field bar)
+    // MARK: Search (dedicated full-screen cover)
 
-    /// The search field bar, shown above the columns while
-    /// search is active. A glass capsule: magnifier, the text
-    /// field, a clear button while there is text, and a close
-    /// button that leaves search entirely.
-    private var searchBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-            TextField("Search tweaks", text: $searchText)
-                .autocorrectionDisabled()
-                .focused($searchFocused)
-            if !searchText.isEmpty {
-                Button {
-                    searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
+    /// The search presentation: a full-screen cover with its
+    /// own header — a glass capsule field (magnifier, the text
+    /// field, a clear button while there is text) and a Cancel
+    /// button — over a single-column, full-width scrolling list
+    /// of results. Search is fully isolated from the columns
+    /// layout: the Tweaks page underneath (nav title, cards,
+    /// Sections card) is never remeasured or overlapped while
+    /// searching, and closing returns to it untouched, with the
+    /// selected section preserved.
+    private var searchCover: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
+                    TextField("Search tweaks", text: $searchText)
+                        .autocorrectionDisabled()
+                        .focused($searchFocused)
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Clear search")
+                    }
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Clear search")
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .wtGlassCard(cornerRadius: 999)
+
+                Button("Cancel") {
+                    closeSearch()
+                }
             }
-            Button {
-                closeSearch()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    searchResultCards
+                }
+                .padding(16)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Close search")
+            .scrollIndicators(.hidden)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .wtGlassCard(cornerRadius: 999)
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
+        .background(Color(.systemGroupedBackground))
         .onAppear { searchFocused = true }
+        // The info alert is attached here as well, so a result
+        // card's info button presents over the cover (the base
+        // page's own alert sits underneath while searching).
+        .alert(infoTitle ?? "", isPresented: showInfo) {
+            Button("OK") { infoTitle = nil }
+        } message: {
+            Text(infoMessage)
+        }
     }
 
     private func closeSearch() {
@@ -347,20 +362,16 @@ struct TweaksView: View {
         searchFocused = false
     }
 
-    /// True while a query is entered: the left column shows
-    /// catalog-wide matches instead of the selected section.
-    private var isSearching: Bool {
-        !searchText.isEmpty
-    }
-
     /// Tweaks whose names match the query, across the whole
     /// catalog regardless of the selected section — with the
-    /// same per-device conditionals as the section lists.
+    /// same per-device conditionals as the section lists. An
+    /// empty query matches everything: the cover opens on the
+    /// full catalog.
     private var searchResults: [GestaltTweak] {
         TweakCatalog.all.filter { tweak in
             if tweak.id == "tap_to_wake" && !hasHomeButton() { return false }
             if tweak.id == "stage_manager_support" && UIDevice.current.userInterfaceIdiom != .pad { return false }
-            return tweak.title.localizedCaseInsensitiveContains(searchText)
+            return searchText.isEmpty || tweak.title.localizedCaseInsensitiveContains(searchText)
         }
     }
 

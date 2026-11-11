@@ -9,6 +9,9 @@ import SwiftUI
 // reinstalled. Content: app identity with the real app icon, the
 // install-method requirement, the developer, a credits summary,
 // compatibility, and buttons into Tutorials and License & Credits.
+//
+// Since v3.8 the page renders as Liquid Glass cards (WTGlassPage),
+// like every other page — the content and buttons are unchanged.
 
 struct WelcomeView: View {
     /// Called when the user taps "Get Started" — the parent marks
@@ -24,40 +27,34 @@ struct WelcomeView: View {
     }
 
     var body: some View {
-        List {
-            Section {
-                header
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-            }
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
+        WTGlassPage {
+            header
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
 
             installSection
             developerSection
             creditsSection
             compatibilitySection
 
-            Section {
+            WTSectionCard {
                 Button {
                     showLicense = true
                 } label: {
                     Label("View Full License & Credits", systemImage: "doc.text")
                         .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .contentShape(Rectangle())
                 }
             }
 
-            Section {
-                Text(versionText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            }
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
+            Text(versionText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
-        .listStyle(.insetGrouped)
-        .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 Button {
@@ -159,7 +156,7 @@ struct WelcomeView: View {
     // MARK: Sections
 
     private var installSection: some View {
-        Section {
+        WTSectionCard(header: "Installation") {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Please Install It the Right Way")
                     .font(.subheadline.weight(.semibold))
@@ -171,71 +168,77 @@ struct WelcomeView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.vertical, 4)
-        } header: {
-            Text("Installation")
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
     }
 
     private var developerSection: some View {
-        Section {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(Color.accentColor)
-                        .frame(width: 46, height: 46)
-                    Text("A")
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(.white)
+        WTSectionCard(header: "Developer") {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.accentColor)
+                            .frame(width: 46, height: 46)
+                        Text("A")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.white)
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Adnan")
+                            .font(.headline)
+                        Text("Developer")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
                 }
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Adnan")
-                        .font(.headline)
-                    Text("Developer")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-            .padding(.vertical, 2)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
 
-            HStack(spacing: 10) {
-                Link(destination: URL(string: "https://www.tiktok.com/@adnan.120hz")!) {
-                    Label("TikTok", systemImage: "music.note")
-                        .font(.footnote.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
+                Divider()
+                    .padding(.leading, 14)
+
+                HStack(spacing: 10) {
+                    Link(destination: URL(string: "https://www.tiktok.com/@adnan.120hz")!) {
+                        Label("TikTok", systemImage: "music.note")
+                            .font(.footnote.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.bordered)
+                    Link(destination: URL(string: "https://github.com/adnan120hz")!) {
+                        Label("GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
-                Link(destination: URL(string: "https://github.com/adnan120hz")!) {
-                    Label("GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
-                }
-                .buttonStyle(.bordered)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
             }
-            .padding(.vertical, 2)
-        } header: {
-            Text("Developer")
         }
     }
 
     private var creditsSection: some View {
-        Section {
-            creditRow(icon: "terminal", name: "ForceQuit OS", role: "worse_query — the core system (sandbox escape)")
-            creditRow(icon: "slider.horizontal.3", name: "mond — rooootdev", role: "the CacheExtra key knowledge behind the tweak catalog")
-            creditRow(icon: "cube", name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode)")
-            creditRow(icon: "arrow.counterclockwise", name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
-        } header: {
-            Text("Credits & License")
-        } footer: {
-            Text("This app is free software under the GNU AGPL v3 license, following the licenses of the projects above.")
+        WTSectionCard(header: "Credits & License", footer: "This app is free software under the GNU AGPL v3 license, following the licenses of the projects above.") {
+            VStack(alignment: .leading, spacing: 0) {
+                creditRow(icon: "terminal", name: "ForceQuit OS", role: "worse_query — the core system (sandbox escape)")
+                Divider().padding(.leading, 14)
+                creditRow(icon: "slider.horizontal.3", name: "mond — rooootdev", role: "the CacheExtra key knowledge behind the tweak catalog")
+                Divider().padding(.leading, 14)
+                creditRow(icon: "cube", name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode)")
+                Divider().padding(.leading, 14)
+                creditRow(icon: "arrow.counterclockwise", name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
+            }
+            .padding(.vertical, 4)
         }
     }
 
     private var compatibilitySection: some View {
-        Section {
+        WTSectionCard(header: "Compatibility") {
             VStack(alignment: .leading, spacing: 8) {
                 Text("iOS 26.7.2 (23H128) — iOS 27.3 Beta 1 (24C5037i)")
                     .font(.subheadline.weight(.semibold))
@@ -244,9 +247,8 @@ struct WelcomeView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.vertical, 4)
-        } header: {
-            Text("Compatibility")
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
     }
 
@@ -263,6 +265,7 @@ struct WelcomeView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
     }
 }

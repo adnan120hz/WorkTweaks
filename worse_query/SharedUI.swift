@@ -42,6 +42,69 @@ extension View {
     }
 }
 
+// MARK: - Glass page scaffolding
+//
+// Since v3.8 every page shares the Tweaks page's construction:
+// a ScrollView holding a vertical stack of free-standing glass
+// cards over the grouped background, instead of List/Form
+// section containers. A former List/Form section maps to one
+// WTSectionCard: the section header becomes a small caption
+// above the card (the "Sections" / "Menus" label style), the
+// rows live inside the card, and the section footer becomes a
+// caption below it.
+
+/// The scrolling page shell: a stack of section cards over the
+/// system grouped background, with the Tweaks page's margins.
+struct WTGlassPage<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                content()
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .background(Color(.systemGroupedBackground))
+    }
+}
+
+/// One page section as a glass card, with the section's header
+/// as a caption above it and its footer as a caption below it.
+/// Rows are padded inside the card; multi-row cards separate
+/// their rows with Divider(), like the lists they replace.
+struct WTSectionCard<Content: View>: View {
+    var header: String? = nil
+    var footer: String? = nil
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let header {
+                Text(header)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+            }
+
+            VStack(alignment: .leading, spacing: 0) {
+                content()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .wtGlassCard(cornerRadius: 16)
+
+            if let footer {
+                Text(footer)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
 // MARK: - Manual restart guide
 //
 // Choosing "Restart Device" anywhere in the app (after Apply,
