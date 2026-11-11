@@ -764,10 +764,10 @@ final class GestaltManager: ObservableObject {
     /// not enough), so the presenting view shows the Restart Required
     /// dialog instead of auto-respringing.
     @Published var showRestartRequired = false
-    /// Honest restart outcome popup (command sent / failed + manual guide).
+    /// Manual restart guide popup (title + text), presented
+    /// when the user picks "Restart Device".
     @Published var restartAlertTitle: String?
     @Published var restartAlertMessage: String = ""
-    private var restartCheckItem: DispatchWorkItem?
 
     // Device Artwork state (mond globals: og_st, selected_st, product_type,
     // enable_device_name, mg_device_name)
@@ -1149,55 +1149,18 @@ final class GestaltManager: ObservableObject {
         }
     }
 
-    // MARK: Restart attempt (post-Apply choice)
+    // MARK: Manual restart guide (post-Apply choice)
 
-    /// Attempt a full device restart via FrontBoard's system service.
-    ///
-    /// Honest by design: stock iOS gives apps no public restart API, so
-    /// this only fires when the private service actually responds to a
-    /// restart selector. Either way the user gets a popup — "command
-    /// sent" plus a 10-second honesty check (if the app is still alive
-    /// then, the restart did NOT happen), or an immediate failure popup.
-    /// Both failure paths include the manual restart steps.
-    func attemptRestart() {
-        _ = dlopen("/System/Library/PrivateFrameworks/FrontBoardServices.framework/FrontBoardServices", RTLD_NOW)
-
-        var invoked = false
-        if let serviceClass = NSClassFromString("FBSSystemService"),
-           let sharedMethod = class_getClassMethod(serviceClass, NSSelectorFromString("sharedService")) {
-            typealias SharedFactory = @convention(c) (AnyObject, Selector) -> AnyObject
-            let factory = unsafeBitCast(method_getImplementation(sharedMethod), to: SharedFactory.self)
-            let service = factory(serviceClass, NSSelectorFromString("sharedService"))
-            for name in ["reboot", "restart", "shutdown"] {
-                let sel = NSSelectorFromString(name)
-                if service.responds(to: sel) {
-                    _ = service.perform(sel)
-                    invoked = true
-                    print("(restart) invoked FBSSystemService.\(name)")
-                    break
-                }
-            }
-        }
-
-        let manualSteps = "Restart manually: press Volume Up, then Volume Down, then hold the Side button until the Apple logo appears — or go to Settings > General > Shut Down, slide to power off, then turn the device back on."
-
-        if invoked {
-            restartAlertTitle = "Restart Command Sent"
-            restartAlertMessage = "Your device should restart within a few seconds. If you're still seeing this after 10 seconds, the restart did not actually happen.\n\n\(manualSteps)"
-            restartCheckItem?.cancel()
-            let item = DispatchWorkItem { [weak self] in
-                guard let self, self.restartAlertTitle != nil else { return }
-                self.restartAlertTitle = "Restart Failed"
-                self.restartAlertMessage = "The device did not restart, so the automatic restart failed — iOS does not give apps a reliable way to restart the device.\n\n\(manualSteps)"
-                print("(restart) still alive after 10s — restart did not happen")
-            }
-            restartCheckItem = item
-            DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: item)
-        } else {
-            restartAlertTitle = "Restart Failed"
-            restartAlertMessage = "Automatic restart isn't available on this device — iOS does not give apps a way to restart the device directly.\n\n\(manualSteps)\n\nNote: some tweaks (especially Apple Intelligence) only take effect after a full restart, not a respring."
-            print("(restart) no restart selector available — honest failure")
-        }
+    /// Present the manual restart guide. The app never restarts
+    /// the device itself — iOS gives apps no way to do that —
+    /// so choosing "Restart Device" presents the shared guide
+    /// (ManualRestartGuide) and the user restarts by hand. The
+    /// presenting views show restartAlertTitle /
+    /// restartAlertMessage in an alert.
+    func presentManualRestartGuide() {
+        restartAlertTitle = ManualRestartGuide.title
+        restartAlertMessage = ManualRestartGuide.message
+        print("(restart) manual restart guide shown.")
     }
 
     // MARK: Restart required (Revert / Restore)
@@ -1205,7 +1168,7 @@ final class GestaltManager: ObservableObject {
     /// Revert and Backup restores used to auto-respring; per the user
     /// they now require a full restart. This just raises the flag — the
     /// Tweaks / Backup views present the Restart Required dialog, whose
-    /// Restart Device button runs attemptRestart().
+    /// Restart Device button presents the manual restart guide.
     private func requireRestart() {
         print("[WorkTweaks] Changes saved - a full restart is required.")
         showRestartRequired = true

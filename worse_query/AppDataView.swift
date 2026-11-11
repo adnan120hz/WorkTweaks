@@ -16,24 +16,6 @@ struct AppDataView: View {
     var body: some View {
         Form {
             Section {
-                NavigationLink {
-                    FootnoteView()
-                } label: {
-                    HStack(spacing: 10) {
-                        RowIcon(systemImage: "text.bubble")
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Lock Screen Footnote")
-                                .font(.subheadline.weight(.semibold))
-                            Text("Custom text shown at the bottom of the Lock Screen.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding(.vertical, 2)
-                }
-            }
-
-            Section {
                 if manager.isScanning {
                     HStack(spacing: 10) {
                         ProgressView()

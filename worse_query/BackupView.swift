@@ -198,7 +198,7 @@ struct BackupDetailView: View {
             Text("The current MobileGestalt will be entirely replaced with this \(snapshot.kind.label) backup.")
         }
         .confirmationDialog("Restart Required", isPresented: $manager.showRestartRequired, titleVisibility: .visible) {
-            Button("Restart Device") { manager.attemptRestart() }
+            Button("Restart Device") { manager.presentManualRestartGuide() }
             Button("Later", role: .cancel) { }
         } message: {
             Text("Restore changes only take effect after a full device restart — a respring is not enough. Choosing Later just postpones it; the changes stay pending until you restart.")

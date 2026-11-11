@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - Lock Screen Footnote editor
 //
-// One editor, reached from two places: the top of the App
-// Data page and the Tweaks tab's Add feature section. All
+// One editor, reached from the Tweaks tab's Add feature
+// section. All
 // work goes through FootnoteManager (directory grant,
 // read-modify-write in place, verify by re-reading). When the
 // directory grant or the read fails, the page shows an honest
@@ -13,7 +13,7 @@ struct FootnoteView: View {
     @StateObject private var manager = FootnoteManager()
     @State private var text = ""
     @State private var showRestartChoice = false
-    @State private var showRestartFailed = false
+    @State private var showManualRestartGuide = false
     @State private var writeFailed = false
 
     var body: some View {
@@ -85,18 +85,16 @@ struct FootnoteView: View {
         .confirmationDialog("Footnote Updated", isPresented: $showRestartChoice, titleVisibility: .visible) {
             Button("Respring") { RespringCenter.shared.trigger() }
             Button("Restart Device") {
-                if !FootnoteManager.requestRestart() {
-                    showRestartFailed = true
-                }
+                showManualRestartGuide = true
             }
             Button("Later", role: .cancel) { }
         } message: {
             Text("SpringBoard reads the footnote when it starts — respring or restart to see it on the Lock Screen.")
         }
-        .alert("Restart Failed", isPresented: $showRestartFailed) {
+        .alert(ManualRestartGuide.title, isPresented: $showManualRestartGuide) {
             Button("OK") { }
         } message: {
-            Text("Automatic restart isn't available on this device.\n\nRestart manually: press Volume Up, then Volume Down, then hold the Side button until the Apple logo appears — or go to Settings > General > Shut Down, slide to power off, then turn the device back on.")
+            Text(ManualRestartGuide.message)
         }
         .alert("Couldn't Save", isPresented: $writeFailed) {
             Button("OK") { }

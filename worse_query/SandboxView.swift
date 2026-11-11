@@ -20,6 +20,13 @@ struct SandboxView: View {
     /// Tweaks tab gate via the same AppStorage key.
     @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
 
+    /// This build's version as recorded in the bundle
+    /// (CFBundleShortVersionString), e.g. "3.7" — the same
+    /// source the Tweaks tab's mini identity card reads.
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -33,8 +40,13 @@ struct SandboxView: View {
                             .frame(width: 52, height: 52)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("WorkTweaks")
-                                .font(.headline)
+                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                Text("WorkTweaks")
+                                    .font(.headline)
+                                Text("v\(appVersion)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                             HStack(spacing: 5) {
                                 Image(systemName: SupportInfo.isSupported ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                                     .foregroundStyle(SupportInfo.isSupported ? Color.accentColor : .orange)

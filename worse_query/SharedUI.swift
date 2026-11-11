@@ -12,6 +12,50 @@ import SwiftUI
 /// through this view, so they all share one size, one weight, and
 /// one color. Tweaks keep their own unique symbol (see
 /// TweakCatalog.presentation) — only the rendering is uniform.
+// MARK: - Liquid Glass card surface
+//
+// Every card in the app renders on the iOS 26 Liquid Glass
+// surface — the same material as the floating tab bar — via
+// this one modifier, so the look stays identical everywhere.
+// The REGULAR glass variant only: no added transparency and
+// no tint, so cards stay essentially solid and text keeps its
+// full contrast. (The Log tab is excluded on purpose: it
+// keeps its plain console appearance.)
+
+struct WTGlassCard: ViewModifier {
+    var cornerRadius: CGFloat = 16
+
+    func body(content: Content) -> some View {
+        content.glassEffect(
+            .regular,
+            in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        )
+    }
+}
+
+extension View {
+    /// Applies the shared Liquid Glass card surface with the
+    /// given corner radius (the app's cards use 14 or 16; a
+    /// radius of 999 renders a capsule).
+    func wtGlassCard(cornerRadius: CGFloat = 16) -> some View {
+        modifier(WTGlassCard(cornerRadius: cornerRadius))
+    }
+}
+
+// MARK: - Manual restart guide
+//
+// Choosing "Restart Device" anywhere in the app (after Apply,
+// after a Revert or Backup restore, after a footnote write)
+// presents this guide: the app never restarts the device
+// itself — iOS gives apps no way to do that — so the user
+// restarts by hand. One shared copy, so every flow shows
+// identical text.
+
+enum ManualRestartGuide {
+    static let title = "Restart Manually"
+    static let message = "Restart manually: press Volume Up, then Volume Down, then hold the Side button until the Apple logo appears — or go to Settings > General > Shut Down, slide to power off, then turn the device back on."
+}
+
 struct RowIcon: View {
     let systemImage: String
     var color: Color = .accentColor

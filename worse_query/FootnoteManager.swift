@@ -170,32 +170,4 @@ final class FootnoteManager: ObservableObject {
         return true
     }
 
-    // MARK: Restart
-
-    /// The same restart mechanism the gestalt Apply uses
-    /// (FBSSystemService via FrontBoardServices). Returns true
-    /// when a restart selector was actually invoked; the
-    /// caller shows the manual steps when it returns false.
-    static func requestRestart() -> Bool {
-        _ = dlopen("/System/Library/PrivateFrameworks/FrontBoardServices.framework/FrontBoardServices", RTLD_NOW)
-
-        guard let serviceClass = NSClassFromString("FBSSystemService"),
-              let sharedMethod = class_getClassMethod(serviceClass, NSSelectorFromString("sharedService")) else {
-            print("[Footnote] restart unavailable — FBSSystemService not found.")
-            return false
-        }
-        typealias SharedFactory = @convention(c) (AnyObject, Selector) -> AnyObject
-        let factory = unsafeBitCast(method_getImplementation(sharedMethod), to: SharedFactory.self)
-        let service = factory(serviceClass, NSSelectorFromString("sharedService"))
-        for name in ["reboot", "restart", "shutdown"] {
-            let sel = NSSelectorFromString(name)
-            if service.responds(to: sel) {
-                _ = service.perform(sel)
-                print("[Footnote] invoked FBSSystemService.\(name)")
-                return true
-            }
-        }
-        print("[Footnote] restart unavailable — no restart selector responded.")
-        return false
-    }
 }

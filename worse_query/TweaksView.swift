@@ -112,6 +112,12 @@ struct TweaksView: View {
     @State private var infoMessage: String = ""
     @State private var showRevertConfirm = false
     @State private var selectedSection: TweakSection = .all
+    /// Search (toolbar pill): while active, the field bar sits
+    /// above the columns; while the query is non-empty, the
+    /// left column lists matches from the whole catalog.
+    @State private var searchActive = false
+    @State private var searchText = ""
+    @FocusState private var searchFocused: Bool
 
     private var showInfo: Binding<Bool> {
         Binding(
@@ -124,7 +130,13 @@ struct TweaksView: View {
         NavigationStack {
             Group {
                 if tweaksEnabled {
-                    columnsView
+                    VStack(spacing: 0) {
+                        if searchActive {
+                            searchBar
+                        }
+                        columnsView
+                    }
+                    .background(Color(.systemGroupedBackground))
                 } else {
                     lockedView
                 }
@@ -132,6 +144,20 @@ struct TweaksView: View {
             .navigationTitle("WorkTweaks")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                if tweaksEnabled {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            if searchActive {
+                                closeSearch()
+                            } else {
+                                searchActive = true
+                            }
+                        } label: {
+                            Label("Search", systemImage: "magnifyingglass")
+                        }
+                        .accessibilityLabel("Search tweaks")
+                    }
+                }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button { manager.load() } label: { Image(systemName: "arrow.clockwise") }
                         .disabled(manager.isLoading)
@@ -164,13 +190,13 @@ struct TweaksView: View {
             }
             .confirmationDialog("Tweaks Applied", isPresented: $manager.showPostApplyChoice, titleVisibility: .visible) {
                 Button("Respring") { RespringCenter.shared.trigger() }
-                Button("Restart Device") { manager.attemptRestart() }
+                Button("Restart Device") { manager.presentManualRestartGuide() }
                 Button("Later", role: .cancel) { }
             } message: {
                 Text("Some tweaks — especially Apple Intelligence — only take effect after a full restart, not a respring.")
             }
             .confirmationDialog("Restart Required", isPresented: $manager.showRestartRequired, titleVisibility: .visible) {
-                Button("Restart Device") { manager.attemptRestart() }
+                Button("Restart Device") { manager.presentManualRestartGuide() }
                 Button("Later", role: .cancel) { }
             } message: {
                 Text("Revert and restore changes only take effect after a full device restart — a respring is not enough. Choosing Later just postpones it; the changes stay pending until you restart.")
@@ -240,7 +266,9 @@ struct TweaksView: View {
                     // The Apply/Revert section's content is the
                     // action cards; every other section shows its
                     // tweak cards.
-                    if selectedSection == .applyRevert {
+                    if isSearching {
+                        searchResultCards
+                    } else if selectedSection == .applyRevert {
                         actionsBlock
                     } else {
                         sectionCards
@@ -271,6 +299,96 @@ struct TweaksView: View {
         }
         .padding(.horizontal, 16)
         .background(Color(.systemGroupedBackground))
+    }
+
+    // MARK: Search (toolbar pill + field bar)
+
+    /// The search field bar, shown above the columns while
+    /// search is active. A glass capsule: magnifier, the text
+    /// field, a clear button while there is text, and a close
+    /// button that leaves search entirely.
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField("Search tweaks", text: $searchText)
+                .autocorrectionDisabled()
+                .focused($searchFocused)
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+            Button {
+                closeSearch()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close search")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .wtGlassCard(cornerRadius: 999)
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .onAppear { searchFocused = true }
+    }
+
+    private func closeSearch() {
+        searchText = ""
+        searchActive = false
+        searchFocused = false
+    }
+
+    /// True while a query is entered: the left column shows
+    /// catalog-wide matches instead of the selected section.
+    private var isSearching: Bool {
+        !searchText.isEmpty
+    }
+
+    /// Tweaks whose names match the query, across the whole
+    /// catalog regardless of the selected section — with the
+    /// same per-device conditionals as the section lists.
+    private var searchResults: [GestaltTweak] {
+        TweakCatalog.all.filter { tweak in
+            if tweak.id == "tap_to_wake" && !hasHomeButton() { return false }
+            if tweak.id == "stage_manager_support" && UIDevice.current.userInterfaceIdiom != .pad { return false }
+            return tweak.title.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    @ViewBuilder
+    private var searchResultCards: some View {
+        if searchResults.isEmpty {
+            Text("No tweaks match \"\(searchText)\".")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 4)
+        } else {
+            ForEach(searchResults) { tweak in
+                TweakCard(manager: manager, tweak: tweak, onInfo: showInfo(for:))
+                    .disabled(tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
+
+                // The follower cards behave exactly as in the
+                // section views: the subtype picker under
+                // Dynamic Island, the spoofing picker under
+                // Apple Intelligence.
+                if tweak.id == "enable_dynamic_island_capability" {
+                    subtypeCard
+                }
+                if tweak.id == "apple_intelligence" {
+                    spoofingCard
+                }
+            }
+        }
     }
 
     // MARK: Sections card (right column, always visible)
@@ -511,8 +629,8 @@ struct TweaksView: View {
     }
 
     /// Lock Screen Footnote: a standalone feature card (not a
-    /// catalog tweak) trailing the Add feature section. It
-    /// pushes the same editor as the App Data page's entry.
+    /// catalog tweak) trailing the Add feature section — the
+    /// footnote editor's only entry point.
     private var footnoteCard: some View {
         NavigationLink {
             FootnoteView()
