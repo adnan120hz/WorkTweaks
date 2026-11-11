@@ -27,7 +27,7 @@ enum TweakSection: String, CaseIterable, Identifiable {
         case .all: return "All"
         case .display: return "Display"
         case .device: return "Device"
-        case .system: return "System"
+        case .system: return "Apple Intelligence"
         case .ipad: return "iPad"
         case .gestalt: return "Gestalt"
         }
