@@ -5,7 +5,9 @@ import UIKit
 //
 // The tab is a two-column page: a scrolling column of tweak cards
 // on the left and a fixed "Sections" card on the right (All /
-// Display / Device / System / iPad / Gestalt / Info). Toggles
+// Display / Device / System / iPad / Gestalt) with an Apply
+// button as its bottom row; the card is vertically centered in
+// the right column. Toggles
 // mutate the in-memory MobileGestalt dictionary immediately;
 // "Apply Tweaks" persists it. Every tweak keeps its own SF Symbol
 // (see TweakCatalog.presentation), rendered uniformly as a plain
@@ -14,9 +16,9 @@ import UIKit
 // (wt.tweaksFeatureEnabled).
 
 /// The sections of the Tweaks tab's right-hand Sections card.
-/// All = the full catalog; Info = device / support / status page.
+/// All = the full catalog.
 enum TweakSection: String, CaseIterable, Identifiable {
-    case all, display, device, system, ipad, gestalt, info
+    case all, display, device, system, ipad, gestalt
 
     var id: String { rawValue }
 
@@ -28,7 +30,6 @@ enum TweakSection: String, CaseIterable, Identifiable {
         case .system: return "System"
         case .ipad: return "iPad"
         case .gestalt: return "Gestalt"
-        case .info: return "Info"
         }
     }
 
@@ -40,7 +41,6 @@ enum TweakSection: String, CaseIterable, Identifiable {
         case .system: return "gearshape"
         case .ipad: return "ipad"
         case .gestalt: return "slider.horizontal.3"
-        case .info: return "info.circle"
         }
     }
 }
@@ -229,21 +229,28 @@ struct TweaksView: View {
                         warningCard
                     }
 
-                    if selectedSection == .info {
-                        infoCards
-                    } else {
-                        sectionCards
-                    }
+                    sectionCards
 
                     actionsBlock
                     footerLinks
                 }
                 .padding(.vertical, 16)
             }
+            .scrollIndicators(.hidden)
 
-            sectionsCard
-                .frame(width: 150)
-                .padding(.vertical, 16)
+            // The Sections card is vertically centered in the
+            // right column: the column spans the full height of
+            // the row (driven by the ScrollView beside it), and
+            // spacers above and below hold the card in the middle
+            // while the left column scrolls.
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                sectionsCard
+                Spacer(minLength: 0)
+            }
+            .frame(width: 150)
+            .frame(maxHeight: .infinity)
+            .padding(.vertical, 16)
         }
         .padding(.horizontal, 16)
         .background(Color(.systemGroupedBackground))
@@ -283,6 +290,35 @@ struct TweaksView: View {
                 }
                 .buttonStyle(.plain)
             }
+
+            // Bottom action row: Apply — the same action and
+            // enabled state as the "Apply Tweaks" card button
+            // in the left column.
+            Button {
+                manager.apply()
+                console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
+            } label: {
+                HStack(spacing: 9) {
+                    Image(systemName: "checkmark.circle")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundStyle(manager.isValid ? Color.white : Color.secondary)
+                        .frame(width: 22)
+                    Text("Apply")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(manager.isValid ? Color.white : Color.secondary)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 9)
+                .background(
+                    manager.isValid ? Color.accentColor : Color(.systemGray5),
+                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                )
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!manager.isValid)
+            .padding(.top, 4)
         }
         .padding(10)
         .background(
@@ -376,8 +412,6 @@ struct TweaksView: View {
             switch section {
             case .all:
                 return true
-            case .info:
-                return false
             default:
                 return TweakCategory.section(of: tweak) == section
             }
@@ -557,53 +591,6 @@ struct TweaksView: View {
             Text("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
-    }
-
-    // MARK: Info section
-
-    private var enabledTweakCount: Int {
-        TweakCatalog.all.filter { $0.isOn(in: manager.dictNow) }.count
-    }
-
-    @ViewBuilder
-    private var infoCards: some View {
-        infoCard(title: "Device", rows: [
-            ("Model", machineName()),
-            ("iOS Version", SupportInfo.deviceVersion),
-            ("Build", SupportInfo.deviceBuild),
-        ])
-        infoCard(title: "Support", rows: [
-            ("Status", SupportInfo.isSupported ? "Supported" : "Not supported"),
-            ("Release", SupportInfo.matchedRelease?.version ?? "—"),
-        ])
-        infoCard(title: "Tweaks", rows: [
-            ("Enabled", "\(enabledTweakCount) of \(TweakCatalog.all.count)"),
-        ])
-    }
-
-    private func infoCard(title: String, rows: [(String, String)]) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                HStack(spacing: 8) {
-                    Text(row.0)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer(minLength: 0)
-                    Text(row.1)
-                        .font(.subheadline.weight(.semibold))
-                        .multilineTextAlignment(.trailing)
-                }
-            }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
