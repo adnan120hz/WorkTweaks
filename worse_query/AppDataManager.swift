@@ -270,6 +270,135 @@ final class AppDataManager: ObservableObject {
         }
     }
 
+    // MARK: Hex editor support
+
+    /// The hex editor's backup store: AppDataBackups/ inside
+    /// our own App Group container. Nil when the group container
+    /// does not resolve — byte edits then refuse to save,
+    /// because editing another app's binary data without a
+    /// backup is not offered.
+    private func hexBackupStoreURL() -> URL? {
+        guard let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppGroupResolver.resolvedGroup) else {
+            print("[AppData] App Group container unavailable — no hex backup store.")
+            return nil
+        }
+        return groupURL.appendingPathComponent("AppDataBackups", isDirectory: true)
+    }
+
+    /// Index of hex backups (index.json in the store):
+    /// source file path -> backup file name. One pristine
+    /// backup per file, taken before its first byte edit.
+    private func loadHexBackupIndex() -> [String: String] {
+        guard let store = hexBackupStoreURL(),
+              let data = try? Data(contentsOf: store.appendingPathComponent("index.json")),
+              let index = try? JSONDecoder().decode([String: String].self, from: data) else {
+            return [:]
+        }
+        return index
+    }
+
+    private func saveHexBackupIndex(_ index: [String: String]) {
+        guard let store = hexBackupStoreURL(),
+              let data = try? JSONEncoder().encode(index) else { return }
+        try? data.write(to: store.appendingPathComponent("index.json"))
+    }
+
+    /// The backup file for a source file, when a pristine
+    /// backup of it exists in AppDataBackups/.
+    func hexBackupURL(forSourcePath path: String) -> URL? {
+        guard let store = hexBackupStoreURL(),
+              let name = loadHexBackupIndex()[path] else { return nil }
+        let url = store.appendingPathComponent(name)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
+
+    /// Ensure a pristine backup of the file exists in
+    /// AppDataBackups/ before its first byte edit. Returns
+    /// false — and the caller must refuse to save — when the
+    /// backup cannot be written.
+    func makeHexBackupIfNeeded(path: String) -> Bool {
+        if hexBackupURL(forSourcePath: path) != nil {
+            return true
+        }
+        guard let store = hexBackupStoreURL() else { return false }
+        do {
+            try FileManager.default.createDirectory(at: store, withIntermediateDirectories: true)
+        } catch {
+            print("[AppData] hex backup store create failed: \(error)")
+            return false
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        let backupName = "\(formatter.string(from: Date()))-\((path as NSString).lastPathComponent)"
+        let backupURL = store.appendingPathComponent(backupName)
+        do {
+            try FileManager.default.copyItem(atPath: path, toPath: backupURL.path)
+        } catch {
+            print("[AppData] hex backup failed for \(path): \(error)")
+            return false
+        }
+        var index = loadHexBackupIndex()
+        index[path] = backupName
+        saveHexBackupIndex(index)
+        print("[AppData] hex backup: \(path) -> \(backupURL.path)")
+        return true
+    }
+
+    /// Write edited bytes in place (truncate + write through a
+    /// FileHandle, no atomic replacement), then verify by
+    /// re-reading and comparing against the edited bytes.
+    /// The hex editor is length-preserving, so the data passed
+    /// here always has the file's original length.
+    func saveHexData(path: String, data: Data) -> Bool {
+        guard let handle = FileHandle(forWritingAtPath: path) else {
+            print("[AppData] hex save failed, open for writing: \(path)")
+            return false
+        }
+        do {
+            try handle.truncate(atOffset: 0)
+            try handle.write(contentsOf: data)
+            try handle.synchronize()
+            try handle.close()
+        } catch {
+            print("[AppData] hex write failed for \(path): \(error)")
+            try? handle.close()
+            return false
+        }
+        guard let reread = try? Data(contentsOf: URL(fileURLWithPath: path)), reread == data else {
+            print("[AppData] hex verify failed for \(path)")
+            return false
+        }
+        print("[AppData] hex saved \(path) (\(data.count) bytes, verified)")
+        return true
+    }
+
+    /// Copy the pristine hex backup back over the file, in
+    /// place — the recovery path for a bad byte edit.
+    func restoreHexBackup(path: String) -> Bool {
+        guard let backupURL = hexBackupURL(forSourcePath: path),
+              let data = try? Data(contentsOf: backupURL) else {
+            print("[AppData] hex restore failed, no readable backup for \(path)")
+            return false
+        }
+        guard let handle = FileHandle(forWritingAtPath: path) else {
+            print("[AppData] hex restore failed, open for writing: \(path)")
+            return false
+        }
+        do {
+            try handle.truncate(atOffset: 0)
+            try handle.write(contentsOf: data)
+            try handle.synchronize()
+            try handle.close()
+            print("[AppData] hex backup restored to \(path) (\(data.count) bytes)")
+            return true
+        } catch {
+            print("[AppData] hex restore write failed for \(path): \(error)")
+            try? handle.close()
+            return false
+        }
+    }
+
     /// Create a subdirectory in the browsed directory.
     func createFolder(path: String) -> Bool {
         do {

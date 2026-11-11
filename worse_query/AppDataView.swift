@@ -316,8 +316,10 @@ struct AppDataDirectoryView: View {
 // MARK: - File view / editor
 //
 // A file that decodes as UTF-8 text (up to 1 MB) opens in the
-// editor and saves back in place. Anything else gets a
-// read-only info page — it is never written to. A file reached
+// editor and saves back in place. Anything else gets an info
+// page; a readable non-text file up to 1 MB can also be edited
+// byte-by-byte in the hex editor (length-preserving, with a
+// pristine backup taken before the first edit). A file reached
 // through Add File starts empty and is created on save.
 
 struct AppDataFileView: View {
@@ -339,6 +341,9 @@ struct AppDataFileView: View {
     @State private var readFailed = false
     @State private var saved = false
     @State private var saveFailed = false
+    @State private var hasBackup = false
+    @State private var showRestoreConfirm = false
+    @State private var restoreFailed = false
 
     var body: some View {
         WTGlassPage {
@@ -430,11 +435,47 @@ struct AppDataFileView: View {
                 }
 
                 WTSectionCard {
-                    Text("This file isn't UTF-8 text, so it can't be edited here. Nothing is ever written to it from this page.")
+                    Text(size <= 1_048_576
+                         ? "This file isn't UTF-8 text, so it can't be edited as text. It can be edited byte-by-byte in the hex editor below."
+                         : "This file isn't UTF-8 text, so it can't be edited here. Nothing is ever written to it from this page.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
+                }
+
+                if size <= 1_048_576 {
+                    WTSectionCard(footer: "Edits replace byte values only — the file's length never changes. A backup of the original is saved before the first edit.") {
+                        NavigationLink {
+                            AppDataHexEditorView(manager: manager, path: path, name: name)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Text("Edit Bytes")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                if hasBackup {
+                    WTSectionCard(footer: "Copies the backup taken before the first byte edit back over this file, in place.") {
+                        Button(role: .destructive) {
+                            showRestoreConfirm = true
+                        } label: {
+                            Text("Restore Backup")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 11)
+                                .contentShape(Rectangle())
+                        }
+                    }
                 }
             }
         }
@@ -444,6 +485,23 @@ struct AppDataFileView: View {
             Button("OK") { }
         } message: {
             Text("Writing the file failed — the details are in the Log.")
+        }
+        .confirmationDialog("Restore the backup?", isPresented: $showRestoreConfirm) {
+            Button("Restore Backup", role: .destructive) {
+                if manager.restoreHexBackup(path: path) {
+                    loaded = false
+                    load()
+                } else {
+                    restoreFailed = true
+                }
+            }
+        } message: {
+            Text("The current file is overwritten in place with the backup taken before the first byte edit.")
+        }
+        .alert("Couldn't Restore", isPresented: $restoreFailed) {
+            Button("OK") { }
+        } message: {
+            Text("Restoring the backup failed — the details are in the Log.")
         }
         .onAppear {
             load()
@@ -478,6 +536,7 @@ struct AppDataFileView: View {
             return
         }
         size = Int64(data.count)
+        hasBackup = manager.hexBackupURL(forSourcePath: path) != nil
         if data.count <= 1_048_576, let decoded = String(data: data, encoding: .utf8) {
             text = decoded
             isText = true
@@ -488,5 +547,225 @@ struct AppDataFileView: View {
             isText = false
         }
         loaded = true
+    }
+}
+
+// MARK: - Hex editor
+//
+// Length-preserving byte editor for files that read fine but
+// are not UTF-8 text. Sixteen bytes per row: offset on the
+// left, hex pairs in the middle, an ASCII gutter on the right
+// (non-printable bytes shown as "·"). Tapping a byte selects
+// it and its two hex digits can be edited in the Byte card.
+// Edits only ever replace byte values — the file's length can
+// never change. Before the first save the manager stores a
+// pristine backup in our App Group container and refuses to
+// save without one; saving writes in place and verifies by
+// re-reading. Same 1 MB ceiling as the text editor.
+
+struct AppDataHexEditorView: View {
+    @ObservedObject var manager: AppDataManager
+    let path: String
+    let name: String
+
+    @State private var loaded = false
+    @State private var loadFailed = false
+    @State private var original: [UInt8] = []
+    @State private var bytes: [UInt8] = []
+    @State private var selectedOffset: Int? = nil
+    @State private var editHex = ""
+    @State private var saved = false
+    @State private var saveFailed = false
+    @State private var failureMessage = ""
+
+    private var isDirty: Bool { bytes != original }
+    private var rowCount: Int { (bytes.count + 15) / 16 }
+
+    var body: some View {
+        WTGlassPage {
+            if !loaded {
+                WTSectionCard {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Reading…")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                }
+            } else if loadFailed {
+                WTSectionCard {
+                    Label("Couldn't read this file.", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                }
+            } else {
+                WTSectionCard(header: "Hex Editor", footer: path) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("\(bytes.count) bytes — length-preserving edits only: byte values can change, the file's length never does.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("Warning: raw byte edits have no structure validation — a wrong byte can corrupt this file or the owning app's data. A backup of the original is saved before the first edit.")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                }
+
+                if let selectedOffset {
+                    WTSectionCard(header: "Byte") {
+                        HStack(spacing: 12) {
+                            Text(String(format: "0x%08X", selectedOffset))
+                                .font(.system(.subheadline, design: .monospaced))
+                            TextField("HH", text: $editHex)
+                                .font(.system(.body, design: .monospaced))
+                                .textInputAutocapitalization(.characters)
+                                .disableAutocorrection(true)
+                                .frame(width: 64)
+                                .onChange(of: editHex) { _, newValue in
+                                    applyEditHex(newValue, at: selectedOffset)
+                                }
+                            Spacer()
+                            Button("Done") {
+                                self.selectedOffset = nil
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                    }
+                }
+
+                WTSectionCard {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyVStack(alignment: .leading, spacing: 2) {
+                            ForEach(0..<rowCount, id: \.self) { row in
+                                hexRow(row)
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                    }
+                }
+
+                WTSectionCard(footer: "Saving writes the file in place and verifies the result by re-reading it.") {
+                    Button {
+                        save()
+                    } label: {
+                        Text(saved && !isDirty ? "Saved" : "Save")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                    }
+                    .disabled(!isDirty)
+                }
+            }
+        }
+        .navigationTitle(name)
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Couldn't Save", isPresented: $saveFailed) {
+            Button("OK") { }
+        } message: {
+            Text(failureMessage)
+        }
+        .onAppear {
+            load()
+        }
+    }
+
+    private func hexRow(_ row: Int) -> some View {
+        let start = row * 16
+        let end = min(start + 16, bytes.count)
+        return HStack(spacing: 10) {
+            Text(String(format: "%08X", start))
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.secondary)
+            HStack(spacing: 5) {
+                ForEach(start..<end, id: \.self) { offset in
+                    Text(String(format: "%02X", bytes[offset]))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(byteColor(at: offset))
+                        .padding(.horizontal, 2)
+                        .background(byteBackground(at: offset))
+                        .onTapGesture {
+                            selectedOffset = offset
+                            editHex = String(format: "%02X", bytes[offset])
+                        }
+                }
+                if end - start < 16 {
+                    ForEach(end..<(start + 16), id: \.self) { _ in
+                        Text("  ")
+                            .font(.system(.caption, design: .monospaced))
+                            .padding(.horizontal, 2)
+                    }
+                }
+            }
+            Text(asciiGutter(start: start, end: end))
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func byteColor(at offset: Int) -> Color {
+        if offset == selectedOffset { return .white }
+        return bytes[offset] != original[offset] ? .orange : .primary
+    }
+
+    private func byteBackground(at offset: Int) -> Color {
+        offset == selectedOffset ? Color.accentColor : .clear
+    }
+
+    private func asciiGutter(start: Int, end: Int) -> String {
+        var result = ""
+        for offset in start..<end {
+            let byte = bytes[offset]
+            if byte >= 32 && byte <= 126 {
+                result.append(Character(UnicodeScalar(byte)))
+            } else {
+                result.append("·")
+            }
+        }
+        return result
+    }
+
+    private func applyEditHex(_ newValue: String, at offset: Int) {
+        let filtered = String(newValue.uppercased().filter { $0.isHexDigit }.prefix(2))
+        if filtered != editHex {
+            editHex = filtered
+        }
+        if filtered.count == 2, let value = UInt8(filtered, radix: 16), offset < bytes.count {
+            bytes[offset] = value
+            saved = false
+        }
+    }
+
+    private func load() {
+        guard !loaded else { return }
+        guard let data = manager.readFileData(path), data.count <= 1_048_576 else {
+            loadFailed = true
+            loaded = true
+            return
+        }
+        original = [UInt8](data)
+        bytes = original
+        loaded = true
+    }
+
+    private func save() {
+        guard isDirty else { return }
+        guard manager.makeHexBackupIfNeeded(path: path) else {
+            failureMessage = "The backup of the original file couldn't be written, so nothing was saved."
+            saveFailed = true
+            return
+        }
+        if manager.saveHexData(path: path, data: Data(bytes)) {
+            original = bytes
+            saved = true
+        } else {
+            failureMessage = "Writing or verifying the file failed — the details are in the Log."
+            saveFailed = true
+        }
     }
 }
