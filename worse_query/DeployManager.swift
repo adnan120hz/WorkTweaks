@@ -245,7 +245,10 @@ final class DeployManager: ObservableObject {
     /// Validate + canonicalize a manifest target path. Nil
     /// when the path is absolute, empty, or contains a ".."
     /// component — such a package is rejected as a whole.
-    private static func cleanRelativePath(_ path: String) -> String? {
+    /// Internal (not private) so the package builder can
+    /// validate destination paths with these exact rules
+    /// while the user types.
+    static func cleanRelativePath(_ path: String) -> String? {
         let normalized = path.replacingOccurrences(of: "\\", with: "/")
         guard !normalized.hasPrefix("/") else { return nil }
         var components: [String] = []
@@ -727,5 +730,452 @@ final class DeployManager: ObservableObject {
             print("[Deploy] restore \(file.path): \(ok ? "ok" : "FAILED") — \(message)")
         }
         return DeployRunResult(lines: lines, receiptFolderName: nil)
+    }
+}
+
+// MARK: - Package store & builder support
+//
+// Packages authored in the app live as folders in the App
+// Group container: DeployPackages/<id>/ holding a
+// manifest.json plus its payload files — the exact folder
+// layout loadPackage(from:) already accepts. Everything in
+// this section only ever reads or writes inside those
+// package folders. Validation is the loader's own
+// (buildPackage): a draft is saved only when the loader
+// would accept it, and deploying a stored package goes
+// through the same loadPackage -> resolve -> deploy path as
+// an externally picked one. Nothing here touches deployed
+// files or Deploy History receipts.
+
+struct StoredDeployPackageFile: Identifiable {
+    let id = UUID()
+    /// File name inside the package folder (the manifest's
+    /// "source"); payloads sit next to manifest.json.
+    var payloadName: String
+    /// Where the file goes inside the target container (the
+    /// manifest's "path"); editable in the builder.
+    var destinationPath: String
+    /// Payload size in bytes, for display.
+    var size: Int
+}
+
+struct StoredDeployPackage: Identifiable {
+    /// The folder name inside DeployPackages/.
+    let id: String
+    let folderURL: URL
+    var name: String?
+    var bundleID: String
+    /// "Application" | "AppGroup" | "InternalDaemon"
+    var scope: String
+    var files: [StoredDeployPackageFile]
+
+    var displayName: String {
+        if let name, !name.isEmpty { return name }
+        return bundleID.isEmpty ? "Untitled package" : bundleID
+    }
+}
+
+extension DeployManager {
+
+    // MARK: Store location
+
+    /// DeployPackages/ inside our own App Group container.
+    /// Nil when the group container does not resolve — the
+    /// builder then honestly reports the store as unavailable.
+    static func packageStoreRootURL() -> URL? {
+        guard let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppGroupResolver.resolvedGroup) else {
+            print("[Deploy] App Group container unavailable — no package store.")
+            return nil
+        }
+        return groupURL.appendingPathComponent("DeployPackages", isDirectory: true)
+    }
+
+    // MARK: Listing
+
+    static func loadStoredPackages() -> [StoredDeployPackage] {
+        guard let root = packageStoreRootURL(),
+              let names = try? FileManager.default.contentsOfDirectory(atPath: root.path) else {
+            return []
+        }
+        var packages: [StoredDeployPackage] = []
+        for name in names {
+            let folder = root.appendingPathComponent(name, isDirectory: true)
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDirectory),
+                  isDirectory.boolValue,
+                  let stored = loadStoredPackage(folderURL: folder) else {
+                continue
+            }
+            packages.append(stored)
+        }
+        return packages.sorted {
+            $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+        }
+    }
+
+    /// Load one stored package folder through the regular
+    /// package loader, so a stored package is by construction
+    /// one the importer would accept. Nil when the folder
+    /// does not hold a valid package (yet — e.g. a new draft
+    /// whose manifest has never been saved).
+    static func loadStoredPackage(folderURL: URL) -> StoredDeployPackage? {
+        switch loadPackage(from: folderURL) {
+        case .failure:
+            return nil
+        case .success(let loaded):
+            let files = loaded.files.map {
+                StoredDeployPackageFile(
+                    payloadName: normalizePackagePath($0.source),
+                    destinationPath: $0.relativePath,
+                    size: $0.data.count
+                )
+            }
+            return StoredDeployPackage(
+                id: folderURL.lastPathComponent,
+                folderURL: folderURL,
+                name: loaded.name,
+                bundleID: loaded.bundleID,
+                scope: loaded.scope,
+                files: files
+            )
+        }
+    }
+
+    // MARK: Drafts & payloads
+
+    /// Create the folder for a brand-new package and return
+    /// its empty draft. Payloads are copied in as they are
+    /// added in the builder; the manifest is written on the
+    /// first save.
+    static func makeNewStoredPackage() -> StoredDeployPackage? {
+        guard let root = packageStoreRootURL() else { return nil }
+        let id = UUID().uuidString
+        let folder = root.appendingPathComponent(id, isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        } catch {
+            print("[Deploy] could not create the package folder \(folder.path): \(error)")
+            return nil
+        }
+        print("[Deploy] new package draft created: \(id)")
+        return StoredDeployPackage(
+            id: id, folderURL: folder,
+            name: nil, bundleID: "", scope: "Application", files: []
+        )
+    }
+
+    /// Copy a picked file into a package folder under a
+    /// unique flat name (name, name-2, name-3, … before the
+    /// extension). Returns the payload name and size, or nil
+    /// when the copy fails.
+    static func addPayload(to folderURL: URL, from sourceURL: URL, takenNames: Set<String>) -> (name: String, size: Int)? {
+        let scoped = sourceURL.startAccessingSecurityScopedResource()
+        defer { if scoped { sourceURL.stopAccessingSecurityScopedResource() } }
+        guard let data = try? Data(contentsOf: sourceURL) else {
+            print("[Deploy] payload pick could not be read: \(sourceURL.path)")
+            return nil
+        }
+        let candidate = uniquePayloadName(for: sourceURL.lastPathComponent, takenNames: takenNames, folderURL: folderURL)
+        let destination = folderURL.appendingPathComponent(candidate)
+        do {
+            try data.write(to: destination)
+        } catch {
+            print("[Deploy] payload copy failed for \(candidate): \(error)")
+            return nil
+        }
+        print("[Deploy] payload added to package \(folderURL.lastPathComponent): \(candidate) (\(data.count) bytes)")
+        return (candidate, data.count)
+    }
+
+    /// Remove a payload file from a package folder (used
+    /// when its entry is removed in the builder). Only ever
+    /// touches the package's own folder.
+    static func removePayload(from folderURL: URL, payloadName: String) {
+        let url = folderURL.appendingPathComponent(payloadName)
+        do {
+            try FileManager.default.removeItem(at: url)
+            print("[Deploy] payload removed from package \(folderURL.lastPathComponent): \(payloadName)")
+        } catch {
+            print("[Deploy] payload remove failed for \(payloadName): \(error)")
+        }
+    }
+
+    /// A payload name that collides with nothing: not with
+    /// the names already used by the draft and not with a
+    /// file already sitting in the package folder.
+    private static func uniquePayloadName(for original: String, takenNames: Set<String>, folderURL: URL?) -> String {
+        let ns = original as NSString
+        let base = ns.deletingPathExtension
+        let ext = ns.pathExtension
+        var candidate = original
+        var counter = 2
+        while takenNames.contains(candidate)
+                || (folderURL.map { FileManager.default.fileExists(atPath: $0.appendingPathComponent(candidate).path) } ?? false) {
+            candidate = ext.isEmpty ? "\(base)-\(counter)" : "\(base)-\(counter).\(ext)"
+            counter += 1
+        }
+        return candidate
+    }
+
+    // MARK: Saving
+
+    /// Validate the draft exactly like the loader validates
+    /// an imported package and, only when it passes, write
+    /// manifest.json into the package folder. A rejected
+    /// draft leaves the manifest on disk untouched; nothing
+    /// outside the package folder is ever written. The
+    /// returned package is reloaded from disk, so the
+    /// builder afterwards shows the canonical stored form.
+    static func saveStoredPackage(_ package: StoredDeployPackage) -> Result<StoredDeployPackage, DeployError> {
+        do {
+            try FileManager.default.createDirectory(at: package.folderURL, withIntermediateDirectories: true)
+        } catch {
+            return .failure(DeployError(message: "The package folder could not be created: \(error.localizedDescription)"))
+        }
+
+        var manifest: [String: Any] = [
+            "bundleID": package.bundleID.trimmingCharacters(in: .whitespacesAndNewlines),
+            "scope": package.scope,
+            "files": package.files.map { ["path": $0.destinationPath, "source": $0.payloadName] },
+        ]
+        if let name = package.name?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+            manifest["name"] = name
+        }
+        guard let manifestData = try? JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys]) else {
+            return .failure(DeployError(message: "The manifest could not be encoded."))
+        }
+
+        var entries: [String: Data] = ["manifest.json": manifestData]
+        for file in package.files {
+            let payloadURL = package.folderURL.appendingPathComponent(file.payloadName)
+            guard let data = try? Data(contentsOf: payloadURL) else {
+                return .failure(DeployError(message: "The payload file \"\(file.payloadName)\" could not be read from the package folder."))
+            }
+            entries[normalizePackagePath(file.payloadName)] = data
+        }
+
+        // The loader's own validation is the gate.
+        switch buildPackage(entries: entries) {
+        case .failure(let error):
+            print("[Deploy] package save rejected: \(error.message)")
+            return .failure(error)
+        case .success:
+            break
+        }
+
+        do {
+            try manifestData.write(to: package.folderURL.appendingPathComponent("manifest.json"))
+        } catch {
+            return .failure(DeployError(message: "The manifest could not be written: \(error.localizedDescription)"))
+        }
+        print("[Deploy] package saved: \(package.displayName) — \(package.bundleID), scope \(package.scope), \(package.files.count) file(s)")
+        guard let stored = loadStoredPackage(folderURL: package.folderURL) else {
+            return .failure(DeployError(message: "The package was written but could not be reloaded."))
+        }
+        return .success(stored)
+    }
+
+    // MARK: Import & delete
+
+    /// Copy an externally picked package into the store and
+    /// return it ready for the builder. The package is
+    /// loaded and validated by the regular loader first;
+    /// payloads are flattened to sit flat next to the new
+    /// manifest.json. A failed import leaves no folder
+    /// behind.
+    static func importIntoStore(from url: URL) -> Result<StoredDeployPackage, DeployError> {
+        let loaded: LoadedDeployPackage
+        switch loadPackage(from: url) {
+        case .failure(let error):
+            return .failure(error)
+        case .success(let package):
+            loaded = package
+        }
+        guard let draft = makeNewStoredPackage() else {
+            return .failure(DeployError(message: "The package store is unavailable (the App Group container did not resolve)."))
+        }
+        var taken = Set<String>()
+        var files: [StoredDeployPackageFile] = []
+        for file in loaded.files {
+            let original = (normalizePackagePath(file.source) as NSString).lastPathComponent
+            let candidate = uniquePayloadName(for: original, takenNames: taken, folderURL: nil)
+            taken.insert(candidate)
+            do {
+                try file.data.write(to: draft.folderURL.appendingPathComponent(candidate))
+            } catch {
+                deleteStoredPackage(draft)
+                return .failure(DeployError(message: "A payload file could not be copied into the store: \(error.localizedDescription)"))
+            }
+            files.append(StoredDeployPackageFile(payloadName: candidate, destinationPath: file.relativePath, size: file.data.count))
+        }
+        var stored = draft
+        stored.name = loaded.name
+        stored.bundleID = loaded.bundleID
+        stored.scope = loaded.scope
+        stored.files = files
+        switch saveStoredPackage(stored) {
+        case .failure(let error):
+            deleteStoredPackage(draft)
+            return .failure(error)
+        case .success(let saved):
+            print("[Deploy] package imported into the store: \(saved.displayName) (\(saved.id))")
+            return .success(saved)
+        }
+    }
+
+    /// Delete a stored package folder. Only folders directly
+    /// inside DeployPackages/ can be removed; files the
+    /// package already deployed and Deploy History receipts
+    /// live elsewhere and are not touched.
+    @discardableResult
+    static func deleteStoredPackage(_ package: StoredDeployPackage) -> Bool {
+        guard let root = packageStoreRootURL() else { return false }
+        let folder = package.folderURL.standardizedFileURL
+        guard folder.deletingLastPathComponent().path == root.standardizedFileURL.path else {
+            print("[Deploy] delete refused — \(folder.path) is not inside the package store")
+            return false
+        }
+        do {
+            try FileManager.default.removeItem(at: folder)
+            print("[Deploy] package deleted: \(package.displayName) (\(package.id))")
+            return true
+        } catch {
+            print("[Deploy] package delete failed for \(folder.path): \(error)")
+            return false
+        }
+    }
+
+    // MARK: Export
+
+    /// Zip a stored package (manifest.json plus exactly the
+    /// payloads its manifest names) into a .deploy archive
+    /// in the temporary directory and return its URL for
+    /// sharing. Entries are stored, not compressed — the
+    /// subset the app's own ZIP reader accepts.
+    static func exportArchiveURL(for package: StoredDeployPackage) -> URL? {
+        var entries: [(name: String, data: Data)] = []
+        let manifestURL = package.folderURL.appendingPathComponent("manifest.json")
+        guard let manifestData = try? Data(contentsOf: manifestURL) else {
+            print("[Deploy] export refused — \(package.folderURL.path) has no readable manifest.json")
+            return nil
+        }
+        entries.append(("manifest.json", manifestData))
+        for file in package.files {
+            let payloadURL = package.folderURL.appendingPathComponent(file.payloadName)
+            guard let data = try? Data(contentsOf: payloadURL) else {
+                print("[Deploy] export refused — payload \(file.payloadName) could not be read")
+                return nil
+            }
+            entries.append((file.payloadName, data))
+        }
+
+        let base = String(package.displayName.unicodeScalars.map { scalar -> Character in
+            if CharacterSet.alphanumerics.contains(scalar) || scalar == " " || scalar == "-" || scalar == "_" || scalar == "." {
+                return Character(scalar)
+            }
+            return "-"
+        }).trimmingCharacters(in: .whitespaces)
+        let fileName = (base.isEmpty ? "DeployPackage" : base) + ".deploy"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        do {
+            try makeStoredZip(entries: entries).write(to: url)
+        } catch {
+            print("[Deploy] export write failed: \(error)")
+            return nil
+        }
+        print("[Deploy] package exported: \(url.path) (\(entries.count) entries)")
+        return url
+    }
+
+    // MARK: Minimal ZIP writer (stored entries)
+
+    /// Build a ZIP archive with stored (uncompressed)
+    /// entries, UTF-8 names — all the bundled reader and
+    /// standard tools need.
+    static func makeStoredZip(entries: [(name: String, data: Data)]) -> Data {
+        func le16(_ value: UInt16) -> Data {
+            var v = value.littleEndian
+            return Data(bytes: &v, count: 2)
+        }
+        func le32(_ value: UInt32) -> Data {
+            var v = value.littleEndian
+            return Data(bytes: &v, count: 4)
+        }
+        let components = Calendar(identifier: .gregorian).dateComponents(
+            [.year, .month, .day, .hour, .minute, .second], from: Date()
+        )
+        let dosTime = UInt16(((components.hour ?? 0) << 11) | ((components.minute ?? 0) << 5) | ((components.second ?? 0) / 2))
+        let dosDate = UInt16((((components.year ?? 1980) - 1980) << 9) | ((components.month ?? 1) << 5) | (components.day ?? 1))
+
+        var out = Data()
+        var central = Data()
+        for entry in entries {
+            let nameBytes = [UInt8](entry.name.utf8)
+            let crc = crc32(entry.data)
+            let size = UInt32(entry.data.count)
+            let localOffset = UInt32(out.count)
+
+            out += le32(0x0403_4B50)              // local file header
+            out += le16(20)                       // version needed
+            out += le16(0x0800)                   // flag: UTF-8 names
+            out += le16(0)                        // method: stored
+            out += le16(dosTime)
+            out += le16(dosDate)
+            out += le32(crc)
+            out += le32(size)                     // compressed size
+            out += le32(size)                     // uncompressed size
+            out += le16(UInt16(nameBytes.count))
+            out += le16(0)                        // extra length
+            out += Data(nameBytes)
+            out += entry.data
+
+            central += le32(0x0201_4B50)          // central directory
+            central += le16(20)                   // version made by
+            central += le16(20)                   // version needed
+            central += le16(0x0800)
+            central += le16(0)
+            central += le16(dosTime)
+            central += le16(dosDate)
+            central += le32(crc)
+            central += le32(size)
+            central += le32(size)
+            central += le16(UInt16(nameBytes.count))
+            central += le16(0)                    // extra length
+            central += le16(0)                    // comment length
+            central += le16(0)                    // disk number
+            central += le16(0)                    // internal attributes
+            central += le32(0)                    // external attributes
+            central += le32(localOffset)
+            central += Data(nameBytes)
+        }
+        let cdOffset = UInt32(out.count)
+        out += central
+        out += le32(0x0605_4B50)                  // end of central directory
+        out += le16(0)                            // disk number
+        out += le16(0)                            // CD start disk
+        out += le16(UInt16(entries.count))        // entries on this disk
+        out += le16(UInt16(entries.count))        // total entries
+        out += le32(UInt32(central.count))
+        out += le32(cdOffset)
+        out += le16(0)                            // comment length
+        return out
+    }
+
+    /// CRC-32 (the ZIP polynomial), for the stored entries
+    /// written by makeStoredZip. The table is rebuilt per
+    /// call — exports are small and infrequent.
+    private static func crc32(_ data: Data) -> UInt32 {
+        let table: [UInt32] = (0..<256).map { i -> UInt32 in
+            var c = UInt32(i)
+            for _ in 0..<8 {
+                c = (c & 1) != 0 ? (0xEDB8_8320 ^ (c >> 1)) : (c >> 1)
+            }
+            return c
+        }
+        var crc: UInt32 = 0xFFFF_FFFF
+        for byte in data {
+            crc = (crc >> 8) ^ table[Int((crc ^ UInt32(byte)) & 0xFF)]
+        }
+        return crc ^ 0xFFFF_FFFF
     }
 }
