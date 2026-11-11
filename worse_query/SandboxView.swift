@@ -118,6 +118,10 @@ struct SandboxView: View {
                         utilityRow("PosterBoard", systemImage: "photo") {
                             PosterBoardView()
                         }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Cache Data Cleaner", systemImage: "trash") {
+                            CacheCleanerView()
+                        }
                     }
                 }
 

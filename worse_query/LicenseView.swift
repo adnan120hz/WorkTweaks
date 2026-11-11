@@ -96,6 +96,19 @@ struct LicenseView: View {
                         detail: "Reference — app-data browsing and portable patches",
                         url: "https://github.com/YangJiiii/3105"
                     )
+                    Divider()
+                        .padding(.leading, 14)
+                    // Xo File is credited without a link: the
+                    // user named the app only, no URL was given.
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Xo File")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Text("Reference — cache data cleaner")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
                 }
                 .padding(.vertical, 4)
             }
