@@ -19,7 +19,7 @@ struct WelcomeView: View {
     @State private var showLicense = false
 
     private var versionText: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0"
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.0"
         return "WorkTweaks v\(v)"
     }
 
@@ -163,7 +163,7 @@ struct WelcomeView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Please Install It the Right Way")
                     .font(.subheadline.weight(.semibold))
-                Text("WorkTweaks must be installed with iLoader, or by signing the IPA with App Group By Adnan.120hz, so that its App Group works correctly.")
+                Text("WorkTweaks must be installed with iLoader, or by signing the IPA with Signed Apps, so that its App Group works correctly.")
                     .font(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("Installed any other way, the signed profile leaves the App Group out — and without it, the tweaks can't run. Tap Tutorials below for both step-by-step guides.")
@@ -224,7 +224,7 @@ struct WelcomeView: View {
     private var creditsSection: some View {
         Section {
             creditRow(icon: "terminal", name: "ForceQuit OS", role: "worse_query — the core system (sandbox escape)")
-            creditRow(icon: "slider.horizontal.3", name: "mond — rooootdev", role: "the tweak engine & MobileGestalt apply system")
+            creditRow(icon: "slider.horizontal.3", name: "mond — rooootdev", role: "the CacheExtra key knowledge behind the tweak catalog")
             creditRow(icon: "cube", name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode)")
             creditRow(icon: "arrow.counterclockwise", name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
         } header: {
@@ -239,7 +239,7 @@ struct WelcomeView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("iOS 26.7.2 (23H128) — iOS 27.3 Beta 1 (24C5037i)")
                     .font(.subheadline.weight(.semibold))
-                Text("v2.0 checks your device's build at launch and only opens on the supported builds. The full version & build list lives in License & Credits.")
+                Text("v3.0 checks your device's build at launch and only opens on the supported builds. The full version & build list lives in License & Credits.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

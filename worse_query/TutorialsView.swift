@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Tutorials
 //
 // Two step-by-step installation guides: the desktop route (iLoader)
-// and the on-device route (App Group By Adnan.120hz, the companion
+// and the on-device route (Signed Apps, the companion
 // signer app). Reachable from the Welcome screen, the unsupported
 // screen, and the Tweaks tab toolbar.
 
@@ -31,7 +31,7 @@ struct TutorialsView: View {
 
             Section {
                 step(1, "Download the WorkTweaks IPA from GitHub.")
-                step(2, "Open App Group By Adnan.120hz and sign in with your Apple ID.")
+                step(2, "Open Signed Apps and sign in with your Apple ID.")
                 step(3, "Certificates tab: create your certificate if needed. A free team can hold only one active development certificate — if creation fails with error 7460, revoke an old unused certificate there first.")
                 step(4, "Install tab → Provisioning: fill in the fields below, tap Provision, and wait for \"profile OK\". Your Team ID is shown in the app's Certificates tab.") {
                     monoLine("Bundle ID: cc.forcequit.worse-query.<Your Team ID>")
@@ -42,7 +42,7 @@ struct TutorialsView: View {
                 step(6, "Export the signed IPA and install it with ESign (or any IPA installer).")
                 step(7, "Open WorkTweaks and you're done.")
             } header: {
-                Text("Guide B — Sign with App Group By Adnan.120hz (Mobile)")
+                Text("Guide B — Sign with Signed Apps (Mobile)")
             }
 
             Section {

@@ -1,17 +1,89 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Tweaks tab
+// MARK: - Tweaks tab (v3.0 two-column layout)
 //
-// Mirrors mond's GestaltView (adnan120hz/mond): same sections, same
-// tweak order, same Subtype picker values, same spoofing model list.
-// Toggles mutate the in-memory MobileGestalt dictionary immediately
-// (mond: mg_tweak_binding); "Apply Tweaks" persists it via mg_apply.
-//
-// Every tweak keeps its own SF Symbol (see TweakCatalog
-// .presentation), rendered uniformly as a plain accent-colored
-// row icon. The tab starts LOCKED until "Start Tweaks Feature"
-// is turned on in the Sandbox tab (wt.tweaksFeatureEnabled).
+// The tab is a two-column page: a scrolling column of tweak cards
+// on the left and a fixed "Sections" card on the right (All /
+// Display / Device / System / iPad / Gestalt / Info). Toggles
+// mutate the in-memory MobileGestalt dictionary immediately;
+// "Apply Tweaks" persists it. Every tweak keeps its own SF Symbol
+// (see TweakCatalog.presentation), rendered uniformly as a plain
+// accent-colored icon. The tab starts LOCKED until "Start Tweaks
+// Feature" is turned on in the Sandbox tab
+// (wt.tweaksFeatureEnabled).
+
+/// The sections of the Tweaks tab's right-hand Sections card.
+/// All = the full catalog; Info = device / support / status page.
+enum TweakSection: String, CaseIterable, Identifiable {
+    case all, display, device, system, ipad, gestalt, info
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .all: return "All"
+        case .display: return "Display"
+        case .device: return "Device"
+        case .system: return "System"
+        case .ipad: return "iPad"
+        case .gestalt: return "Gestalt"
+        case .info: return "Info"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .all: return "square.grid.2x2"
+        case .display: return "display"
+        case .device: return "iphone"
+        case .system: return "gearshape"
+        case .ipad: return "ipad"
+        case .gestalt: return "slider.horizontal.3"
+        case .info: return "info.circle"
+        }
+    }
+}
+
+/// Which section each catalog tweak belongs to — exactly one per
+/// tweak, keyed by tweak id. The union of Display / Device /
+/// System / iPad / Gestalt is the full 23-tweak catalog.
+enum TweakCategory {
+    static let sectionByID: [String: TweakSection] = [
+        // Display
+        "enable_dynamic_island_capability": .display,
+        "always_on_display": .display,
+        "aod_vibrancy": .display,
+        "disable_wallpaper_parallax": .display,
+        "enable_liquid_glass_low_performance_mode": .display,
+        "disable_liquid_glass_low_performance_mode": .display,
+        "pulse_width_modulation": .display,
+        // Device
+        "boot_shutdown_chime": .device,
+        "charge_limit_menu": .device,
+        "tap_to_wake": .device,
+        "iphone_16_camera_control_settings": .device,
+        "action_button_settings": .device,
+        "collision_sos": .device,
+        // System
+        "security_research_device_mode": .system,
+        "disable_region_restrictions": .system,
+        "apple_intelligence": .system,
+        // iPad
+        "apple_pencil_settings": .ipad,
+        "allow_ipad_apps": .ipad,
+        "stage_manager_support": .ipad,
+        "enable_ipados_mode": .ipad,
+        // Gestalt (raw CacheExtra / internal flags)
+        "internal_storage_view": .gestalt,
+        "apple_internal_install": .gestalt,
+        "internal_features": .gestalt,
+    ]
+
+    static func section(of tweak: GestaltTweak) -> TweakSection {
+        sectionByID[tweak.id] ?? .gestalt
+    }
+}
 
 struct TweaksView: View {
     // Not @ObservedObject on purpose: this view never displays console
@@ -31,6 +103,7 @@ struct TweaksView: View {
     @State private var infoTitle: String?
     @State private var infoMessage: String = ""
     @State private var showRevertConfirm = false
+    @State private var selectedSection: TweakSection = .all
 
     private var showInfo: Binding<Bool> {
         Binding(
@@ -43,7 +116,7 @@ struct TweaksView: View {
         NavigationStack {
             Group {
                 if tweaksEnabled {
-                    tweakList
+                    columnsView
                 } else {
                     lockedView
                 }
@@ -105,7 +178,7 @@ struct TweaksView: View {
             .confirmationDialog("Revert all tweaks?", isPresented: $showRevertConfirm) {
                 Button("Revert", role: .destructive) { manager.revert() }
             } message: {
-                Text("This restores the MobileGestalt backup saved on first launch (mond: SavedGestalt.plist).")
+                Text("This restores the MobileGestalt backup saved on first launch (SavedGestalt.plist).")
             }
         }
     }
@@ -144,51 +217,106 @@ struct TweaksView: View {
         .background(Color(.systemGroupedBackground))
     }
 
-    // MARK: Tweak list
+    // MARK: Two-column layout
 
-    private var tweakList: some View {
-        List {
-            statusSection
+    private var columnsView: some View {
+        HStack(alignment: .top, spacing: 12) {
+            ScrollView {
+                VStack(spacing: 12) {
+                    statusCard
 
-            if manager.isValid || manager.isEmpty {
-                if !manager.isValid || manager.isEmpty {
-                    warningSection
+                    if manager.isEmpty || !manager.isValid {
+                        warningCard
+                    }
+
+                    if selectedSection == .info {
+                        infoCards
+                    } else {
+                        sectionCards
+                    }
+
+                    actionsBlock
+                    footerLinks
                 }
+                .padding(.vertical, 16)
             }
 
-            actionSection
-            artworkSection
-            softwareSection
-            hardwareSection
-            eligibilitySection
-            ipadSection
-            internalSection
-            writeSettingsSection
-            footerSection
+            sectionsCard
+                .frame(width: 150)
+                .padding(.vertical, 16)
         }
+        .padding(.horizontal, 16)
+        .background(Color(.systemGroupedBackground))
     }
 
-    // MARK: Status
+    // MARK: Sections card (right column, always visible)
 
-    private var statusSection: some View {
-        Section {
-            HStack(spacing: 12) {
-                Image(systemName: statusIcon)
-                    .font(.system(size: 20))
-                    .foregroundStyle(statusColor)
-                    .frame(width: 30)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(statusTitle)
-                        .font(.subheadline.weight(.semibold))
-                    Text(statusSubtitle)
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(3)
+    private var sectionsCard: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Sections")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 4)
+
+            ForEach(TweakSection.allCases) { section in
+                Button {
+                    selectedSection = section
+                } label: {
+                    HStack(spacing: 9) {
+                        Image(systemName: section.icon)
+                            .font(.system(size: 15, weight: .regular))
+                            .foregroundStyle(selectedSection == section ? Color.white : Color.accentColor)
+                            .frame(width: 22)
+                        Text(section.title)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(selectedSection == section ? Color.white : Color.primary)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 9)
+                    .background(
+                        selectedSection == section ? Color.accentColor : Color.clear,
+                        in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    )
+                    .contentShape(Rectangle())
                 }
-                if manager.grantingMG || manager.isLoading {
-                    Spacer()
-                    ProgressView()
-                }
-            }.padding(.vertical, 4)
+                .buttonStyle(.plain)
+            }
         }
+        .padding(10)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+        )
+    }
+
+    // MARK: Status card
+
+    private var statusCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: statusIcon)
+                .font(.system(size: 20))
+                .foregroundStyle(statusColor)
+                .frame(width: 30)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(statusTitle)
+                    .font(.subheadline.weight(.semibold))
+                Text(statusSubtitle)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if manager.grantingMG || manager.isLoading {
+                Spacer()
+                ProgressView()
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
     }
 
     private var statusIcon: String {
@@ -214,59 +342,96 @@ struct TweaksView: View {
         return "Granting sandbox access…"
     }
 
-    // mond: "Do not reboot!" warning block
-    private var warningSection: some View {
-        Section {
+    // "Do not reboot!" warning card (shown when the loaded
+    // MobileGestalt plist is empty or invalid).
+    private var warningCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
             Label {
                 Text("Do not reboot! Your MobileGestalt.plist seems to be \(manager.isEmpty ? "empty" : "invalid").")
                     .font(.subheadline)
+                    .fixedSize(horizontal: false, vertical: true)
             } icon: {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
             }
-        } header: {
-            Text("Warning")
-        } footer: {
             Text("Rebooting now might cause a bootloop. Try pressing 'Revert Tweaks'.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
+    }
+
+    // MARK: Section cards (left column)
+
+    /// The tweaks shown for the selected section, in catalog order.
+    private func visibleTweaks(for section: TweakSection) -> [GestaltTweak] {
+        TweakCatalog.all.filter { tweak in
+            // Same device conditionals as the old list layout.
+            if tweak.id == "tap_to_wake" && !hasHomeButton() { return false }
+            if tweak.id == "stage_manager_support" && UIDevice.current.userInterfaceIdiom != .pad { return false }
+            switch section {
+            case .all:
+                return true
+            case .info:
+                return false
+            default:
+                return TweakCategory.section(of: tweak) == section
+            }
         }
     }
 
-    // MARK: Actions (mond: Apply / Revert / Respring)
+    @ViewBuilder
+    private var sectionCards: some View {
+        ForEach(visibleTweaks(for: selectedSection)) { tweak in
+            TweakCard(manager: manager, tweak: tweak, onInfo: showInfo(for:))
+                .disabled(tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
 
-    private var actionSection: some View {
-        Section {
-            Button {
-                manager.apply()
-                console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
-            } label: {
-                Text("Apply Tweaks")
-                    .font(.subheadline.weight(.semibold))
+            // The Dynamic Island model picker lives directly
+            // under its tweak's card.
+            if tweak.id == "enable_dynamic_island_capability" {
+                subtypeCard
             }
-            .disabled(!manager.isValid)
+            // The spoofing model picker sits next to Apple
+            // Intelligence in the All section, as before.
+            if tweak.id == "apple_intelligence" && selectedSection == .all {
+                spoofingCard
+            }
+        }
 
-            Button {
-                RespringCenter.shared.trigger()
-            } label: {
-                Text("Respring")
-                    .font(.subheadline.weight(.semibold))
-            }
-
-            Button(role: .destructive) {
-                showRevertConfirm = true
-            } label: {
-                Text("Revert Tweaks")
-                    .font(.subheadline.weight(.semibold))
-            }
-            .disabled(!manager.isValid)
-        } footer: {
-            Text("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores require a full device restart.")
+        if selectedSection == .device {
+            deviceNameCard
+            spoofingCard
+        }
+        if selectedSection == .all {
+            deviceNameCard
+        }
+        if selectedSection == .gestalt || selectedSection == .all {
+            persistCard
         }
     }
 
-    // MARK: Device Artwork (mond: Subtype picker + Custom Device Name)
+    /// Enable iPadOS Mode stays locked unless the device class in
+    /// CacheExtra still reads "iPhone" (unchanged from v2.0).
+    private var ipadOSModeLocked: Bool {
+        let extra = manager.dictNow["CacheExtra"] as? [String: Any]
+        return extra?["+3Uf0Pm5F8Xy7Onyvko0vA"] as? String != "iPhone"
+    }
 
-    private var artworkSection: some View {
-        Section {
-            Picker(selection: $manager.selectedST) {
+    // MARK: Special cards (non-catalog controls)
+
+    /// Device Artwork: the Dynamic Island subtype (model) picker.
+    private var subtypeCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                RowIcon(systemImage: "capsule.fill")
+                Text("Subtype")
+                    .font(.subheadline.weight(.semibold))
+            }
+            Picker("Subtype", selection: $manager.selectedST) {
                 Text("Original (\(manager.ogST))").tag("og")
 
                 if isDeviceGoodForNoDynamicIsland() {
@@ -290,86 +455,50 @@ struct TweaksView: View {
                 if hasHomeButton() {
                     Text("iPhone X Gestures").tag("x")
                 }
-            } label: {
-                Text("Subtype")
             }
+            .labelsHidden()
+            .pickerStyle(.menu)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
+    }
 
-            Toggle("Custom Device Name", isOn: $manager.enableDeviceName)
-
+    /// Device Artwork: Custom Device Name toggle + field.
+    private var deviceNameCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: $manager.enableDeviceName) {
+                HStack(spacing: 8) {
+                    RowIcon(systemImage: "textformat")
+                    Text("Custom Device Name")
+                        .font(.subheadline.weight(.semibold))
+                }
+            }
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
+                    .textFieldStyle(.roundedBorder)
             }
-        } header: {
-            Text("Device Artwork")
         }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
     }
 
-    // MARK: Tweak sections (mond: GestaltView sections, same order)
-
-    private var softwareSection: some View {
-        Section {
-            TweakToggle(manager: manager, title: "Enable Dynamic Island Capability", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Always-On Display", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "AOD Vibrancy", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Disable Wallpaper Parallax", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Charge Limit Menu", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Boot & Shutdown Chime", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Enable Liquid Glass Low-Performance Mode", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Disable Liquid Glass Low-Performance Mode", onInfo: showInfo(for:))
-        } header: {
-            Text("Software-Oriented Features")
-        }
-    }
-
-    private var hardwareSection: some View {
-        Section {
-            TweakToggle(manager: manager, title: "iPhone 16 Camera Control Settings", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Action Button Settings", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Collision SOS", onInfo: showInfo(for:))
-            if hasHomeButton() {
-                TweakToggle(manager: manager, title: "Tap to Wake", onInfo: showInfo(for:))
-            }
-            TweakToggle(manager: manager, title: "Pulse Width Modulation", onInfo: showInfo(for:))
-        } header: {
-            Text("Hardware-Oriented Features")
-        }
-    }
-
-    private var eligibilitySection: some View {
-        Section {
-            TweakToggle(manager: manager, title: "Security Research Device Mode", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Disable Region Restrictions", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Apple Intelligence", onInfo: showInfo(for:))
-
+    /// Eligibility: the device-model spoofing picker.
+    private var spoofingCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Picker("Spoofing", selection: $manager.productType) {
-                    Text("Default").tag(machineName())
-                    if UIDevice.current.userInterfaceIdiom == .pad {
-                        if doubleSystemVersion() >= 17.4 {
-                            Text("iPad Pro 11-inch (M4)").tag("iPad16,3")
-                            Text("iPad Pro 11-inch (M4, Cellular)").tag("iPad16,4")
-                        }
-                        Text("iPad Pro 11-inch (4th Gen)").tag("iPad14,3")
-                        Text("iPad Pro 11-inch (4th Gen, Cellular)").tag("iPad14,4")
-                    } else {
-                        Text("iPhone 15 Pro").tag("iPhone16,1")
-                        Text("iPhone 15 Pro Max").tag("iPhone16,2")
-                        if doubleSystemVersion() >= 18.0 {
-                            Text("iPhone 16").tag("iPhone17,3")
-                            Text("iPhone 16 Plus").tag("iPhone17,4")
-                            Text("iPhone 16 Pro").tag("iPhone17,1")
-                            Text("iPhone 16 Pro Max").tag("iPhone17,2")
-                        }
-                        if doubleSystemVersion() >= 19.0 {
-                            Text("iPhone 17").tag("iPhone18,3")
-                            Text("iPhone 17 Pro").tag("iPhone18,1")
-                            Text("iPhone 17 Pro Max").tag("iPhone18,2")
-                            Text("iPhone Air").tag("iPhone18,4")
-                        }
-                    }
-                }
-
+                RowIcon(systemImage: "iphone.gen3")
+                Text("Spoofing")
+                    .font(.subheadline.weight(.semibold))
+                Spacer(minLength: 0)
                 Button {
                     infoTitle = "Device Spoofing Info"
                     infoMessage = "Only spoof your device model if you want to download Apple Intelligence. This may break Face ID. If you decide to unspoof and want to keep Apple Intelligence, do NOT re-enter the Apple Intelligence & Siri menu in Settings."
@@ -378,70 +507,199 @@ struct TweaksView: View {
                 }
                 .buttonStyle(.plain)
             }
-        } header: {
-            Text("Eligibility")
+            Picker("Spoofing", selection: $manager.productType) {
+                Text("Default").tag(machineName())
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    if doubleSystemVersion() >= 17.4 {
+                        Text("iPad Pro 11-inch (M4)").tag("iPad16,3")
+                        Text("iPad Pro 11-inch (M4, Cellular)").tag("iPad16,4")
+                    }
+                    Text("iPad Pro 11-inch (4th Gen)").tag("iPad14,3")
+                    Text("iPad Pro 11-inch (4th Gen, Cellular)").tag("iPad14,4")
+                } else {
+                    Text("iPhone 15 Pro").tag("iPhone16,1")
+                    Text("iPhone 15 Pro Max").tag("iPhone16,2")
+                    if doubleSystemVersion() >= 18.0 {
+                        Text("iPhone 16").tag("iPhone17,3")
+                        Text("iPhone 16 Plus").tag("iPhone17,4")
+                        Text("iPhone 16 Pro").tag("iPhone17,1")
+                        Text("iPhone 16 Pro Max").tag("iPhone17,2")
+                    }
+                    if doubleSystemVersion() >= 19.0 {
+                        Text("iPhone 17").tag("iPhone18,3")
+                        Text("iPhone 17 Pro").tag("iPhone18,1")
+                        Text("iPhone 17 Pro Max").tag("iPhone18,2")
+                        Text("iPhone Air").tag("iPhone18,4")
+                    }
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
         }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
     }
 
-    private var ipadSection: some View {
-        Section {
-            TweakToggle(manager: manager, title: "Allow iPad Apps", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Apple Pencil Settings", onInfo: showInfo(for:))
+    /// Write Method: "Persist after reboot" (atomic_write).
+    private var persistCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: $atomicWrite) {
+                HStack(spacing: 8) {
+                    RowIcon(systemImage: "externaldrive.fill")
+                    Text("Persist after reboot")
+                        .font(.subheadline.weight(.semibold))
+                }
+            }
+            Text("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
+    }
 
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                TweakToggle(manager: manager, title: "Stage Manager Support", onInfo: showInfo(for:))
+    // MARK: Info section
+
+    private var enabledTweakCount: Int {
+        TweakCatalog.all.filter { $0.isOn(in: manager.dictNow) }.count
+    }
+
+    @ViewBuilder
+    private var infoCards: some View {
+        infoCard(title: "Device", rows: [
+            ("Model", machineName()),
+            ("iOS Version", SupportInfo.deviceVersion),
+            ("Build", SupportInfo.deviceBuild),
+        ])
+        infoCard(title: "Support", rows: [
+            ("Status", SupportInfo.isSupported ? "Supported" : "Not supported"),
+            ("Release", SupportInfo.matchedRelease?.version ?? "—"),
+        ])
+        infoCard(title: "Tweaks", rows: [
+            ("Enabled", "\(enabledTweakCount) of \(TweakCatalog.all.count)"),
+        ])
+    }
+
+    private func infoCard(title: String, rows: [(String, String)]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                HStack(spacing: 8) {
+                    Text(row.0)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    Text(row.1)
+                        .font(.subheadline.weight(.semibold))
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
+    }
+
+    // MARK: Actions (Apply / Respring / Revert)
+
+    private var actionsBlock: some View {
+        VStack(spacing: 12) {
+            actionCardButton(title: "Apply Tweaks", systemImage: "checkmark.circle") {
+                manager.apply()
+                console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
+            }
+            .disabled(!manager.isValid)
+
+            actionCardButton(title: "Respring", systemImage: "arrow.counterclockwise") {
+                RespringCenter.shared.trigger()
             }
 
-            TweakToggle(manager: manager, title: "Enable iPadOS Mode", onInfo: showInfo(for:))
-                .disabled({
-                    let extra = manager.dictNow["CacheExtra"] as? [String: Any]
-                    return extra?["+3Uf0Pm5F8Xy7Onyvko0vA"] as? String != "iPhone"
-                }())
-        } header: {
-            Text("iPadOS Features")
+            actionCardButton(title: "Revert Tweaks", systemImage: "arrow.uturn.backward", destructive: true) {
+                showRevertConfirm = true
+            }
+            .disabled(!manager.isValid)
+
+            Text("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores require a full device restart.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
-    private var internalSection: some View {
-        Section {
-            TweakToggle(manager: manager, title: "Internal Storage View", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Internal Features", onInfo: showInfo(for:))
-            TweakToggle(manager: manager, title: "Apple Internal Install", onInfo: showInfo(for:))
-        } header: {
-            Text("Internal")
+    private func actionCardButton(title: String, systemImage: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(destructive ? Color.red : Color.accentColor)
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                Color(.secondarySystemGroupedBackground),
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 
-    // mond SettingsView: "Persist after reboot" (atomic_write)
-    private var writeSettingsSection: some View {
-        Section {
-            Toggle("Persist after reboot", isOn: $atomicWrite)
-        } header: {
-            Text("Write Method")
-        } footer: {
-            Text("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead. (mond's default: enabled.)")
-        }
-    }
+    // MARK: Footer links + credits line
 
-    private var footerSection: some View {
-        Section {
+    private var footerLinks: some View {
+        VStack(spacing: 12) {
             NavigationLink {
                 TutorialsView()
             } label: {
-                Text("Tutorials")
-                    .font(.subheadline.weight(.medium))
+                footerLinkLabel(title: "Tutorials", systemImage: "book")
             }
+            .buttonStyle(.plain)
 
             NavigationLink {
                 LicenseView()
             } label: {
-                Text("License & Credits")
-                    .font(.subheadline.weight(.medium))
+                footerLinkLabel(title: "License & Credits", systemImage: "doc.text")
             }
+            .buttonStyle(.plain)
 
-            Text("Tweak engine ported from mond (mg.swift); core exploit from work-gestalt (worse_query).")
+            Text("Built on the worse_query core system by ForceQuit OS, with CacheExtra key knowledge from mond by rooootdev (AGPL-3.0).")
                 .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private func footerLinkLabel(title: String, systemImage: String) -> some View {
+        HStack(spacing: 8) {
+            RowIcon(systemImage: systemImage)
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
+        .contentShape(Rectangle())
     }
 
     private func showInfo(for tweak: GestaltTweak) {
@@ -450,31 +708,25 @@ struct TweaksView: View {
     }
 }
 
-// MARK: - Toggle row (mond: TweakToggle via mg_tweak_binding)
+// MARK: - Tweak card
 //
-// Row design: the tweak's own SF Symbol as a plain accent-colored
-// icon (uniform size/weight/color for every tweak) + title
-// (+ "Requires iOS" subtitle when the tweak needs a newer iOS)
-// + optional info button + switch.
+// Compact vertical card for the two-column layout: the tweak's
+// own SF Symbol as a plain accent-colored icon + an optional info
+// button + the switch on the top row, then the tweak name and a
+// state line ("On" / "Off", or "Requires iOS …" when the tweak
+// needs a newer iOS). The switch stages changes through the same
+// manager binding as before.
 
-struct TweakToggle: View {
+struct TweakCard: View {
     @ObservedObject var manager: GestaltManager
-    let title: String
+    let tweak: GestaltTweak
     let onInfo: (GestaltTweak) -> Void
 
     var body: some View {
-        if let tweak = TweakCatalog.tweak(title: title) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 6) {
                 RowIcon(systemImage: tweak.icon)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(tweak.title)
-                        .font(.subheadline.weight(.medium))
-                    if !tweak.supported(), let minv = tweak.minv {
-                        Text("Requires iOS \(minv, specifier: "%.1f")+")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-                Spacer()
+                Spacer(minLength: 0)
                 if tweak.infoMessage != nil {
                     Button { onInfo(tweak) } label: {
                         Image(systemName: tweak.infoType == .warning || tweak.infoType == .error
@@ -488,7 +740,24 @@ struct TweakToggle: View {
                     .labelsHidden()
                     .disabled(!manager.isValid || !tweak.supported())
             }
-            .padding(.vertical, 2)
+            Text(tweak.title)
+                .font(.subheadline.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
+            Text(stateLine)
+                .font(.caption).foregroundStyle(.secondary)
         }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color(.secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
+    }
+
+    private var stateLine: String {
+        if !tweak.supported(), let minv = tweak.minv {
+            return "Requires iOS \(minv, specifier: "%.1f")+"
+        }
+        return tweak.isOn(in: manager.dictNow) ? "On" : "Off"
     }
 }

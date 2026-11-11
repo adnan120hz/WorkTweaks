@@ -25,7 +25,7 @@ struct LicenseView: View {
             } header: {
                 Text("Compatibility — Supported iOS Versions & Builds")
             } footer: {
-                Text("WorkTweaks v2.0 only opens on the builds listed above: the app checks your device's build at launch, and any other build gets the \"not supported\" screen instead of the app. Developed and tested on iOS 27.0.1 (24A446).")
+                Text("WorkTweaks v3.0 only opens on the builds listed above: the app checks your device's build at launch, and any other build gets the \"not supported\" screen instead of the app. Developed and tested on iOS 27.0.1 (24A446).")
             }
 
             Section {
@@ -56,7 +56,7 @@ struct LicenseView: View {
                 )
                 creditRow(
                     title: "mond — by rooootdev",
-                    detail: "The tweak engine: the tweak catalog and commands, and the load / apply / write system (mg.swift), ported from mond.",
+                    detail: "The CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on.",
                     url: "https://github.com/rooootdev/mond"
                 )
                 creditRow(
@@ -93,7 +93,7 @@ struct LicenseView: View {
             } header: {
                 Text("License")
             } footer: {
-                Text("WorkTweaks is free software under the GNU Affero General Public License v3.0. The core (worse_query) is GPL-3.0, but the tweak engine from mond and the CacheData method from Nugget are AGPL-3.0 — GPLv3 code may be combined into an AGPLv3 work, and the AGPL terms then cover the combined work as a whole.")
+                Text("WorkTweaks is free software under the GNU Affero General Public License v3.0. The core (worse_query) is GPL-3.0, but the CacheExtra key knowledge from mond and the CacheData method from Nugget are AGPL-3.0 — GPLv3 code may be combined into an AGPLv3 work, and the AGPL terms then cover the combined work as a whole.")
             }
 
             Section {

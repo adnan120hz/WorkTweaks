@@ -1,5 +1,14 @@
 import SwiftUI
 
+// MARK: - Sandbox tab (v3.0: utilities as their own menus)
+//
+// The identity header and the "Start Tweaks Feature" master
+// switch stay on the Sandbox home. Each utility group — Sandbox
+// Escape, Path Enumeration, App Group — is now a menu row that
+// opens its own page holding exactly the controls it had when
+// they were stacked sections here. The console stays on the
+// home, below the menu rows.
+
 struct SandboxView: View {
     @ObservedObject var console: Console
     @State private var path = "/private/var/mobile/Containers/Shared/AppGroup/"
@@ -10,10 +19,6 @@ struct SandboxView: View {
     /// stays locked until this is turned on. Shared with the
     /// Tweaks tab gate via the same AppStorage key.
     @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
-
-    private var isConsumed: Bool {
-        (sandboxHandle ?? -255) > 0
-    }
 
     var body: some View {
         NavigationStack {
@@ -56,75 +61,28 @@ struct SandboxView: View {
                     .padding(.vertical, 2)
                 }
 
+                // Utility menus — each opens its own page.
                 Section {
-                    TextField("App Group ID", text: $groupText)
-                        .disableAutocorrection(true)
-                        .textInputAutocapitalization(.never)
-
-                    Button("Save App Group ID") {
-                        AppGroupResolver.configuredGroup = groupText
-                        print("[AppGroup] configured group set to: \(groupText)")
-                        AppGroupResolver.logDiagnostics()
+                    NavigationLink {
+                        SandboxEscapePage(path: $path, sandboxHandle: $sandboxHandle)
+                    } label: {
+                        Label("Sandbox Escape", systemImage: "lock.open")
                     }
 
-                    Button("App Group Diagnostics") {
-                        AppGroupResolver.logDiagnostics()
+                    NavigationLink {
+                        PathEnumerationPage(path: path)
+                    } label: {
+                        Label("Path Enumeration", systemImage: "list.bullet.indent")
                     }
-                } header: {
-                    Text("App Group")
-                } footer: {
-                    Text("Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.")
-                }
 
-                Section {
-                    TextField("Target", text: $path)
-                        .disabled(isConsumed)
-                        .disableAutocorrection(true)
-                        .textInputAutocapitalization(.never)
-                } header: {
-                    Text("Target Path")
-                }
-
-                Section {
-                    Button("Consume Sandbox Extension") {
-                        sandboxHandle = consumeExtension(path)
+                    NavigationLink {
+                        AppGroupPage(groupText: $groupText)
+                    } label: {
+                        Label("App Group", systemImage: "person.2")
                     }
-                    .disabled(path.isEmpty || isConsumed)
-
-                    Button("Release Sandbox Extension") {
-                        if let handle = sandboxHandle {
-                            releaseExtension(handle)
-                        }
-                        sandboxHandle = nil
-                    }
-                    .disabled(!isConsumed)
-                } header: {
-                    Text("Escape")
-                }
-
-                Section {
-                    ShareLink(item: URL(fileURLWithPath: path)) {
-                        Label("Share Contents", systemImage: "square.and.arrow.up")
-                    }
-                    .disabled(path.isEmpty)
                 } header: {
                     Text("Utilities")
                 }
-
-                Section {
-                    // Reliable, but insanely slow
-                    Button("Get Paths (pathleak)") {
-                        leakPaths(path)
-                    }
-                    // Only works on directories that can get a parent
-                    // directory extension (AppGroup and System on 27.x)
-                    Button("Get Paths (parentdir)") {
-                        listPaths(path)
-                    }
-                } header: {
-                    Text("Enumeration")
-                }
-                .disabled(path.isEmpty)
 
                 Section {
                     ScrollViewReader { proxy in
@@ -153,5 +111,124 @@ struct SandboxView: View {
             }
             .navigationTitle("Sandbox")
         }
+    }
+}
+
+// MARK: - Sandbox Escape page
+//
+// Target Path field + Consume / Release Sandbox Extension, plus
+// Share Contents, which acts on the same target path.
+
+struct SandboxEscapePage: View {
+    @Binding var path: String
+    @Binding var sandboxHandle: Int64?
+
+    private var isConsumed: Bool {
+        (sandboxHandle ?? -255) > 0
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("Target", text: $path)
+                    .disabled(isConsumed)
+                    .disableAutocorrection(true)
+                    .textInputAutocapitalization(.never)
+            } header: {
+                Text("Target Path")
+            }
+
+            Section {
+                Button("Consume Sandbox Extension") {
+                    sandboxHandle = consumeExtension(path)
+                }
+                .disabled(path.isEmpty || isConsumed)
+
+                Button("Release Sandbox Extension") {
+                    if let handle = sandboxHandle {
+                        releaseExtension(handle)
+                    }
+                    sandboxHandle = nil
+                }
+                .disabled(!isConsumed)
+            } header: {
+                Text("Escape")
+            }
+
+            Section {
+                ShareLink(item: URL(fileURLWithPath: path)) {
+                    Label("Share Contents", systemImage: "square.and.arrow.up")
+                }
+                .disabled(path.isEmpty)
+            } header: {
+                Text("Utilities")
+            }
+        }
+        .navigationTitle("Sandbox Escape")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Path Enumeration page
+//
+// Enumerates the paths under the Sandbox tab's target path.
+
+struct PathEnumerationPage: View {
+    let path: String
+
+    var body: some View {
+        Form {
+            Section {
+                // Reliable, but insanely slow
+                Button("Get Paths (pathleak)") {
+                    leakPaths(path)
+                }
+                // Only works on directories that can get a parent
+                // directory extension (AppGroup and System on 27.x)
+                Button("Get Paths (parentdir)") {
+                    listPaths(path)
+                }
+            } header: {
+                Text("Enumeration")
+            }
+            .disabled(path.isEmpty)
+        }
+        .navigationTitle("Path Enumeration")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - App Group page
+//
+// App Group ID field + Save + Diagnostics, with the explanation
+// of what error -1 means.
+
+struct AppGroupPage: View {
+    @Binding var groupText: String
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("App Group ID", text: $groupText)
+                    .disableAutocorrection(true)
+                    .textInputAutocapitalization(.never)
+
+                Button("Save App Group ID") {
+                    AppGroupResolver.configuredGroup = groupText
+                    print("[AppGroup] configured group set to: \(groupText)")
+                    AppGroupResolver.logDiagnostics()
+                }
+
+                Button("App Group Diagnostics") {
+                    AppGroupResolver.logDiagnostics()
+                }
+            } header: {
+                Text("App Group")
+            } footer: {
+                Text("Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.")
+            }
+        }
+        .navigationTitle("App Group")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
