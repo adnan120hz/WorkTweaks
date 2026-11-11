@@ -756,7 +756,7 @@ struct TweakCard: View {
 
     private var stateLine: String {
         if !tweak.supported(), let minv = tweak.minv {
-            return "Requires iOS \(minv, specifier: "%.1f")+"
+            return String(format: "Requires iOS %.1f+", minv)
         }
         return tweak.isOn(in: manager.dictNow) ? "On" : "Off"
     }
