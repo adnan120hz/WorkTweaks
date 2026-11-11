@@ -33,7 +33,11 @@ import Darwin
 /// be established. Slow by design (one fsgetpath per inode up
 /// to the baseline) — call off the main thread. Logs the method,
 /// the cap, the elapsed time, and the hit count so a device
-/// test explains itself.
+/// test explains itself. The root is canonicalized with
+/// canonicalScanPath before scanning: pathleak's literal
+/// prefix match needs the canonical /private spelling that
+/// fsgetpath returns (a /var/... root can never match), and
+/// the children come back in that same /private form.
 func wtPathleakChildren(_ root: String) -> [String]? {
     let files = FileManager.default
     let baselineURL = files.temporaryDirectory.appendingPathComponent(".baseline_\(UUID().uuidString)")
@@ -51,11 +55,16 @@ func wtPathleakChildren(_ root: String) -> [String]? {
     }
     guard baselineInode > 0 else { return nil }
 
-    print("(containers) pathleak scan of \(root) up to inode \(baselineInode) — this can take a while…")
+    let scanRoot = canonicalScanPath(root)
+    if scanRoot != root {
+        print("(containers) canonicalized scan root: \(root) -> \(scanRoot)")
+    }
+
+    print("(containers) pathleak scan of \(scanRoot) up to inode \(baselineInode) — this can take a while…")
     let started = Date()
-    let found = pathleak(root, baselineInode) ?? []
+    let found = pathleak(scanRoot, baselineInode) ?? []
     let elapsed = Date().timeIntervalSince(started)
-    print(String(format: "(containers) pathleak found %d container(s) under %@ in %.1fs.", found.count, root, elapsed))
+    print(String(format: "(containers) pathleak found %d container(s) under %@ in %.1fs.", found.count, scanRoot, elapsed))
     return found.sorted()
 }
 

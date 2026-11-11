@@ -159,7 +159,34 @@ func releaseExtension(_ handle: Int64) {
 
 // MARK: - Path Leak
 
+/// Canonical spelling of a pathleak scan target.
+///
+/// pathleak (pathleak.m, fork code) matches fsgetpath results
+/// against the handed path by literal prefix, and fsgetpath
+/// returns canonical paths: on iOS the data volume mounts at
+/// /private/var and /var is a symlink to it, so fsgetpath never
+/// returns a path starting with /var/. A scan target spelled
+/// /var/... therefore matches nothing (the App Data container
+/// scan ran the full inode range and found 0 containers this
+/// way). Resolve the target at our call boundary instead —
+/// realpath() first, the /var -> /private spelling rewrite as
+/// the fallback for targets that cannot be resolved.
+func canonicalScanPath(_ path: String) -> String {
+    var buf = [CChar](repeating: 0, count: Int(PATH_MAX))
+    if realpath(path, &buf) != nil {
+        return String(cString: buf)
+    }
+    if path.hasPrefix("/var/") {
+        return "/private" + path
+    }
+    return path
+}
+
 func leakPaths(_ filter: String) {
+    let scanFilter = canonicalScanPath(filter)
+    if scanFilter != filter {
+        print("canonicalized scan path: \(filter) -> \(scanFilter)")
+    }
     let files = FileManager.default
     let baselineURL = files.temporaryDirectory.appendingPathComponent(".baseline_\(UUID().uuidString)")
     var baselineInode: UInt64 = 0
@@ -188,7 +215,7 @@ func leakPaths(_ filter: String) {
     // small number would make the scan find almost nothing.
     let baseline = baselineInode
     DispatchQueue.global(qos: .userInitiated).async {
-        let paths = pathleak(filter, baseline) ?? []
+        let paths = pathleak(scanFilter, baseline) ?? []
         print("pathleak found \(paths.count) path(s).")
 
         for path in paths {
