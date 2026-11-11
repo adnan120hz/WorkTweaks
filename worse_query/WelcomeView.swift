@@ -153,7 +153,7 @@ struct WelcomeView: View {
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Color(.systemGroupedBackground), in: Capsule())
+            .wtGlassCard(cornerRadius: 999)
     }
 
     // MARK: Sections

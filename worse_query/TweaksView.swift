@@ -427,10 +427,7 @@ struct TweaksView: View {
             }
         }
         .padding(10)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 16)
     }
 
     // MARK: Right-column companion cards (identity + menus)
@@ -460,10 +457,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 16)
     }
 
     // Menus quick-access card at the bottom of the right column:
@@ -483,10 +477,7 @@ struct TweaksView: View {
             menuRow(title: "Backup", systemImage: "externaldrive.badge.timemachine") { onOpenBackup() }
         }
         .padding(10)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 16)
     }
 
     private func menuRow(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
@@ -530,10 +521,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 14)
     }
 
     private var statusIcon: String {
@@ -576,10 +564,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 14)
     }
 
     // MARK: Section cards (left column)
@@ -652,10 +637,7 @@ struct TweaksView: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                Color(.secondarySystemGroupedBackground),
-                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-            )
+            .wtGlassCard(cornerRadius: 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -708,10 +690,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 14)
     }
 
     /// Device Artwork: Custom Device Name toggle + field.
@@ -732,10 +711,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 14)
     }
 
     /// Eligibility: the device-model spoofing picker.
@@ -785,10 +761,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 14)
     }
 
     /// Write Method: "Persist after reboot" (atomic_write).
@@ -807,10 +780,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 14)
     }
 
     // MARK: Actions (Apply / Respring / Revert)
@@ -849,10 +819,7 @@ struct TweaksView: View {
             .foregroundStyle(destructive ? Color.red : Color.accentColor)
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                Color(.secondarySystemGroupedBackground),
-                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-            )
+            .wtGlassCard(cornerRadius: 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -895,10 +862,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 14)
         .contentShape(Rectangle())
     }
 
@@ -948,10 +912,7 @@ struct TweakCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .wtGlassCard(cornerRadius: 14)
     }
 
     private var stateLine: String {
