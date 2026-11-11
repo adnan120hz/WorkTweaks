@@ -113,6 +113,11 @@ struct AppDataView: View {
                         Label("Deploy Package…", systemImage: "shippingbox")
                     }
                     NavigationLink {
+                        PackageBuilderView(appDataManager: manager)
+                    } label: {
+                        Label("Package Builder", systemImage: "hammer")
+                    }
+                    NavigationLink {
                         DeployHistoryView(appDataManager: manager)
                     } label: {
                         Label("Deploy History", systemImage: "clock.arrow.circlepath")

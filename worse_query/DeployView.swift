@@ -9,9 +9,26 @@ import UniformTypeIdentifiers
 // format and the safety rules are documented on this page
 // itself, under "Package Format".
 //
+// The page is composed of two shared sections, so the App
+// Data ••• menu's "Package Builder" page can host exactly
+// the same machinery: DeployStoreSection (the "My Packages"
+// store and its builder) and DeployPreviewSection (the
+// manifest / files / target / result preview every loaded
+// package lands in, however it was loaded).
+//
 // Since v3.8 the page renders as Liquid Glass cards
 // (WTGlassPage/WTSectionCard), like every other page —
 // presentation only; the deploy flow is unchanged.
+
+/// The content types every Deploy package picker accepts:
+/// a folder, or a .zip / .deploy archive.
+private func deployPackageContentTypes() -> [UTType] {
+    var types: [UTType] = [.folder, .zip]
+    if let deployType = UTType(filenameExtension: "deploy", conformingTo: .data) {
+        types.append(deployType)
+    }
+    return types
+}
 
 struct DeployView: View {
     @ObservedObject var appDataManager: AppDataManager
@@ -20,44 +37,146 @@ struct DeployView: View {
     @State private var package: LoadedDeployPackage?
     @State private var importError: String?
     @State private var showImporter = false
-    @State private var wantsResolve = false
 
-    // Package store ("My Packages") + builder state.
+    var body: some View {
+        WTGlassPage {
+            DeployStoreSection(
+                appDataManager: appDataManager,
+                onDeploy: { presentLoadedPackage($0) },
+                onImportError: { importError = $0 }
+            )
+
+            WTSectionCard(header: "Deploy Package") {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("A Deploy package replaces files inside exactly one app — the app named by its bundle ID. It cannot touch any other app: every target path is relative to that app's container, and packages with absolute or \"..\" paths are rejected whole.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+
+                    Divider()
+                        .padding(.leading, 14)
+
+                    Button {
+                        showImporter = true
+                    } label: {
+                        Label(package == nil ? "Choose Package…" : "Choose a Different Package…", systemImage: "shippingbox")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                    }
+                }
+            }
+
+            if let importError {
+                WTSectionCard(footer: "Nothing was written.") {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Label("This package was rejected", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text(importError)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                }
+            }
+
+            DeployPreviewSection(
+                appDataManager: appDataManager,
+                package: $package,
+                deployManager: deployManager
+            )
+
+            WTSectionCard(header: "Package Format") {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("A package is a folder, or a .zip / .deploy archive, containing a manifest.json at its top level plus the payload files it names:")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("""
+                    {
+                      "bundleID": "com.example.app",
+                      "scope": "Application",
+                      "name": "Optional label",
+                      "files": [
+                        { "path": "Library/Preferences/com.example.app.plist",
+                          "source": "payload/com.example.app.plist" }
+                      ]
+                    }
+                    """)
+                    .font(.system(.caption, design: .monospaced))
+                    Text("Single-file shorthand: instead of \"files\", give \"relativePath\" and \"file\". \"scope\" is Application (bundleID = the app's bundle ID), AppGroup (bundleID = the group identifier, e.g. group.com.example) or InternalDaemon. ZIP archives may use stored or deflated entries; encrypted and ZIP64 archives are not supported.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+            }
+        }
+        .navigationTitle("Deploy")
+        .navigationBarTitleDisplayMode(.inline)
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: deployPackageContentTypes()) { result in
+            switch result {
+            case .success(let url):
+                switch DeployManager.loadPackage(from: url) {
+                case .success(let loaded):
+                    presentLoadedPackage(loaded)
+                case .failure(let error):
+                    package = nil
+                    importError = error.message
+                }
+            case .failure(let error):
+                importError = error.localizedDescription
+            }
+        }
+    }
+
+    /// Show a loaded package in the preview/deploy flow
+    /// below — the same state a fresh import lands in.
+    private func presentLoadedPackage(_ loaded: LoadedDeployPackage) {
+        package = loaded
+        importError = nil
+        deployManager.resolvedContainerPath = nil
+        deployManager.resolveError = nil
+        deployManager.lastResult = nil
+    }
+}
+
+// MARK: - Package store ("My Packages")
+//
+// The stored-package list and everything attached to it:
+// the New Package / Import Package… actions, the
+// builder/editor sheet, the export share sheet and the
+// delete confirmation. One implementation, hosted by both
+// the Deploy page and the Package Builder page, so both
+// entry points show the same live store. Deploying a
+// stored package is handed to the host (onDeploy), which
+// shows it in its own preview flow.
+
+struct DeployStoreSection: View {
+    @ObservedObject var appDataManager: AppDataManager
+    /// A stored package's Deploy action, after the package
+    /// loaded successfully.
+    var onDeploy: (LoadedDeployPackage) -> Void
+    /// An import-for-editing failure, for the host to show
+    /// in its package-rejected card.
+    var onImportError: (String) -> Void
+
     @State private var storedPackages: [StoredDeployPackage] = []
-    @State private var importerPurpose: PackageImporterPurpose = .deployPreview
+    @State private var showImporter = false
     @State private var editorSession: DeployEditorSession?
     @State private var packageToDelete: StoredDeployPackage?
     @State private var exportItem: DeployExportItem?
     @State private var storeError: String?
-
-    private enum PackageImporterPurpose {
-        /// Pick a package to preview and deploy (the flow
-        /// this page has always had).
-        case deployPreview
-        /// Pick a package to copy into the store and open in
-        /// the builder.
-        case storeAndEdit
-    }
 
     private struct DeployExportItem: Identifiable {
         let url: URL
         var id: String { url.path }
     }
 
-    private var packageContentTypes: [UTType] {
-        var types: [UTType] = [.folder, .zip]
-        if let deployType = UTType(filenameExtension: "deploy", conformingTo: .data) {
-            types.append(deployType)
-        }
-        return types
-    }
-
-    private var isResolving: Bool {
-        deployManager.isResolving || (wantsResolve && appDataManager.isScanning)
-    }
-
     var body: some View {
-        WTGlassPage {
+        Group {
             WTSectionCard(header: "My Packages", footer: "Packages you build or import are stored on this device, in WorkTweaks' own container. Tap a package to edit it. Deploy runs it through the same preview, resolve and backup flow as a picked package.") {
                 VStack(alignment: .leading, spacing: 0) {
                     if storedPackages.isEmpty {
@@ -92,7 +211,6 @@ struct DeployView: View {
                         .padding(.leading, 14)
 
                     Button {
-                        importerPurpose = .storeAndEdit
                         showImporter = true
                     } label: {
                         Label("Import Package…", systemImage: "square.and.arrow.down")
@@ -117,45 +235,160 @@ struct DeployView: View {
                     .padding(.vertical, 10)
                 }
             }
+        }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: deployPackageContentTypes()) { result in
+            switch result {
+            case .success(let url):
+                switch DeployManager.importIntoStore(from: url) {
+                case .success(let stored):
+                    storedPackages = DeployManager.loadStoredPackages()
+                    editorSession = DeployEditorSession(package: stored, isNew: false)
+                case .failure(let error):
+                    onImportError(error.message)
+                }
+            case .failure(let error):
+                onImportError(error.localizedDescription)
+            }
+        }
+        .onAppear {
+            storedPackages = DeployManager.loadStoredPackages()
+        }
+        .sheet(item: $editorSession, onDismiss: {
+            storedPackages = DeployManager.loadStoredPackages()
+        }) { session in
+            DeployBuilderView(appDataManager: appDataManager, session: session)
+        }
+        .sheet(item: $exportItem) { item in
+            DeployShareSheet(items: [item.url])
+        }
+        .confirmationDialog(
+            "Delete Package",
+            isPresented: Binding(
+                get: { packageToDelete != nil },
+                set: { if !$0 { packageToDelete = nil } }
+            ),
+            presenting: packageToDelete
+        ) { stored in
+            Button("Delete \"\(stored.displayName)\"", role: .destructive) {
+                if DeployManager.deleteStoredPackage(stored) {
+                    storedPackages = DeployManager.loadStoredPackages()
+                }
+                packageToDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                packageToDelete = nil
+            }
+        } message: { _ in
+            Text("The stored package is removed. Files it already deployed, and its Deploy History receipts, are not touched.")
+        }
+    }
 
-            WTSectionCard(header: "Deploy Package") {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("A Deploy package replaces files inside exactly one app — the app named by its bundle ID. It cannot touch any other app: every target path is relative to that app's container, and packages with absolute or \"..\" paths are rejected whole.")
+    private func storedPackageRow(_ stored: StoredDeployPackage) -> some View {
+        HStack(spacing: 10) {
+            Button {
+                editorSession = DeployEditorSession(package: stored, isNew: false)
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(stored.displayName)
+                        .font(.subheadline.weight(.semibold))
+                    Text("\(stored.bundleID) • \(stored.scope) • \(stored.files.count) file\(stored.files.count == 1 ? "" : "s")")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-
-                    Divider()
-                        .padding(.leading, 14)
-
-                    Button {
-                        importerPurpose = .deployPreview
-                        showImporter = true
-                    } label: {
-                        Label(package == nil ? "Choose Package…" : "Choose a Different Package…", systemImage: "shippingbox")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 11)
-                            .contentShape(Rectangle())
-                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
 
-            if let importError {
-                WTSectionCard(footer: "Nothing was written.") {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Label("This package was rejected", systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                        Text(importError)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
+            Menu {
+                Button {
+                    editorSession = DeployEditorSession(package: stored, isNew: false)
+                } label: {
+                    Label("Edit", systemImage: "pencil")
                 }
+                Button {
+                    deployStoredPackage(stored)
+                } label: {
+                    Label("Deploy", systemImage: "shippingbox")
+                }
+                Button {
+                    exportStoredPackage(stored)
+                } label: {
+                    Label("Export .deploy", systemImage: "square.and.arrow.up")
+                }
+                Button(role: .destructive) {
+                    packageToDelete = stored
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.title3)
             }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+    }
 
+    private func newPackageTapped() {
+        if let draft = DeployManager.makeNewStoredPackage() {
+            editorSession = DeployEditorSession(package: draft, isNew: true)
+        } else {
+            storeError = "The package store is unavailable (the App Group container did not resolve)."
+        }
+    }
+
+    /// Deploy a stored package by feeding its folder through
+    /// the regular loader into the host's preview flow — no
+    /// second deploy path.
+    private func deployStoredPackage(_ stored: StoredDeployPackage) {
+        switch DeployManager.loadPackage(from: stored.folderURL) {
+        case .success(let loaded):
+            storeError = nil
+            onDeploy(loaded)
+        case .failure(let error):
+            storeError = error.message
+        }
+    }
+
+    private func exportStoredPackage(_ stored: StoredDeployPackage) {
+        if let url = DeployManager.exportArchiveURL(for: stored) {
+            storeError = nil
+            exportItem = DeployExportItem(url: url)
+        } else {
+            storeError = "The package could not be exported."
+        }
+    }
+}
+
+// MARK: - Deploy preview (manifest / files / target / result)
+//
+// The preview every loaded package lands in: its manifest,
+// its files, target resolution and the Deploy button, then
+// the run's result lines. Hosted by the Deploy page and by
+// the Package Builder page; the package itself is the
+// host's state, so both pages drive the one preview.
+
+struct DeployPreviewSection: View {
+    @ObservedObject var appDataManager: AppDataManager
+    @Binding var package: LoadedDeployPackage?
+    @ObservedObject var deployManager: DeployManager
+
+    @State private var wantsResolve = false
+
+    private var isResolving: Bool {
+        deployManager.isResolving || (wantsResolve && appDataManager.isScanning)
+    }
+
+    /// Identity of the presented package, for change
+    /// detection: presenting a different package cancels a
+    /// resolve that was still waiting on the container scan.
+    private var packageKey: String? {
+        package.map { "\($0.bundleID)|\($0.scope)|\($0.files.count)|\($0.name ?? "")" }
+    }
+
+    var body: some View {
+        Group {
             if let package {
                 WTSectionCard(header: "Manifest") {
                     VStack(alignment: .leading, spacing: 0) {
@@ -282,89 +515,9 @@ struct DeployView: View {
                     .padding(.vertical, 4)
                 }
             }
-
-            WTSectionCard(header: "Package Format") {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("A package is a folder, or a .zip / .deploy archive, containing a manifest.json at its top level plus the payload files it names:")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text("""
-                    {
-                      "bundleID": "com.example.app",
-                      "scope": "Application",
-                      "name": "Optional label",
-                      "files": [
-                        { "path": "Library/Preferences/com.example.app.plist",
-                          "source": "payload/com.example.app.plist" }
-                      ]
-                    }
-                    """)
-                    .font(.system(.caption, design: .monospaced))
-                    Text("Single-file shorthand: instead of \"files\", give \"relativePath\" and \"file\". \"scope\" is Application (bundleID = the app's bundle ID), AppGroup (bundleID = the group identifier, e.g. group.com.example) or InternalDaemon. ZIP archives may use stored or deflated entries; encrypted and ZIP64 archives are not supported.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-            }
         }
-        .navigationTitle("Deploy")
-        .navigationBarTitleDisplayMode(.inline)
-        .fileImporter(isPresented: $showImporter, allowedContentTypes: packageContentTypes) { result in
-            switch result {
-            case .success(let url):
-                switch importerPurpose {
-                case .deployPreview:
-                    switch DeployManager.loadPackage(from: url) {
-                    case .success(let loaded):
-                        presentLoadedPackage(loaded)
-                    case .failure(let error):
-                        package = nil
-                        importError = error.message
-                    }
-                case .storeAndEdit:
-                    switch DeployManager.importIntoStore(from: url) {
-                    case .success(let stored):
-                        storedPackages = DeployManager.loadStoredPackages()
-                        editorSession = DeployEditorSession(package: stored, isNew: false)
-                    case .failure(let error):
-                        importError = error.message
-                    }
-                }
-            case .failure(let error):
-                importError = error.localizedDescription
-            }
-        }
-        .onAppear {
-            storedPackages = DeployManager.loadStoredPackages()
-        }
-        .sheet(item: $editorSession, onDismiss: {
-            storedPackages = DeployManager.loadStoredPackages()
-        }) { session in
-            DeployBuilderView(appDataManager: appDataManager, session: session)
-        }
-        .sheet(item: $exportItem) { item in
-            DeployShareSheet(items: [item.url])
-        }
-        .confirmationDialog(
-            "Delete Package",
-            isPresented: Binding(
-                get: { packageToDelete != nil },
-                set: { if !$0 { packageToDelete = nil } }
-            ),
-            presenting: packageToDelete
-        ) { stored in
-            Button("Delete \"\(stored.displayName)\"", role: .destructive) {
-                if DeployManager.deleteStoredPackage(stored) {
-                    storedPackages = DeployManager.loadStoredPackages()
-                }
-                packageToDelete = nil
-            }
-            Button("Cancel", role: .cancel) {
-                packageToDelete = nil
-            }
-        } message: { _ in
-            Text("The stored package is removed. Files it already deployed, and its Deploy History receipts, are not touched.")
+        .onChange(of: packageKey) { _, _ in
+            wantsResolve = false
         }
         .onChange(of: appDataManager.didScan) { _, done in
             if done, wantsResolve, let package, package.scope == "Application" {
@@ -406,96 +559,6 @@ struct DeployView: View {
             return
         }
         deployManager.resolveTarget(package: package, containers: appDataManager.containers)
-    }
-
-    // MARK: Package store ("My Packages")
-
-    /// Show a loaded package in the preview/deploy flow
-    /// below — the same state a fresh import lands in.
-    private func presentLoadedPackage(_ loaded: LoadedDeployPackage) {
-        package = loaded
-        importError = nil
-        wantsResolve = false
-        deployManager.resolvedContainerPath = nil
-        deployManager.resolveError = nil
-        deployManager.lastResult = nil
-    }
-
-    private func storedPackageRow(_ stored: StoredDeployPackage) -> some View {
-        HStack(spacing: 10) {
-            Button {
-                editorSession = DeployEditorSession(package: stored, isNew: false)
-            } label: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(stored.displayName)
-                        .font(.subheadline.weight(.semibold))
-                    Text("\(stored.bundleID) • \(stored.scope) • \(stored.files.count) file\(stored.files.count == 1 ? "" : "s")")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            Menu {
-                Button {
-                    editorSession = DeployEditorSession(package: stored, isNew: false)
-                } label: {
-                    Label("Edit", systemImage: "pencil")
-                }
-                Button {
-                    deployStoredPackage(stored)
-                } label: {
-                    Label("Deploy", systemImage: "shippingbox")
-                }
-                Button {
-                    exportStoredPackage(stored)
-                } label: {
-                    Label("Export .deploy", systemImage: "square.and.arrow.up")
-                }
-                Button(role: .destructive) {
-                    packageToDelete = stored
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.title3)
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-    }
-
-    private func newPackageTapped() {
-        if let draft = DeployManager.makeNewStoredPackage() {
-            editorSession = DeployEditorSession(package: draft, isNew: true)
-        } else {
-            storeError = "The package store is unavailable (the App Group container did not resolve)."
-        }
-    }
-
-    /// Deploy a stored package by feeding its folder through
-    /// the regular loader into the preview flow — no second
-    /// deploy path.
-    private func deployStoredPackage(_ stored: StoredDeployPackage) {
-        switch DeployManager.loadPackage(from: stored.folderURL) {
-        case .success(let loaded):
-            storeError = nil
-            presentLoadedPackage(loaded)
-        case .failure(let error):
-            storeError = error.message
-        }
-    }
-
-    private func exportStoredPackage(_ stored: StoredDeployPackage) {
-        if let url = DeployManager.exportArchiveURL(for: stored) {
-            storeError = nil
-            exportItem = DeployExportItem(url: url)
-        } else {
-            storeError = "The package could not be exported."
-        }
     }
 }
 

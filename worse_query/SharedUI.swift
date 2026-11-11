@@ -92,6 +92,15 @@ struct WTSectionCard<Content: View>: View {
                 content()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            // Every button inside a section card inherits the
+            // plain style: a default-style Button or Link on
+            // the glass surface renders as a filled blue
+            // capsule on iOS 26, which reads as decoration,
+            // not as a row. A button that sets its own style
+            // (.bordered, .borderedProminent) closer to itself
+            // still wins — the environment value only reaches
+            // buttons that don't declare one.
+            .buttonStyle(.plain)
             .wtGlassCard(cornerRadius: 16)
 
             if let footer {

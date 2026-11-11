@@ -419,6 +419,66 @@ struct DeployContainerPickerView: View {
     }
 }
 
+// MARK: - Package Builder page
+//
+// The App Data ••• menu's direct entry to the package
+// store — the menu item is named "Package Builder", so
+// this page is too. It hosts the same DeployStoreSection
+// as the Deploy page (one store, one builder) plus the
+// shared DeployPreviewSection, so a stored package can be
+// deployed from here without detouring through the Deploy
+// page.
+
+struct PackageBuilderView: View {
+    @ObservedObject var appDataManager: AppDataManager
+    @StateObject private var deployManager = DeployManager()
+
+    @State private var package: LoadedDeployPackage?
+    @State private var importError: String?
+
+    var body: some View {
+        WTGlassPage {
+            DeployStoreSection(
+                appDataManager: appDataManager,
+                onDeploy: { presentLoadedPackage($0) },
+                onImportError: { importError = $0 }
+            )
+
+            if let importError {
+                WTSectionCard(footer: "Nothing was written.") {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Label("This package was rejected", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text(importError)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                }
+            }
+
+            DeployPreviewSection(
+                appDataManager: appDataManager,
+                package: $package,
+                deployManager: deployManager
+            )
+        }
+        .navigationTitle("Package Builder")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// Show a loaded package in the preview/deploy flow
+    /// below — the same state a fresh import lands in.
+    private func presentLoadedPackage(_ loaded: LoadedDeployPackage) {
+        package = loaded
+        importError = nil
+        deployManager.resolvedContainerPath = nil
+        deployManager.resolveError = nil
+        deployManager.lastResult = nil
+    }
+}
+
 // MARK: - Share sheet (package export)
 
 struct DeployShareSheet: UIViewControllerRepresentable {
