@@ -80,6 +80,12 @@ struct SandboxView: View {
                     } label: {
                         Label("App Group", systemImage: "person.2")
                     }
+
+                    NavigationLink {
+                        DaemonsView()
+                    } label: {
+                        Label("Daemons", systemImage: "gearshape.2")
+                    }
                 } header: {
                     Text("Utilities")
                 }
