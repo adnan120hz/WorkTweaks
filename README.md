@@ -100,7 +100,20 @@ The AGPL-3.0 license above covers **WorkTweaks only**. It does not apply to Sign
 
 ## Install
 
-WorkTweaks is distributed as an unsigned IPA and must be installed with **[iLoader](https://iloader.app)** — the free sideloading tool for Windows, macOS, and Linux (download it only from the official site, iloader.app). Open iLoader, sign in with your Apple ID, connect your device by USB, choose **Install IPA**, and select the WorkTweaks `.ipa`. Alternatively, the IPA can be signed on-device with the **Signed Apps** companion. With a free Apple ID, sideloaded apps expire after about 7 days and must be refreshed.
+WorkTweaks is distributed as an unsigned IPA. Whichever route you take, the IPA must end up signed with a provisioning profile that includes **WorkTweaks' App Group registered under your own team** — that requirement is what decides which tools work and which do not. With a free Apple ID, sideloaded apps expire after about 7 days and must be refreshed.
+
+**Option 1 — iLoader (desktop).** Install with **[iLoader](https://iloader.app)** — the free sideloading tool for Windows, macOS, and Linux (download it only from the official site, iloader.app). Open iLoader, sign in with your Apple ID, connect your device by USB, choose **Install IPA**, and select the WorkTweaks `.ipa`. iLoader registers the App Group under your team as part of signing.
+
+**Option 2 — Signed Apps (on-device, no iLoader, no computer).** You can also sign and install WorkTweaks without iLoader, using an on-device signer that provisions with your own Apple ID — **Signed Apps** (the companion app above) does exactly this, and signers built the same way, such as SideInstaller, work on the same principle:
+
+1. Open **Signed Apps** and sign in with your Apple ID (**Sign In** tab).
+2. **Certificates** tab: create a certificate. If creation fails with **error 7460**, a certificate already holds your team's single slot — revoke the old certificate there first, then create a new one. (Revoking kills apps signed with the old certificate until they are re-signed.)
+3. **Install** tab → **Choose IPA…** and pick the WorkTweaks `.ipa`.
+4. **Provisioning** section: Bundle ID `cc.forcequit.worse-query.<your Team ID>`, App name `WorkTweaks`, App Group ID `group.cc.forcequit.worse-query.<your Team ID>` → tap **Provision** and wait until the profile is ready.
+5. **Signing** section: set the Bundle ID to the same `cc.forcequit.worse-query.<your Team ID>` — check this field *after* choosing the IPA, because picking an IPA resets it to the IPA's original ID — then tap **Sign IPA**.
+6. **Export** the signed IPA and install it. The signed IPA already carries your own profile, so a plain installer is enough for this last step.
+
+**What does NOT work:** signing WorkTweaks directly with **KSign**, or with **ESign's shared/free certificates** (the same applies to Sideloadly). Those signers cannot register the App Group under your team, so the signed result has no working App Group entitlement — WorkTweaks then cannot apply its tweaks. ESign is fine as the *installer* in step 6 for an IPA that Signed Apps has already signed; it just cannot do the provisioning itself.
 
 ## Building & signing notes
 
