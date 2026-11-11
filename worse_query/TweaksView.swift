@@ -5,9 +5,11 @@ import UIKit
 //
 // The tab is a two-column page: a scrolling column of tweak cards
 // on the left and a fixed "Sections" card on the right (All /
-// Display / Device / System / iPad / Gestalt) with an Apply
-// button as its bottom row; the card is vertically centered in
-// the right column. Toggles
+// Dynamic Island / Tweaks / Apple Intelligence / Add feature /
+// Apply/Revert); the card is vertically centered in
+// the right column. Apply/Revert is a section of its own: its
+// column holds the Apply / Respring / Revert action cards.
+// Toggles
 // mutate the in-memory MobileGestalt dictionary immediately;
 // "Apply Tweaks" persists it. Every tweak keeps its own SF Symbol
 // (see TweakCatalog.presentation), rendered uniformly as a plain
@@ -16,72 +18,72 @@ import UIKit
 // (wt.tweaksFeatureEnabled).
 
 /// The sections of the Tweaks tab's right-hand Sections card.
-/// All = the full catalog.
+/// All = the full catalog; Apply/Revert holds the action cards
+/// instead of tweaks.
 enum TweakSection: String, CaseIterable, Identifiable {
-    case all, display, device, system, ipad, gestalt
+    case all, dynamicIsland, tweaks, appleIntelligence, addFeature, applyRevert
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .all: return "All"
-        case .display: return "Display"
-        case .device: return "Device"
-        case .system: return "Apple Intelligence"
-        case .ipad: return "iPad"
-        case .gestalt: return "Gestalt"
+        case .dynamicIsland: return "Dynamic Island"
+        case .tweaks: return "Tweaks"
+        case .appleIntelligence: return "Apple Intelligence"
+        case .addFeature: return "Add feature"
+        case .applyRevert: return "Apply/Revert"
         }
     }
 
     var icon: String {
         switch self {
         case .all: return "square.grid.2x2"
-        case .display: return "display"
-        case .device: return "iphone"
-        case .system: return "gearshape"
-        case .ipad: return "ipad"
-        case .gestalt: return "slider.horizontal.3"
+        case .dynamicIsland: return "capsule.fill"
+        case .tweaks: return "slider.horizontal.3"
+        case .appleIntelligence: return "sparkles"
+        case .addFeature: return "plus.circle"
+        case .applyRevert: return "checkmark.circle"
         }
     }
 }
 
 /// Which section each catalog tweak belongs to — exactly one per
-/// tweak, keyed by tweak id. The union of Display / Device /
-/// System / iPad / Gestalt is the full 23-tweak catalog.
+/// tweak, keyed by tweak id. The union of Dynamic Island / Tweaks /
+/// Apple Intelligence / Add feature is the full 23-tweak catalog.
 enum TweakCategory {
     static let sectionByID: [String: TweakSection] = [
-        // Display
-        "enable_dynamic_island_capability": .display,
-        "always_on_display": .display,
-        "aod_vibrancy": .display,
-        "disable_wallpaper_parallax": .display,
-        "enable_liquid_glass_low_performance_mode": .display,
-        "disable_liquid_glass_low_performance_mode": .display,
-        "pulse_width_modulation": .display,
-        // Device
-        "boot_shutdown_chime": .device,
-        "charge_limit_menu": .device,
-        "tap_to_wake": .device,
-        "iphone_16_camera_control_settings": .device,
-        "action_button_settings": .device,
-        "collision_sos": .device,
-        // System
-        "security_research_device_mode": .system,
-        "disable_region_restrictions": .system,
-        "apple_intelligence": .system,
-        // iPad
-        "apple_pencil_settings": .ipad,
-        "allow_ipad_apps": .ipad,
-        "stage_manager_support": .ipad,
-        "enable_ipados_mode": .ipad,
-        // Gestalt (raw CacheExtra / internal flags)
-        "internal_storage_view": .gestalt,
-        "apple_internal_install": .gestalt,
-        "internal_features": .gestalt,
+        // Dynamic Island
+        "enable_dynamic_island_capability": .dynamicIsland,
+        // Apple Intelligence
+        "apple_intelligence": .appleIntelligence,
+        // Add feature
+        "iphone_16_camera_control_settings": .addFeature,
+        "action_button_settings": .addFeature,
+        "apple_pencil_settings": .addFeature,
+        "enable_ipados_mode": .addFeature,
+        "allow_ipad_apps": .addFeature,
+        "stage_manager_support": .addFeature,
+        "charge_limit_menu": .addFeature,
+        "tap_to_wake": .addFeature,
+        "collision_sos": .addFeature,
+        // Tweaks
+        "always_on_display": .tweaks,
+        "aod_vibrancy": .tweaks,
+        "disable_wallpaper_parallax": .tweaks,
+        "enable_liquid_glass_low_performance_mode": .tweaks,
+        "disable_liquid_glass_low_performance_mode": .tweaks,
+        "pulse_width_modulation": .tweaks,
+        "boot_shutdown_chime": .tweaks,
+        "security_research_device_mode": .tweaks,
+        "disable_region_restrictions": .tweaks,
+        "internal_storage_view": .tweaks,
+        "apple_internal_install": .tweaks,
+        "internal_features": .tweaks,
     ]
 
     static func section(of tweak: GestaltTweak) -> TweakSection {
-        sectionByID[tweak.id] ?? .gestalt
+        sectionByID[tweak.id] ?? .tweaks
     }
 }
 
@@ -229,9 +231,15 @@ struct TweaksView: View {
                         warningCard
                     }
 
-                    sectionCards
+                    // The Apply/Revert section's content is the
+                    // action cards; every other section shows its
+                    // tweak cards.
+                    if selectedSection == .applyRevert {
+                        actionsBlock
+                    } else {
+                        sectionCards
+                    }
 
-                    actionsBlock
                     footerLinks
                 }
                 .padding(.vertical, 16)
@@ -290,35 +298,6 @@ struct TweaksView: View {
                 }
                 .buttonStyle(.plain)
             }
-
-            // Bottom action row: Apply — the same action and
-            // enabled state as the "Apply Tweaks" card button
-            // in the left column.
-            Button {
-                manager.apply()
-                console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
-            } label: {
-                HStack(spacing: 9) {
-                    Image(systemName: "checkmark.circle")
-                        .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(manager.isValid ? Color.white : Color.secondary)
-                        .frame(width: 22)
-                    Text("Apply")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(manager.isValid ? Color.white : Color.secondary)
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 9)
-                .background(
-                    manager.isValid ? Color.accentColor : Color(.systemGray5),
-                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-                )
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .disabled(!manager.isValid)
-            .padding(.top, 4)
         }
         .padding(10)
         .background(
@@ -430,20 +409,15 @@ struct TweaksView: View {
                 subtypeCard
             }
             // The spoofing model picker sits next to Apple
-            // Intelligence in the All section, as before.
-            if tweak.id == "apple_intelligence" && selectedSection == .all {
+            // Intelligence, as before — in the All section and in
+            // the Apple Intelligence section itself.
+            if tweak.id == "apple_intelligence" && (selectedSection == .all || selectedSection == .appleIntelligence) {
                 spoofingCard
             }
         }
 
-        if selectedSection == .device {
+        if selectedSection == .tweaks || selectedSection == .all {
             deviceNameCard
-            spoofingCard
-        }
-        if selectedSection == .all {
-            deviceNameCard
-        }
-        if selectedSection == .gestalt || selectedSection == .all {
             persistCard
         }
     }

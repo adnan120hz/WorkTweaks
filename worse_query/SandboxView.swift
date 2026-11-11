@@ -47,6 +47,16 @@ struct SandboxView: View {
                         }
                     }
                     .padding(.vertical, 4)
+
+                    // Compact device details, from the same data
+                    // the support gate already computes.
+                    VStack(alignment: .leading, spacing: 6) {
+                        deviceInfoRow("Model", machineName())
+                        deviceInfoRow("iOS Version", SupportInfo.deviceVersion)
+                        deviceInfoRow("Build", SupportInfo.deviceBuild)
+                        deviceInfoRow("Support", SupportInfo.isSupported ? "Supported" : "Unsupported")
+                    }
+                    .padding(.vertical, 2)
                 }
 
                 // Master switch for the Tweaks feature.
@@ -117,6 +127,18 @@ struct SandboxView: View {
             }
             .navigationTitle("Sandbox")
         }
+    }
+
+    /// One label/value line of the identity card's device-details
+    /// block.
+    private func deviceInfoRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+        }
+        .font(.caption)
     }
 }
 
