@@ -204,7 +204,7 @@ struct PosterBoardMakerView: View {
             }
         } else {
             guard provider.hasItemConformingToTypeIdentifier(UTType.movie.identifier) else { return }
-            provider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { url, _, _ in
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { url, _ in
                 guard let url else { return }
                 let copy = FileManager.default.temporaryDirectory
                     .appendingPathComponent("maker-video-\(UUID().uuidString).mov")
