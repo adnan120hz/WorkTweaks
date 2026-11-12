@@ -1,6 +1,5 @@
 import Foundation
 import Darwin
-import Security
 
 /// The App Group this build is actually provisioned with.
 /// It must match `worse_query.entitlements` — changing this string alone
@@ -18,8 +17,8 @@ let workGestaltAppGroup = "group.cc.forcequit.worse-query"
 ///
 /// So the resolver does not guess blindly. It reads the groups in this
 /// order:
-///   1. The RUNNING process's own signed entitlements
-///      (SecTaskCopyValueForEntitlement) — the authoritative source.
+///   1. The RUNNING process's own signed entitlements (csops,
+///      via TaskEntitlements.c) — the authoritative source.
 ///      This is the only source that exists when there is no
 ///      provisioning profile at all, e.g. under LiveContainer, where
 ///      the guest app runs inside the host process with the host's
@@ -50,16 +49,17 @@ enum AppGroupResolver {
     // MARK: Live task entitlements
 
     /// The application-groups the RUNNING process is actually entitled
-    /// to, read from the code signature itself. Unlike the profile
-    /// below, this needs no embedded.mobileprovision — it is what the
-    /// kernel really granted this process, whatever signer or host
-    /// (SideStore, AltStore, LiveContainer) put it there.
+    /// to, read from the kernel (csops, see TaskEntitlements.c).
+    /// Unlike the profile below, this needs no
+    /// embedded.mobileprovision — it is what the kernel really
+    /// granted this process, whatever signer or host (SideStore,
+    /// AltStore, LiveContainer) put it there.
     static func taskAppGroups() -> [String] {
-        guard let task = SecTaskCreateFromSelf(nil),
-              let value = SecTaskCopyValueForEntitlement(task, "com.apple.security.application-groups" as CFString) else {
+        guard let data = wtTaskEntitlements(),
+              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
             return []
         }
-        return value as? [String] ?? []
+        return plist["com.apple.security.application-groups"] as? [String] ?? []
     }
 
     // MARK: Signed profile
