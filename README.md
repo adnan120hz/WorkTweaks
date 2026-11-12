@@ -16,10 +16,11 @@
 
 ## Features
 
-- **Tweaks** — WorkTweaks' own catalog of 23 tweaks: Dynamic Island, Always-On Display, Apple Intelligence, Stage Manager, Charge Limit, Action Button, Camera Control, iPadOS Mode, device spoofing, and more — applied with WorkTweaks' own in-place MobileGestalt write system, so tweaks persist across resprings and reboots. The catalog is organized into sections (All, Dynamic Island, Tweaks, Apple Intelligence, Add feature, Apply/Revert) with a search page.
+- **Install without manual signing** *(new in v4.0)* — WorkTweaks reads its App Group dynamically from the entitlements of the running process and tries every App Group in the signature until one works (multi-group fallback), so it no longer depends on a manually-signed provisioning profile. Install the unsigned IPA with SideStore, AltStore, or LiveContainer and the tweaks work — device-verified in LiveContainer.
+- **Tweaks** — WorkTweaks' own catalog of 23 tweaks: Dynamic Island, Always-On Display, Apple Intelligence, Stage Manager, Charge Limit, Action Button, Camera Control, iPadOS Mode, device spoofing, and more — applied with WorkTweaks' own in-place MobileGestalt write system, so tweaks persist across resprings and reboots. The catalog is organized into sections (All, Dynamic Island, Tweaks, Apple Intelligence, Add feature, Apply/Revert) with a search page. The Tweaks tab offers a **New UI / Old UI** choice *(new in v4.2)* — the current two-column layout or the v1 list layout, picked in Sandbox under Start Tweaks Feature; it applies to the Tweaks tab only.
 - **App Data** — browse the data containers of the apps on your device, open and edit text files in place, edit binary files byte by byte with the hex editor (a pristine backup is taken before the first byte edit), and add files and folders.
 - **Cache Data Cleaner** *(new in v3.13)* — Sandbox → Utilities: pick an app, see how much cache it keeps in `Library/Caches` and `tmp`, and empty those two folders after a confirmation. Only the contents of those two cache folders are deleted — Documents and the rest of Library are never touched — and the freed space is measured, not estimated.
-- **PosterBoard** — import `.tendies` wallpaper packages into PosterBoard's data store and remove the wallpapers you imported, tracked by receipts.
+- **PosterBoard** — import `.tendies` wallpaper packages into PosterBoard's data store and remove the wallpapers you imported, tracked by receipts. The built-in **wallpaper maker** *(new in v4.1)* creates PosterBoard wallpapers on-device from a photo or a video (first 12 seconds, loop on/off) and installs them through the same verified path.
 - **Deploy** — install file packages (`.deploy` / folders / `.zip` with a `manifest.json`) into app containers, App Groups, and internal daemon containers, with per-file backups and a restore history. The built-in **Package Builder** lets you create and edit packages on-device.
 - **Lock Screen Footnote** — set the footnote text shown on the Lock Screen, as a card in Tweaks → Add feature.
 - **Extra** — a free-form CacheExtra editor: add, edit, or delete any MobileGestalt key directly, with a Reset that restores exactly the keys you edited.
@@ -66,6 +67,8 @@ The two apps' credits are kept separate — they are different projects built on
 | [Nugget](https://github.com/leminlimez/Nugget) | leminlimez | The file-based CacheData pattern method used by Enable iPadOS Mode | AGPL-3.0 |
 | [3105](https://github.com/YangJiiii/3105) | YangJiii | Reference — app-data browsing and portable patches | — |
 | Xo File | — | Reference — cache data cleaner | — |
+| [Pocket Poster](https://github.com/leminlimez/Pocket-Poster) | leminlimez | Reference — video-to-wallpaper (CAML) builder used by the PosterBoard wallpaper maker | GPL-3.0 |
+| [CAPlayground](https://github.com/CAPlayground/CAPlayground) | CAPlayground | Reference — PosterBoard wallpaper format the maker was verified against | — |
 | Respring technique | neonmodder123 & skadz108 | The web-based respring approach and its Swift implementation (via jailbreak.party) | — |
 
 ### Signed Apps
@@ -84,7 +87,7 @@ The two apps' credits are kept separate — they are different projects built on
 
 WorkTweaks is free software, licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see [LICENSE](LICENSE) for the full text.
 
-Why AGPL and not plain GPL: the core system (worse_query) is GPL-3.0, but the CacheExtra key knowledge from mond and the CacheData method from Nugget are AGPL-3.0. GPLv3 code may be combined into an AGPLv3 work (GPLv3 §13), and the AGPL terms then apply to the combined work as a whole — so WorkTweaks is distributed under AGPL-3.0.
+Why AGPL and not plain GPL: the core system (worse_query) is GPL-3.0, but the CacheExtra key knowledge from mond and the CacheData method from Nugget are AGPL-3.0. GPLv3 code may be combined into an AGPLv3 work (GPLv3 §13), and the AGPL terms then apply to the combined work as a whole — so WorkTweaks is distributed under AGPL-3.0. The same applies to the wallpaper-maker format knowledge from Pocket Poster (GPL-3.0).
 
 ### Signed Apps — proprietary (NOT open source)
 
@@ -113,11 +116,13 @@ WorkTweaks is distributed as an unsigned IPA. Whichever route you take, the IPA 
 5. **Signing** section: set the Bundle ID to the same `cc.forcequit.worse-query.<your Team ID>` — check this field *after* choosing the IPA, because picking an IPA resets it to the IPA's original ID — then tap **Sign IPA**.
 6. **Export** the signed IPA and install it. The signed IPA already carries your own profile, so a plain installer is enough for this last step.
 
+**Option 3 — SideStore / AltStore / LiveContainer (no manual signing, v4.0+).** Install the unsigned IPA directly with SideStore, AltStore, or LiveContainer — no certificate, provisioning, or computer signing needed. WorkTweaks finds its App Group from the running process and works as installed.
+
 **What does NOT work:** signing WorkTweaks directly with **KSign**, or with **ESign's shared/free certificates** (the same applies to Sideloadly). Those signers cannot register the App Group under your team, so the signed result has no working App Group entitlement — WorkTweaks then cannot apply its tweaks. ESign is fine as the *installer* in step 6 for an IPA that Signed Apps has already signed; it just cannot do the provisioning itself.
 
 ## Building & signing notes
 
 - Every push to `main` builds an unsigned IPA in GitHub Actions (artifact `WorkTweaks-unsigned-ipa`).
 - The Xcode target is intentionally still named `worse_query` — only the display name is WorkTweaks.
-- The app must keep an App Group entitlement when signed. WorkTweaks reads its own provisioning profile at runtime and uses the group it was actually signed with, so signer-rewritten bundle ids and team-suffixed groups work automatically.
+- The app must keep an App Group entitlement when signed. WorkTweaks reads its App Group dynamically from the entitlements of the running process at runtime (with multi-group fallback), so signer-rewritten bundle ids, team-suffixed groups, and installs via SideStore/AltStore/LiveContainer work automatically.
 - Use at your own risk — tweaks modify system files. Keep your original backup.
