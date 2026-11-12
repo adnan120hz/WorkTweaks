@@ -55,8 +55,12 @@ enum AppGroupResolver {
     /// granted this process, whatever signer or host (SideStore,
     /// AltStore, LiveContainer) put it there.
     static func taskAppGroups() -> [String] {
-        guard let data = wtTaskEntitlements(),
-              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
+        guard let data = wtTaskEntitlements() else {
+            print("[AppGroup] csops: no entitlements blob (errno \(wtTaskEntitlementsErrno()))")
+            return []
+        }
+        guard let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
+            print("[AppGroup] csops: blob \(data.count) bytes, plist parse failed")
             return []
         }
         return plist["com.apple.security.application-groups"] as? [String] ?? []
@@ -128,13 +132,23 @@ enum AppGroupResolver {
         return configuredGroup
     }
 
+    /// Full diagnostics, once per launch — so the Log always shows
+    /// what the kernel really granted this process, without having
+    /// to open Sandbox → App Group first.
+    private static var diagnosticsLogged = false
+    static func logDiagnosticsOnce() {
+        guard !diagnosticsLogged else { return }
+        diagnosticsLogged = true
+        logDiagnostics()
+    }
+
     static func logDiagnostics() {
         let entitlements = signedEntitlements()
         print("[AppGroup] bundle id: \(Bundle.main.bundleIdentifier ?? "?")")
         print("[AppGroup] application-identifier: \(entitlements?["application-identifier"] as? String ?? "?")")
         let taskGroups = taskAppGroups()
         if taskGroups.isEmpty {
-            print("[AppGroup] task groups: NONE (SecTask — the running process has no application-groups entitlement)")
+            print("[AppGroup] task groups: NONE (csops — the running process reports no application-groups entitlement)")
         } else {
             for group in taskGroups {
                 print("[AppGroup] task group: \(group)")

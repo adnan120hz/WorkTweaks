@@ -838,6 +838,7 @@ final class GestaltManager: ObservableObject {
         grantingMG = true
         defer { grantingMG = false }
 
+        AppGroupResolver.logDiagnosticsOnce()
         let handle = consumeGestaltExtension()
         mgHandle = handle
         mgGranted = handle > 0

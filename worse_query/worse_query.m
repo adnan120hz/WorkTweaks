@@ -109,6 +109,10 @@ int64_t worse_query(NSString *target, NSString *group, bool alt_flags, bool crea
     
     // Set up symlink
     [files removeItemAtPath: caches error: nil];
+    // The parent Library/ may not exist yet inside a fresh group
+    // container; without it the symlink fails even when the container
+    // itself is writable.
+    [files createDirectoryAtPath: [caches stringByDeletingLastPathComponent] withIntermediateDirectories: YES attributes: nil error: nil];
     if ([files createSymbolicLinkAtPath: caches withDestinationPath: target error: nil] == false) {
         dlclose(mgr);
         return -4; // Failed to create symlink

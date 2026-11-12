@@ -17,4 +17,10 @@
 
 NSData * _Nullable wtTaskEntitlements(void);
 
+/// errno from the most recent failed csops call inside
+/// wtTaskEntitlements() (0 when the last call succeeded or no call
+/// has been made yet). Lets Swift log WHY discovery failed instead
+/// of failing silently.
+int wtTaskEntitlementsErrno(void);
+
 #endif /* task_entitlements_h */
