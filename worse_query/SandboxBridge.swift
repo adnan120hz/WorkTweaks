@@ -1,5 +1,6 @@
 import Foundation
 import Darwin
+import Security
 
 /// The App Group this build is actually provisioned with.
 /// It must match `worse_query.entitlements` — changing this string alone
@@ -15,12 +16,24 @@ let workGestaltAppGroup = "group.cc.forcequit.worse-query"
 /// *signed* with — sideload signers routinely rewrite bundle ids (e.g.
 /// appending the team id) and rewrite or strip app groups entirely.
 ///
-/// So the resolver does not guess blindly. It reads the app's own
-/// embedded provisioning profile, whose Entitlements section lists the
-/// application-groups the signed app really has, and probes those first.
-/// Only if the profile names none does it fall back to the configured
-/// value, signer-style derivations from the (rewritten) bundle id, and
-/// the well-known defaults.
+/// So the resolver does not guess blindly. It reads the groups in this
+/// order:
+///   1. The RUNNING process's own signed entitlements
+///      (SecTaskCopyValueForEntitlement) — the authoritative source.
+///      This is the only source that exists when there is no
+///      provisioning profile at all, e.g. under LiveContainer, where
+///      the guest app runs inside the host process with the host's
+///      entitlements.
+///   2. The app's embedded provisioning profile, whose Entitlements
+///      section lists the application-groups the signed app has.
+///   3. The configured value, signer-style derivations from the
+///      (rewritten) bundle id, and the well-known defaults.
+///
+/// The escape itself does not care which group it uses — any group
+/// whose container the kernel will grant an extension for works as
+/// the vehicle — so every worse_query call tries the candidates in
+/// order until one returns a handle (multi-group fallback), instead
+/// of betting everything on a single group.
 enum AppGroupResolver {
     private static let defaultsKey = "worktweaks.appGroupID"
 
@@ -32,6 +45,21 @@ enum AppGroupResolver {
         set {
             UserDefaults.standard.set(newValue, forKey: defaultsKey)
         }
+    }
+
+    // MARK: Live task entitlements
+
+    /// The application-groups the RUNNING process is actually entitled
+    /// to, read from the code signature itself. Unlike the profile
+    /// below, this needs no embedded.mobileprovision — it is what the
+    /// kernel really granted this process, whatever signer or host
+    /// (SideStore, AltStore, LiveContainer) put it there.
+    static func taskAppGroups() -> [String] {
+        guard let task = SecTaskCreateFromSelf(nil),
+              let value = SecTaskCopyValueForEntitlement(task, "com.apple.security.application-groups" as CFString) else {
+            return []
+        }
+        return value as? [String] ?? []
     }
 
     // MARK: Signed profile
@@ -75,7 +103,8 @@ enum AppGroupResolver {
     }
 
     static var candidates: [String] {
-        var list = signedAppGroups
+        var list = taskAppGroups()
+        list.append(contentsOf: signedAppGroups)
         list.append(configuredGroup)
         list.append(contentsOf: derivedCandidates())
         list.append("group.cc.forcequit.worse-query")
@@ -103,6 +132,14 @@ enum AppGroupResolver {
         let entitlements = signedEntitlements()
         print("[AppGroup] bundle id: \(Bundle.main.bundleIdentifier ?? "?")")
         print("[AppGroup] application-identifier: \(entitlements?["application-identifier"] as? String ?? "?")")
+        let taskGroups = taskAppGroups()
+        if taskGroups.isEmpty {
+            print("[AppGroup] task groups: NONE (SecTask — the running process has no application-groups entitlement)")
+        } else {
+            for group in taskGroups {
+                print("[AppGroup] task group: \(group)")
+            }
+        }
         let groups = signedAppGroups
         if groups.isEmpty {
             print("[AppGroup] signed groups: NONE - the provisioning profile in this install contains no application-groups entitlement.")
@@ -124,17 +161,28 @@ enum AppGroupResolver {
     }
 }
 
+/// Multi-group fallback: try each candidate App Group in turn until
+/// one returns a handle. A failed attempt returns a negative code and
+/// consumes nothing, so retrying with the next group is safe — the
+/// only handle ever returned (and ever released) is a positive one.
 func consumeExtension(_ path: String, create: Bool = false) -> Int64 {
-    var handle: Int64 = -255
+    let useAltFlags = path.contains("/var/mobile/Containers/Shared/AppGroup") &&
+        ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 26
 
-    if path.contains("/var/mobile/Containers/Shared/AppGroup") &&
-        ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 26 {
-        handle = worse_query(path, AppGroupResolver.resolvedGroup, true, create)
-    } else {
-        handle = worse_query(path, AppGroupResolver.resolvedGroup, false, create)
+    var lastFailure: Int64 = -1
+    for group in AppGroupResolver.candidates {
+        let handle = worse_query(path, group, useAltFlags, create)
+        if handle > 0 {
+            print("[AppGroup] grant via \(group): handle \(handle)")
+            return handle
+        }
+        print("[AppGroup] grant via \(group) failed: \(handle)")
+        lastFailure = handle
     }
 
-    switch handle {
+    // No candidate worked — report the last failure code the same way
+    // a single attempt used to be reported.
+    switch lastFailure {
     case -1: print("failed to access group!")
     case -2: print("failed to resolve functions!")
     case -3: print("failed to create query!")
@@ -142,10 +190,28 @@ func consumeExtension(_ path: String, create: Bool = false) -> Int64 {
     case -5: print("query rejected!")
     case -6: print("kernel refused extension issue!")
     case -255: print("target doesn't exist!")
-    default: print("handle: \(handle)")
+    default: print("handle: \(lastFailure)")
     }
 
-    return handle
+    return lastFailure
+}
+
+/// The gestalt-directory grant (mond's grant_mg), with the same
+/// multi-group fallback. The alt_flags value matches the original
+/// mond port: true on iOS 26, false otherwise.
+func consumeGestaltExtension() -> Int64 {
+    let major = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+    var lastFailure: Int64 = -1
+    for group in AppGroupResolver.candidates {
+        let handle = worse_query(MGPaths.gestaltDir, group, major == 26, false)
+        if handle > 0 {
+            print("[AppGroup] mg grant via \(group): handle \(handle)")
+            return handle
+        }
+        print("[AppGroup] mg grant via \(group) failed: \(handle)")
+        lastFailure = handle
+    }
+    return lastFailure
 }
 
 func releaseExtension(_ handle: Int64) {

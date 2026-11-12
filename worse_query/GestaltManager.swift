@@ -838,8 +838,7 @@ final class GestaltManager: ObservableObject {
         grantingMG = true
         defer { grantingMG = false }
 
-        let major = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
-        let handle = worse_query(MGPaths.gestaltDir, AppGroupResolver.resolvedGroup, major == 26, false)
+        let handle = consumeGestaltExtension()
         mgHandle = handle
         mgGranted = handle > 0
 
