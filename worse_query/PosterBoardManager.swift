@@ -335,6 +335,77 @@ final class PosterBoardManager: ObservableObject {
         }
     }
 
+    // MARK: Install a wallpaper built here
+
+    /// Installs a descriptor folder built by PosterBoardMaker:
+    /// same grant / copy / verify / receipt path as a .tendies
+    /// import, so a made wallpaper is listed and deletable
+    /// exactly like an imported one. The builder already gave
+    /// the descriptor a fresh random ID, so — unlike imports —
+    /// the ID is NOT re-randomized here: the folder and file
+    /// names match the IDs inside the plists.
+    func installBuiltDescriptor(folder: URL, name: String, completion: @escaping (Bool) -> Void) {
+        guard let containerPath, let version = storeVersion,
+              case .ready = state, !isBusy else {
+            completion(false)
+            return
+        }
+        isBusy = true
+        lastResult = nil
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+            var message = ""
+            var written = false
+            var newReceipt: PosterBoardReceipt?
+            let handle = consumeExtension(containerPath)
+            print("[PosterBoard] grant for maker install -> \(handle)")
+            if handle > 0 {
+                defer { releaseExtension(handle) }
+                let destDir = Self.descriptorsPath(container: containerPath, version: version, ext: Self.collectionsExtension)
+                do {
+                    try FileManager.default.createDirectory(atPath: destDir, withIntermediateDirectories: true)
+                    let destName = UUID().uuidString
+                    let dest = (destDir as NSString).appendingPathComponent(destName)
+                    try FileManager.default.copyItem(atPath: folder.path, toPath: dest)
+                    let sourceCount = Self.recursiveFileCount(folder)
+                    let destCount = Self.recursiveFileCount(URL(fileURLWithPath: dest))
+                    if destCount == sourceCount {
+                        written = true
+                        newReceipt = PosterBoardReceipt(
+                            descriptorUUID: destName,
+                            ext: Self.collectionsExtension,
+                            storeRelativePath: "\(Self.dataStoreRelativePath)/\(version)/Extensions/\(Self.collectionsExtension)/descriptors/\(destName)",
+                            sourcePackage: "Wallpaper Maker — \(name)",
+                            importedAt: ISO8601DateFormatter().string(from: Date())
+                        )
+                        message = "Created “\(name)” (\(destCount) file(s)). Respring to see it in the wallpaper gallery."
+                        print("[PosterBoard] installed maker wallpaper \(destName) (\(destCount) file(s))")
+                    } else {
+                        try? FileManager.default.removeItem(atPath: dest)
+                        message = "Verification failed for “\(name)” (\(destCount) of \(sourceCount) files) — partial copy removed, nothing was installed."
+                        print("[PosterBoard] maker verify failed for \(destName) — partial copy removed")
+                    }
+                } catch {
+                    message = "Installing “\(name)” failed: \(error.localizedDescription)"
+                    print("[PosterBoard] maker install failed: \(error)")
+                }
+            } else {
+                message = "The sandbox extension for the PosterBoard container was refused (code \(handle)). Nothing was written."
+            }
+            DispatchQueue.main.async {
+                self.isBusy = false
+                self.lastResult = message
+                if written, let receipt = newReceipt {
+                    self.receipts.append(receipt)
+                    self.saveReceipts()
+                    AppDataManager.shared.invalidateScanCache()
+                    self.refreshStatus()
+                }
+                completion(written)
+            }
+        }
+    }
+
     private struct ImportOutcome {
         var written = 0
         var failed = 0

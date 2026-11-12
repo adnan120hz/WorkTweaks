@@ -71,6 +71,26 @@ struct PosterBoardView: View {
                     .disabled(manager.isBusy)
                 }
 
+                WTSectionCard(header: "Create", footer: "Builds a PosterBoard wallpaper on-device from your photo or video — the same descriptor format as an imported .tendies package, installed and listed exactly like one.") {
+                    NavigationLink {
+                        PosterBoardMakerView(manager: manager)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Label("Create Wallpaper…", systemImage: "wand.and.stars")
+                                .font(.subheadline)
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.footnote)
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(manager.isBusy)
+                }
+
                 WTSectionCard(header: "Imported") {
                     if manager.receipts.isEmpty {
                         Text("No wallpapers imported yet. Wallpapers imported here are listed so you can remove them again — wallpapers added any other way are never touched.")
