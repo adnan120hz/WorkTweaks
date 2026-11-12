@@ -107,6 +107,12 @@ struct TweaksView: View {
     @AppStorage("atomic_write") private var atomicWrite = true
     /// Master switch for this tab, flipped in the Sandbox tab.
     @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
+    /// New UI / Old UI choice, picked in the Sandbox tab
+    /// (wt.tweaksUIVersion: "new" or "old"). Applies to this
+    /// tab only — every other tab is untouched.
+    @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "new"
+
+    private var useOldUI: Bool { uiVersionRaw == "old" }
 
     @State private var infoTitle: String?
     @State private var infoMessage: String = ""
@@ -131,7 +137,20 @@ struct TweaksView: View {
         NavigationStack {
             Group {
                 if tweaksEnabled {
-                    columnsView
+                    if useOldUI {
+                        OldTweaksView(
+                            console: console,
+                            manager: manager,
+                            onInfo: showInfo(for:),
+                            onRevert: { showRevertConfirm = true },
+                            onSpoofingInfo: {
+                                infoTitle = "Device Spoofing Info"
+                                infoMessage = "Only spoof your device model if you want to download Apple Intelligence. This may break Face ID. If you decide to unspoof and want to keep Apple Intelligence, do NOT re-enter the Apple Intelligence & Siri menu in Settings."
+                            }
+                        )
+                    } else {
+                        columnsView
+                    }
                 } else {
                     lockedView
                 }
@@ -139,7 +158,9 @@ struct TweaksView: View {
             .navigationTitle("WorkTweaks")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                if tweaksEnabled {
+                // Search is a New UI feature — the Old UI (v1)
+                // never had it.
+                if tweaksEnabled && !useOldUI {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
                             searchActive = true

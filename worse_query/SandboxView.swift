@@ -24,6 +24,10 @@ struct SandboxView: View {
     /// stays locked until this is turned on. Shared with the
     /// Tweaks tab gate via the same AppStorage key.
     @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
+    /// New UI / Old UI choice for the Tweaks tab only
+    /// ("new" = the current two-column layout, "old" = the v1
+    /// list layout). Default is the current UI.
+    @AppStorage("wt.tweaksUIVersion") private var tweaksUIVersion = "new"
 
     /// This build's version as recorded in the bundle
     /// (CFBundleShortVersionString), e.g. "3.7" — the same
@@ -91,6 +95,25 @@ struct SandboxView: View {
                         Text("Unlocks the Tweaks tab. Turn this on to start using tweaks.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+
+                        Divider()
+                            .padding(.vertical, 4)
+
+                        // Tweaks UI choice — New UI is the current
+                        // two-column layout, Old UI is the v1 list
+                        // layout. Applies to the Tweaks tab only.
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Tweaks UI")
+                                .font(.subheadline.weight(.semibold))
+                            Picker("Tweaks UI", selection: $tweaksUIVersion) {
+                                Text("New UI").tag("new")
+                                Text("Old UI").tag("old")
+                            }
+                            .pickerStyle(.segmented)
+                            Text("Applies to the Tweaks tab only.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
