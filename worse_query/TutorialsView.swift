@@ -2,10 +2,10 @@ import SwiftUI
 
 // MARK: - Tutorials
 //
-// Two step-by-step installation guides: the desktop route (iLoader)
-// and the on-device route (Signed Apps, the companion
-// signer app). Reachable from the Welcome screen, the unsupported
-// screen, and the Tweaks tab toolbar.
+// Two step-by-step installation guides (A and B: the desktop route
+// via iLoader and the on-device route via Signed Apps, the companion
+// signer app) plus the Siri AI guide (C). Reachable from the Welcome
+// screen, the unsupported screen, and the Tweaks tab toolbar.
 //
 // Since v3.8 the page renders as Liquid Glass cards (WTGlassPage),
 // like every other page — the guides' text is unchanged.
@@ -14,7 +14,7 @@ struct TutorialsView: View {
     var body: some View {
         WTGlassPage {
             WTSectionCard {
-                Text("WorkTweaks only works when its App Group is part of the signing profile. Both guides below make sure that happens — pick the one that fits you.")
+                Text("WorkTweaks only works when its App Group is part of the signing profile. Guides A and B make sure that happens — pick the one that fits you. Guide C turns on the new Siri AI.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 14)
@@ -57,6 +57,23 @@ struct TutorialsView: View {
                     step(6, "Export the signed IPA and install it with ESign (or any IPA installer).")
                     Divider().padding(.leading, 14)
                     step(7, "Open WorkTweaks and you're done.")
+                }
+                .padding(.vertical, 4)
+            }
+
+            WTSectionCard(header: "Guide C — Turn On New Siri AI", footer: "This only makes the Join Waitlist button appear. The Siri AI model may still refuse to download — that part is not solved by this method yet.") {
+                VStack(alignment: .leading, spacing: 0) {
+                    step(1, "In the Tweaks tab, Apple Intelligence section, turn on Apple Intelligence and Siri AI Cache Patch. The cache patch is the Filza line-104 edit (one CacheData byte, 0x00 to 0x02) — done here, no Filza needed.")
+                    Divider().padding(.leading, 14)
+                    step(2, "Set the Spoofing picker (under Apple Intelligence) to iPhone 17 Pro (iPhone18,1).")
+                    Divider().padding(.leading, 14)
+                    step(3, "Turn on the Charge Limit Menu toggle (Add feature section).")
+                    Divider().padding(.leading, 14)
+                    step(4, "Go to the Apply/Revert section and tap Apply, then Respring. When the respring finishes, restart your iPhone.")
+                    Divider().padding(.leading, 14)
+                    step(5, "Open Settings → Apple Intelligence & Siri and tap Join Waitlist. Wait about 15 minutes for it to be accepted.")
+                    Divider().padding(.leading, 14)
+                    step(6, "Connect your iPhone to power, connect to Wi-Fi, and leave the Settings → General → iPhone Storage tab open for about 1 hour while the model downloads.")
                 }
                 .padding(.vertical, 4)
             }

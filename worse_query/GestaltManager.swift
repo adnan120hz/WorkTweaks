@@ -315,6 +315,101 @@ enum NuggetIPadOSLocator {
     }
 }
 
+// MARK: - Siri AI CacheData patch (Filza line-104 edit, file-based)
+//
+// The published "turn on new Siri AI" method edits one line of the
+// cached MobileGestalt plist in Filza: the base64 line that decodes
+// to 51 bytes — twelve zero bytes, 0x01, then zeros — has the byte
+// at offset 21 of that line flipped from 0x00 to 0x02. WorkTweaks
+// does the same edit in memory (staged until Apply writes it),
+// located the same file-based way as Nugget's iPadOS locator:
+// the plist serializes CacheData as 51-byte base64 lines, so the
+// target is one 51-byte-aligned chunk. The guide names it as file
+// line 104, which is chunk 97 (CacheData starts at file line 7);
+// that chunk is tried first and accepted only if its bytes match
+// the expected shape, otherwise every aligned chunk is scanned
+// for the pattern. More than one match — or none — refuses
+// honestly instead of writing to the wrong place. Verified
+// against the user's own plist (CacheVersion 24A446): the line
+// is present there; the locator still re-validates on device.
+
+enum SiriAICachePatch {
+    /// Bytes per base64 line in the serialized plist.
+    static let lineLength = 51
+    /// Byte inside the target line flipped 0x00 -> 0x02.
+    static let flipOffsetInLine = 21
+    /// File line of the target in Filza's text editor (guide).
+    /// CacheData starts at file line 7, so line 104 is chunk 97.
+    static let guideLineChunk = 97
+
+    private static var cachedOffset: Int?
+
+    /// The chunk matches the target line with the flip byte at
+    /// `flip` (0x00 = patch off, 0x02 = patch on): byte 12 is
+    /// 0x01 and every other byte is 0x00.
+    private static func lineMatches(_ bytes: UnsafePointer<UInt8>, at offset: Int, flip: UInt8) -> Bool {
+        guard bytes[offset + 12] == 0x01, bytes[offset + flipOffsetInLine] == flip else { return false }
+        for i in 0..<lineLength where i != 12 && i != flipOffsetInLine {
+            if bytes[offset + i] != 0 { return false }
+        }
+        return true
+    }
+
+    /// Locates the target chunk. Returns (offset, error).
+    static func locate(in cacheData: NSData) -> (offset: Int?, error: String?) {
+        let bytes = cacheData.bytes.bindMemory(to: UInt8.self, capacity: cacheData.length)
+        if let cached = cachedOffset, cached + lineLength <= cacheData.length,
+           lineMatches(bytes, at: cached, flip: 0x00) || lineMatches(bytes, at: cached, flip: 0x02) {
+            return (cached, nil)
+        }
+        cachedOffset = nil
+        // 1. The guide's line 104, accepted only if it matches.
+        let guideOffset = guideLineChunk * lineLength
+        if guideOffset + lineLength <= cacheData.length,
+           lineMatches(bytes, at: guideOffset, flip: 0x00) || lineMatches(bytes, at: guideOffset, flip: 0x02) {
+            cachedOffset = guideOffset
+            print("(siri-ai) cache patch slot at byte \(guideOffset) (guide line 104)")
+            return (guideOffset, nil)
+        }
+        // 2. Scan every 51-byte-aligned chunk for the pattern.
+        var matches: [Int] = []
+        var offset = 0
+        while offset + lineLength <= cacheData.length {
+            if lineMatches(bytes, at: offset, flip: 0x00) || lineMatches(bytes, at: offset, flip: 0x02) {
+                matches.append(offset)
+            }
+            offset += lineLength
+        }
+        guard matches.count == 1 else {
+            if matches.isEmpty {
+                return (nil, "Siri AI cache pattern not found in CacheData.")
+            }
+            return (nil, "Siri AI cache pattern is ambiguous (\(matches.count) matches) — edit line 104 in Filza instead.")
+        }
+        cachedOffset = matches[0]
+        print("(siri-ai) cache patch slot at byte \(matches[0]) (pattern scan)")
+        return (matches[0], nil)
+    }
+
+    static func isOn(in cacheData: NSData) -> Bool {
+        guard let offset = locate(in: cacheData).offset else { return false }
+        return cacheData.bytes.load(fromByteOffset: offset + flipOffsetInLine, as: UInt8.self) == 0x02
+    }
+
+    /// Sets the flip byte to 0x02 (on) or 0x00 (off). Returns an error string or nil.
+    static func set(in dict: NSMutableDictionary, enabled: Bool) -> String? {
+        guard let cacheData = dict["CacheData"] as? NSMutableData else {
+            return "CacheData is missing from MobileGestalt."
+        }
+        let located = locate(in: cacheData)
+        if let error = located.error { return error }
+        guard let offset = located.offset else { return "Siri AI cache pattern not found in CacheData." }
+        cacheData.mutableBytes.storeBytes(of: enabled ? UInt8(0x02) : UInt8(0x00), toByteOffset: offset + flipOffsetInLine, as: UInt8.self)
+        print("(siri-ai) cache patch slot \(offset) set to \(enabled ? "0x02" : "0x00")")
+        return nil
+    }
+}
+
 // MARK: - Tweak model (mond: mg_tweak)
 
 struct GestaltTweak: Identifiable {
@@ -464,7 +559,7 @@ enum TweakCatalog {
             title: "Apple Intelligence",
             minv: 18.1,
             infoType: .info,
-            infoMessage: "How to use this tweak:\n1. Spoof to the model next to the first one supported by Apple Intelligence.\n2. Spoof back to your model.\n3. Spoof to your final model and you should see the Apple Intelligence icon in Settings.\n4. Connect iPhone to power and leave the Settings > Storage tab open for ~1 hour.\n\nNOTE: Do not spoof back.",
+            infoMessage: "How to use this tweak (see also Tutorials > Guide C — Turn On New Siri AI):\n1. Turn on this toggle and Siri AI Cache Patch.\n2. Set Spoofing (below) to iPhone 17 Pro (iPhone18,1).\n3. Turn on the Charge Limit Menu toggle.\n4. Apply, respring, then restart. Join Waitlist should appear in Settings > Apple Intelligence & Siri — tap it and wait about 15 minutes.\n5. Connect iPhone to power and leave the Settings > Storage tab open for ~1 hour while the model downloads.\n\nNOTE: Do not spoof back. The waitlist may appear while the model still refuses to download — that part is not solved yet.",
             keys: ["A62OafQ85EJAiiqKn4agtg"],
             canApply: { _ in nil },
             read: { dict in
@@ -478,6 +573,50 @@ enum TweakCatalog {
             writeOff: { dict in
                 guard let extra = dict["CacheExtra"] as? NSMutableDictionary else { return }
                 extra.removeObject(forKey: "A62OafQ85EJAiiqKn4agtg")
+            }
+        ),
+
+        // Siri AI Cache Patch — the Filza line-104 edit from the
+        // published "turn on new Siri AI" method, done inside
+        // WorkTweaks instead of Filza: one CacheData byte (line
+        // 104 of com.apple.MobileGestalt.plist, byte 21 of that
+        // 51-byte line) flipped 0x00 -> 0x02. Used together with
+        // the Apple Intelligence toggle, a spoof to an Apple
+        // Intelligence device (Spoofing picker: iPhone 17 Pro),
+        // and the Charge Limit Menu toggle; Apply, respring,
+        // then restart, and Join Waitlist appears in Settings >
+        // Apple Intelligence & Siri. Honest limit (the method's
+        // own author says so): this makes the waitlist appear;
+        // the model download may still refuse.
+        GestaltTweak(
+            id: slug("Siri AI Cache Patch"),
+            title: "Siri AI Cache Patch",
+            minv: 18.1,
+            infoType: .warning,
+            infoMessage: "The Filza line-104 edit, done here instead of Filza.\n\nUse with the Apple Intelligence toggle, Spoofing set to iPhone 17 Pro (iPhone18,1), and the Charge Limit Menu toggle. Then Apply, respring, and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri; tap it and wait about 15 minutes.\n\nThis only makes the waitlist appear. The Siri AI model may still refuse to download — that part is not solved by this method. Turning this off and applying restores the byte; Revert restores the original file.",
+            keys: [],
+            canApply: { dict in
+                guard let cacheData = dict["CacheData"] as? NSMutableData else {
+                    return "CacheData is missing from MobileGestalt."
+                }
+                if let error = SiriAICachePatch.locate(in: cacheData).error {
+                    return error
+                }
+                return nil
+            },
+            read: { dict in
+                guard let cacheData = dict["CacheData"] as? NSMutableData else { return false }
+                return SiriAICachePatch.isOn(in: cacheData)
+            },
+            writeOn: { dict in
+                if let error = SiriAICachePatch.set(in: dict, enabled: true) {
+                    print("(siri-ai) write failed: \(error)")
+                }
+            },
+            writeOff: { dict in
+                if let error = SiriAICachePatch.set(in: dict, enabled: false) {
+                    print("(siri-ai) write failed: \(error)")
+                }
             }
         ),
 
@@ -642,6 +781,7 @@ extension TweakCatalog {
         "internal_storage_view": ("internaldrive.fill", .gray),
         "disable_region_restrictions": ("globe.americas.fill", .green),
         "apple_intelligence": ("apple.intelligence", .purple),
+        "siri_ai_cache_patch": ("waveform", .purple),
         "enable_ipados_mode": ("ipad", .blue),
         "internal_features": ("ladybug.fill", .green),
     ]

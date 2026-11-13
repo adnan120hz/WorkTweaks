@@ -50,13 +50,14 @@ enum TweakSection: String, CaseIterable, Identifiable {
 
 /// Which section each catalog tweak belongs to — exactly one per
 /// tweak, keyed by tweak id. The union of Dynamic Island / Tweaks /
-/// Apple Intelligence / Add feature is the full 23-tweak catalog.
+/// Apple Intelligence / Add feature is the full 24-tweak catalog.
 enum TweakCategory {
     static let sectionByID: [String: TweakSection] = [
         // Dynamic Island
         "enable_dynamic_island_capability": .dynamicIsland,
         // Apple Intelligence
         "apple_intelligence": .appleIntelligence,
+        "siri_ai_cache_patch": .appleIntelligence,
         // Add feature
         "iphone_16_camera_control_settings": .addFeature,
         "action_button_settings": .addFeature,

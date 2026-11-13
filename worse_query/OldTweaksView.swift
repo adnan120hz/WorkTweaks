@@ -217,6 +217,7 @@ struct OldTweaksView: View {
             OldTweakToggle(manager: manager, title: "Security Research Device Mode", onInfo: onInfo)
             OldTweakToggle(manager: manager, title: "Disable Region Restrictions", onInfo: onInfo)
             OldTweakToggle(manager: manager, title: "Apple Intelligence", onInfo: onInfo)
+            OldTweakToggle(manager: manager, title: "Siri AI Cache Patch", onInfo: onInfo)
 
             HStack(spacing: 10) {
                 Picker("Spoofing", selection: $manager.productType) {
