@@ -931,6 +931,7 @@ struct TweakCard: View {
     let onInfo: (GestaltTweak) -> Void
 
     @State private var showFixStatusBarGuide = false
+    @State private var showFixAppleIntelligenceGuide = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -967,6 +968,17 @@ struct TweakCard: View {
                     .foregroundStyle(Color.accentColor)
                     .buttonStyle(.plain)
                 }
+                // The Apple Intelligence fix guide lives next to
+                // the "On" line of the Apple Intelligence card only.
+                if tweak.id == "apple_intelligence", tweak.isOn(in: manager.dictNow) {
+                    Button("Fix Apple Intelligence Here!") {
+                        SoundEffects.playTap()
+                        showFixAppleIntelligenceGuide = true
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+                    .buttonStyle(.plain)
+                }
             }
         }
         .padding(12)
@@ -976,6 +988,11 @@ struct TweakCard: View {
             Button("OK") { }
         } message: {
             Text("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional).")
+        }
+        .alert("Fix Apple Intelligence", isPresented: $showFixAppleIntelligenceGuide) {
+            Button("OK") { }
+        } message: {
+            Text("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading.")
         }
     }
 
