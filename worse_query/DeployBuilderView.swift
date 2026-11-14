@@ -9,6 +9,13 @@ import UIKit
 // DeployPackages/ (see DeployManager's package store)
 // holding payload files plus, once saved, a manifest.json.
 //
+// v5: the builder's product is ONE .zip file — Export ZIP
+// shares manifest.json plus payloads as a single zip the
+// user saves (in Files); Deploy imports that zip and
+// applies it without location picking. Add File unpacks
+// .zip archives (each file inside becomes a payload) and
+// accepts .plist files as payloads.
+//
 // Payload files are copied into the package folder the
 // moment they are added, and removed from it the moment
 // their entry is removed — those two actions only ever
@@ -42,6 +49,12 @@ struct DeployBuilderView: View {
     @State private var showContainerPicker = false
     @State private var saveError: String?
     @State private var addError: String?
+    @State private var exportItem: BuilderExportItem?
+
+    private struct BuilderExportItem: Identifiable {
+        let url: URL
+        var id: String { url.path }
+    }
 
     init(appDataManager: AppDataManager, session: DeployEditorSession) {
         _appDataManager = ObservedObject(wrappedValue: appDataManager)
@@ -165,7 +178,7 @@ struct DeployBuilderView: View {
 
                 WTSectionCard(
                     header: "Files (\(files.count))",
-                    footer: "Payload files are copied into the package. The destination is where each file lands inside the target container — relative paths only; absolute paths and \"..\" are rejected, exactly like an imported package."
+                    footer: "Payload files are copied into the package. Add File accepts any file — a .plist is added as a payload, and a .zip is unpacked, each file inside becoming a payload with its destination defaulting to its path inside the archive. Destinations are relative paths only; absolute paths and \"..\" are rejected, exactly like an imported package."
                 ) {
                     VStack(alignment: .leading, spacing: 0) {
                         if files.isEmpty {
@@ -226,6 +239,21 @@ struct DeployBuilderView: View {
                             .padding(.vertical, 10)
                     }
                 }
+
+                WTSectionCard(
+                    header: "Export",
+                    footer: "Saves the package, then shares ONE .zip file — save it in Files. Deploy imports that zip and applies it without asking for locations."
+                ) {
+                    Button {
+                        exportZIP()
+                    } label: {
+                        Label("Export ZIP", systemImage: "square.and.arrow.up")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                    }
+                }
             }
             .navigationTitle(session.isNew ? "New Package" : "Edit Package")
             .navigationBarTitleDisplayMode(.inline)
@@ -243,11 +271,30 @@ struct DeployBuilderView: View {
                 switch result {
                 case .success(let url):
                     let taken = Set(files.map(\.payloadName))
-                    if let added = DeployManager.addPayload(to: session.package.folderURL, from: url, takenNames: taken) {
+                    if url.pathExtension.lowercased() == "zip" {
+                        // A .zip is unpacked: each file inside
+                        // becomes a payload, its destination
+                        // defaulting to its path in the archive.
+                        switch DeployManager.addZipPayloads(to: session.package.folderURL, from: url, takenNames: taken) {
+                        case .success(let rows):
+                            for row in rows {
+                                files.append(StoredDeployPackageFile(
+                                    payloadName: row.name,
+                                    destinationPath: row.destination,
+                                    size: row.size
+                                ))
+                            }
+                            addError = nil
+                        case .failure(let error):
+                            addError = error.message
+                        }
+                    } else if let added = DeployManager.addPayload(to: session.package.folderURL, from: url, takenNames: taken) {
                         // The destination defaults to the
                         // payload's name — the picked file's
                         // name, unless it had to be made
-                        // unique inside the package.
+                        // unique inside the package. A .plist
+                        // is added as a payload file, like any
+                        // other file.
                         files.append(StoredDeployPackageFile(
                             payloadName: added.name,
                             destinationPath: added.name,
@@ -260,6 +307,9 @@ struct DeployBuilderView: View {
                 case .failure(let error):
                     addError = error.localizedDescription
                 }
+            }
+            .sheet(item: $exportItem) { item in
+                DeployShareSheet(items: [item.url])
             }
             .sheet(isPresented: $showContainerPicker) {
                 DeployContainerPickerView(appDataManager: appDataManager) { picked in
@@ -325,6 +375,29 @@ struct DeployBuilderView: View {
             dismiss()
         case .failure(let error):
             saveError = error.message
+        }
+    }
+
+    /// Save the draft, then share it as ONE .zip file —
+    /// the v5 artifact the user saves (in Files) and
+    /// Deploy imports.
+    private func exportZIP() {
+        var draft = session.package
+        let trimmedName = nameText.trimmingCharacters(in: .whitespacesAndNewlines)
+        draft.name = trimmedName.isEmpty ? nil : trimmedName
+        draft.scope = scope
+        draft.bundleID = bundleIDText
+        draft.files = files
+        switch DeployManager.saveStoredPackage(draft) {
+        case .failure(let error):
+            saveError = error.message
+        case .success(let saved):
+            saveError = nil
+            if let url = DeployManager.exportZipURL(for: saved) {
+                exportItem = BuilderExportItem(url: url)
+            } else {
+                saveError = "The package could not be exported."
+            }
         }
     }
 
@@ -435,6 +508,7 @@ struct PackageBuilderView: View {
 
     @State private var package: LoadedDeployPackage?
     @State private var importError: String?
+    @State private var resolveRequest = UUID()
 
     var body: some View {
         WTGlassPage {
@@ -461,7 +535,8 @@ struct PackageBuilderView: View {
             DeployPreviewSection(
                 appDataManager: appDataManager,
                 package: $package,
-                deployManager: deployManager
+                deployManager: deployManager,
+                resolveRequest: $resolveRequest
             )
         }
         .navigationTitle("Package Builder")
@@ -470,12 +545,15 @@ struct PackageBuilderView: View {
 
     /// Show a loaded package in the preview/deploy flow
     /// below — the same state a fresh import lands in.
+    /// Bumping resolveRequest makes the preview resolve
+    /// the target by itself (v5: no location picking).
     private func presentLoadedPackage(_ loaded: LoadedDeployPackage) {
         package = loaded
         importError = nil
         deployManager.resolvedContainerPath = nil
         deployManager.resolveError = nil
         deployManager.lastResult = nil
+        resolveRequest = UUID()
     }
 }
 

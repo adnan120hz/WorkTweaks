@@ -3,9 +3,12 @@ import UniformTypeIdentifiers
 
 // MARK: - Deploy page
 //
-// Import a Deploy package (a folder, or a .zip / .deploy
-// archive), check its manifest, resolve its one target app,
-// preview exactly what will happen, and deploy. The package
+// Import a Deploy package — v5: ONE .zip file from the
+// Package Builder (older .deploy archives and plain folders
+// still import) — check its manifest, resolve its one
+// target app by itself, preview exactly what will happen,
+// and apply. No location picking: the target and the
+// destinations come from the zip's manifest. The package
 // format and the safety rules are documented on this page
 // itself, under "Package Format".
 //
@@ -37,6 +40,7 @@ struct DeployView: View {
     @State private var package: LoadedDeployPackage?
     @State private var importError: String?
     @State private var showImporter = false
+    @State private var resolveRequest = UUID()
 
     var body: some View {
         WTGlassPage {
@@ -86,12 +90,13 @@ struct DeployView: View {
             DeployPreviewSection(
                 appDataManager: appDataManager,
                 package: $package,
-                deployManager: deployManager
+                deployManager: deployManager,
+                resolveRequest: $resolveRequest
             )
 
             WTSectionCard(header: "Package Format") {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("A package is a folder, or a .zip / .deploy archive, containing a manifest.json at its top level plus the payload files it names:")
+                    Text("A package is ONE .zip file containing a manifest.json at its top level plus the payload files it names. The Package Builder exports that zip (save it in Files); Deploy imports it, resolves the target itself from the manifest, and applies it — no location picking, the destinations come from the zip.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Text("""
@@ -106,7 +111,7 @@ struct DeployView: View {
                     }
                     """)
                     .font(.system(.caption, design: .monospaced))
-                    Text("Single-file shorthand: instead of \"files\", give \"relativePath\" and \"file\". \"scope\" is Application (bundleID = the app's bundle ID), AppGroup (bundleID = the group identifier, e.g. group.com.example) or InternalDaemon. ZIP archives may use stored or deflated entries; encrypted and ZIP64 archives are not supported.")
+                    Text("Single-file shorthand: instead of \"files\", give \"relativePath\" and \"file\". \"scope\" is Application (bundleID = the app's bundle ID), AppGroup (bundleID = the group identifier, e.g. group.com.example) or InternalDaemon. ZIP archives may use stored or deflated entries; encrypted and ZIP64 archives are not supported. Older .deploy archives and plain folders still import.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -134,12 +139,15 @@ struct DeployView: View {
 
     /// Show a loaded package in the preview/deploy flow
     /// below — the same state a fresh import lands in.
+    /// Bumping resolveRequest makes the preview resolve
+    /// the target by itself (v5: no location picking).
     private func presentLoadedPackage(_ loaded: LoadedDeployPackage) {
         package = loaded
         importError = nil
         deployManager.resolvedContainerPath = nil
         deployManager.resolveError = nil
         deployManager.lastResult = nil
+        resolveRequest = UUID()
     }
 }
 
@@ -314,7 +322,7 @@ struct DeployStoreSection: View {
                 Button {
                     exportStoredPackage(stored)
                 } label: {
-                    Label("Export .deploy", systemImage: "square.and.arrow.up")
+                    Label("Export ZIP", systemImage: "square.and.arrow.up")
                 }
                 Button(role: .destructive) {
                     packageToDelete = stored
@@ -352,7 +360,7 @@ struct DeployStoreSection: View {
     }
 
     private func exportStoredPackage(_ stored: StoredDeployPackage) {
-        if let url = DeployManager.exportArchiveURL(for: stored) {
+        if let url = DeployManager.exportZipURL(for: stored) {
             storeError = nil
             exportItem = DeployExportItem(url: url)
         } else {
@@ -373,6 +381,11 @@ struct DeployPreviewSection: View {
     @ObservedObject var appDataManager: AppDataManager
     @Binding var package: LoadedDeployPackage?
     @ObservedObject var deployManager: DeployManager
+    /// Bumped by the host whenever a package is presented,
+    /// so the target resolves itself — v5: no location
+    /// picking, the manifest names the target and the
+    /// destinations.
+    @Binding var resolveRequest: UUID
 
     @State private var wantsResolve = false
 
@@ -466,10 +479,10 @@ struct DeployPreviewSection: View {
                                     if deployManager.isDeploying {
                                         HStack(spacing: 8) {
                                             ProgressView()
-                                            Text("Deploying…")
+                                            Text("Applying…")
                                         }
                                     } else {
-                                        Text("Deploy")
+                                        Text("Apply")
                                             .fontWeight(.semibold)
                                     }
                                 }
@@ -481,7 +494,7 @@ struct DeployPreviewSection: View {
                             .disabled(deployManager.isDeploying)
                         } else {
                             Button {
-                                resolveTapped()
+                                autoResolve()
                             } label: {
                                 Text("Resolve Target")
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -519,6 +532,9 @@ struct DeployPreviewSection: View {
         .onChange(of: packageKey) { _, _ in
             wantsResolve = false
         }
+        .onChange(of: resolveRequest) { _, _ in
+            autoResolve()
+        }
         .onChange(of: appDataManager.didScan) { _, done in
             if done, wantsResolve, let package, package.scope == "Application" {
                 wantsResolve = false
@@ -547,7 +563,12 @@ struct DeployPreviewSection: View {
         .padding(.vertical, 8)
     }
 
-    private func resolveTapped() {
+    /// Resolve the presented package's target by itself:
+    /// the manifest names the target, the destinations come
+    /// from the zip — v5 has no location picking. The
+    /// Application scope waits for the App Data scan when
+    /// it has not run yet.
+    private func autoResolve() {
         guard let package else { return }
         if package.scope == "Application", appDataManager.containers.isEmpty, !appDataManager.didScan {
             // The Application scope resolves against the App

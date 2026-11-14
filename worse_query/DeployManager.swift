@@ -409,12 +409,44 @@ final class DeployManager: ObservableObject {
         resolveError = nil
 
         if package.scope == "Application" {
+            // Exact scan match first.
             if let match = containers.first(where: { $0.bundleID == package.bundleID }) {
                 resolvedContainerPath = match.path
                 print("[Deploy] resolved \(package.bundleID) -> \(match.path)")
-            } else {
-                resolveError = "Target container not found for \(package.bundleID)"
-                print("[Deploy] no Application container matches \(package.bundleID) among \(containers.count) scanned container(s)")
+                return
+            }
+            // A typed plain bundle ID also matches the one
+            // container whose scanned identifier is that ID
+            // plus a team suffix (the WorkTweaks container
+            // itself: cc.forcequit.worse-query.<TEAMID>).
+            // Only when exactly one container matches.
+            let prefixed = containers.filter { $0.bundleID.hasPrefix(package.bundleID + ".") }
+            if prefixed.count == 1, let match = prefixed.first {
+                resolvedContainerPath = match.path
+                print("[Deploy] resolved \(package.bundleID) -> \(match.path) (team-suffixed identifier)")
+                return
+            }
+            // No scan match — enumerate the Application root
+            // directly. The scan can be empty or stale (the
+            // same gap PosterBoard's searchRoot closed in
+            // v4.3.1), and without this fallback Deploy can
+            // never resolve. Slow, on a background queue.
+            let target = package.bundleID
+            isResolving = true
+            print("[Deploy] no scan match for \(target) — enumerating the Application containers root directly…")
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                let found = Self.findContainer(root: AppDataManager.rootPath, identifier: target)
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.isResolving = false
+                    if let found {
+                        self.resolvedContainerPath = found
+                        print("[Deploy] resolved \(target) -> \(found) (direct enumeration)")
+                    } else {
+                        self.resolveError = "Target container not found for \(target)"
+                        print("[Deploy] no Application container matches \(target) — not in the scan and not in a direct enumeration")
+                    }
+                }
             }
             return
         }
@@ -887,6 +919,55 @@ extension DeployManager {
         return (candidate, data.count)
     }
 
+    /// Add the contents of a picked .zip as payloads: every
+    /// entry becomes one payload file, stored flat under a
+    /// unique name, with its destination defaulting to the
+    /// entry's own path inside the archive — the zip knows
+    /// where its files go. manifest.json, __MACOSX noise
+    /// and .DS_Store entries are skipped: a builder zip is
+    /// imported whole through Import Package, not added
+    /// file by file. Returns the added rows, or an error
+    /// when the archive cannot be read or holds nothing
+    /// usable. Files already written are removed again on
+    /// failure, so a failed add leaves nothing behind.
+    static func addZipPayloads(to folderURL: URL, from sourceURL: URL, takenNames: Set<String>) -> Result<[(name: String, destination: String, size: Int)], DeployError> {
+        let scoped = sourceURL.startAccessingSecurityScopedResource()
+        defer { if scoped { sourceURL.stopAccessingSecurityScopedResource() } }
+        guard let data = try? Data(contentsOf: sourceURL) else {
+            return .failure(DeployError(message: "The picked ZIP file could not be read."))
+        }
+        let entries: [String: Data]
+        switch zipEntries(from: data) {
+        case .failure(let error): return .failure(error)
+        case .success(let dict): entries = dict
+        }
+        var rows: [(name: String, destination: String, size: Int)] = []
+        var written: [URL] = []
+        var taken = takenNames
+        for (entryPath, entryData) in entries.sorted(by: { $0.key < $1.key }) {
+            if entryPath == "manifest.json" { continue }
+            if entryPath.hasPrefix("__MACOSX/") { continue }
+            if (entryPath as NSString).lastPathComponent == ".DS_Store" { continue }
+            guard let destination = cleanRelativePath(entryPath) else { continue }
+            let payloadName = uniquePayloadName(for: (entryPath as NSString).lastPathComponent, takenNames: taken, folderURL: folderURL)
+            taken.insert(payloadName)
+            let destURL = folderURL.appendingPathComponent(payloadName)
+            do {
+                try entryData.write(to: destURL)
+            } catch {
+                for url in written { try? FileManager.default.removeItem(at: url) }
+                return .failure(DeployError(message: "A file from the ZIP could not be copied into the package: \(error.localizedDescription)"))
+            }
+            written.append(destURL)
+            rows.append((payloadName, destination, entryData.count))
+            print("[Deploy] ZIP payload added: \(entryPath) -> \(payloadName) (dest \(destination))")
+        }
+        guard !rows.isEmpty else {
+            return .failure(DeployError(message: "The ZIP holds no files that can be added as payloads."))
+        }
+        return .success(rows)
+    }
+
     /// Remove a payload file from a package folder (used
     /// when its entry is removed in the builder). Only ever
     /// touches the package's own folder.
@@ -1048,11 +1129,13 @@ extension DeployManager {
     // MARK: Export
 
     /// Zip a stored package (manifest.json plus exactly the
-    /// payloads its manifest names) into a .deploy archive
-    /// in the temporary directory and return its URL for
-    /// sharing. Entries are stored, not compressed — the
-    /// subset the app's own ZIP reader accepts.
-    static func exportArchiveURL(for package: StoredDeployPackage) -> URL? {
+    /// payloads its manifest names) into ONE .zip file in
+    /// the temporary directory and return its URL for
+    /// sharing — the v5 artifact the user saves (in Files)
+    /// and Deploy imports. Entries are stored, not
+    /// compressed — the subset the app's own ZIP reader
+    /// accepts.
+    static func exportZipURL(for package: StoredDeployPackage) -> URL? {
         var entries: [(name: String, data: Data)] = []
         let manifestURL = package.folderURL.appendingPathComponent("manifest.json")
         guard let manifestData = try? Data(contentsOf: manifestURL) else {
@@ -1075,7 +1158,7 @@ extension DeployManager {
             }
             return "-"
         }).trimmingCharacters(in: .whitespaces)
-        let fileName = (base.isEmpty ? "DeployPackage" : base) + ".deploy"
+        let fileName = (base.isEmpty ? "DeployPackage" : base) + ".zip"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         do {
             try makeStoredZip(entries: entries).write(to: url)
