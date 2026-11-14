@@ -742,6 +742,7 @@ struct TweaksView: View {
                         .font(.subheadline.weight(.semibold))
                 }
             }
+            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
@@ -813,6 +814,7 @@ struct TweaksView: View {
                         .font(.subheadline.weight(.semibold))
                 }
             }
+            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
             Text("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

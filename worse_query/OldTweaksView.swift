@@ -182,6 +182,7 @@ struct OldTweaksView: View {
             }
 
             Toggle("Custom Device Name", isOn: $manager.enableDeviceName)
+                .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
 
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
@@ -340,6 +341,7 @@ struct OldTweaksView: View {
     private var writeSettingsSection: some View {
         Section {
             Toggle("Persist after reboot", isOn: $atomicWrite)
+                .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
         } header: {
             Label("Write Method", systemImage: "pencil.and.outline")
         } footer: {

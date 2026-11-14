@@ -95,6 +95,7 @@ struct SandboxView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Toggle("Start Tweaks Feature", isOn: $tweaksEnabled)
                             .font(.subheadline.weight(.semibold))
+                            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                         Text("Unlocks the Tweaks tab. Turn this on to start using tweaks.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -126,6 +127,7 @@ struct SandboxView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Toggle("Sound Effects", isOn: $soundEffectsEnabled)
                                 .font(.subheadline.weight(.semibold))
+                                .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                             Text("Plays a soft sound when you tap menus and features. Respects the silent switch.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
