@@ -27,6 +27,7 @@ struct OldTweaksView: View {
     let onSpoofingInfo: () -> Void
 
     @AppStorage("atomic_write") private var atomicWrite = true
+    @State private var showFixStatusBarGuide = false
 
     var body: some View {
         List {
@@ -46,6 +47,11 @@ struct OldTweaksView: View {
             footnoteSection
             writeSettingsSection
             footerSection
+        }
+        .alert("Fix Status Bar", isPresented: $showFixStatusBarGuide) {
+            Button("OK") { }
+        } message: {
+            Text("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional).")
         }
     }
 
@@ -114,6 +120,7 @@ struct OldTweaksView: View {
     private var actionSection: some View {
         Section {
             Button {
+                SoundEffects.playTap()
                 manager.apply()
                 console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
             } label: {
@@ -122,12 +129,14 @@ struct OldTweaksView: View {
             .disabled(!manager.isValid)
 
             Button {
+                SoundEffects.playTap()
                 RespringCenter.shared.trigger()
             } label: {
                 Label("Respring", systemImage: "restart.circle")
             }
 
             Button(role: .destructive) {
+                SoundEffects.playTap()
                 onRevert()
             } label: {
                 Label("Revert Tweaks", systemImage: "arrow.uturn.backward.circle")
@@ -156,7 +165,9 @@ struct OldTweaksView: View {
                 if doubleSystemVersion() >= 18.0 {
                     Text("iPhone 16 Pro").tag("16p")
                     Text("iPhone 16 Pro Max").tag("16pm")
+                    Text("iPhone 18 Pro (iOS 27.0.1+)").tag("18p")
                     Text("iPhone 18 Pro Max (iOS 27.0.1+)").tag("18pm")
+                    Text("iPhone Duo (iOS 27.3+)").tag("duo")
                 }
 
                 if doubleSystemVersion() >= 26.0 {
@@ -186,6 +197,17 @@ struct OldTweaksView: View {
     private var softwareSection: some View {
         Section {
             OldTweakToggle(manager: manager, title: "Enable Dynamic Island Capability", onInfo: onInfo)
+            // The status-bar fix guide, next to the Dynamic
+            // Island toggle while it is on (same guide as the
+            // New UI card's "Fix Status Bar!" button).
+            if isDynamicIslandOn {
+                Button("Fix Status Bar!") {
+                    SoundEffects.playTap()
+                    showFixStatusBarGuide = true
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.accentColor)
+            }
             OldTweakToggle(manager: manager, title: "Always-On Display", onInfo: onInfo)
             OldTweakToggle(manager: manager, title: "AOD Vibrancy", onInfo: onInfo)
             OldTweakToggle(manager: manager, title: "Disable Wallpaper Parallax", onInfo: onInfo)
@@ -196,6 +218,12 @@ struct OldTweaksView: View {
         } header: {
             Label("Software-Oriented Features", systemImage: "gearshape")
         }
+    }
+
+    /// Whether the Dynamic Island capability tweak is on —
+    /// the Fix Status Bar guide only shows while it is.
+    private var isDynamicIslandOn: Bool {
+        TweakCatalog.all.first(where: { $0.id == "enable_dynamic_island_capability" })?.isOn(in: manager.dictNow) ?? false
     }
 
     private var hardwareSection: some View {

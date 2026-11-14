@@ -84,6 +84,9 @@ struct RootView: View {
                 .tabItem { Label("Log", systemImage: "terminal") }
                 .tag(AppTab.log)
         }
+        .onChange(of: selectedTab) { _, _ in
+            SoundEffects.playSwipe()
+        }
         .onAppear {
             console.start()
             gestalt.load()

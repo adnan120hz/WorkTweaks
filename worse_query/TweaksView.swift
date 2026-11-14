@@ -281,16 +281,19 @@ struct TweaksView: View {
 
                     // The Apply/Revert section's content is the
                     // action cards; every other section shows its
-                    // tweak cards.
+                    // tweak cards. Section switches animate.
                     if selectedSection == .applyRevert {
                         actionsBlock
+                            .transition(.opacity)
                     } else {
                         sectionCards
+                            .transition(.opacity)
                     }
 
                     footerLinks
                 }
                 .padding(.vertical, 16)
+                .animation(.easeInOut(duration: 0.25), value: selectedSection)
             }
             .scrollIndicators(.hidden)
 
@@ -436,6 +439,7 @@ struct TweaksView: View {
 
             ForEach(TweakSection.allCases) { section in
                 Button {
+                    SoundEffects.playTap()
                     selectedSection = section
                 } label: {
                     HStack(spacing: 9) {
@@ -514,7 +518,7 @@ struct TweaksView: View {
     }
 
     private func menuRow(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button(action: { SoundEffects.playTap(); action() }) {
             HStack(spacing: 9) {
                 Image(systemName: systemImage)
                     .font(.system(size: 15, weight: .regular))
@@ -707,7 +711,9 @@ struct TweaksView: View {
                 if doubleSystemVersion() >= 18.0 {
                     Text("iPhone 16 Pro").tag("16p")
                     Text("iPhone 16 Pro Max").tag("16pm")
+                    Text("iPhone 18 Pro (iOS 27.0.1+)").tag("18p")
                     Text("iPhone 18 Pro Max (iOS 27.0.1+)").tag("18pm")
+                    Text("iPhone Duo (iOS 27.3+)").tag("duo")
                 }
 
                 if doubleSystemVersion() >= 26.0 {
@@ -842,7 +848,7 @@ struct TweaksView: View {
     }
 
     private func actionCardButton(title: String, systemImage: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button(action: { SoundEffects.playTap(); action() }) {
             HStack(spacing: 8) {
                 Image(systemName: systemImage)
                 Text(title)
@@ -919,6 +925,8 @@ struct TweakCard: View {
     let tweak: GestaltTweak
     let onInfo: (GestaltTweak) -> Void
 
+    @State private var showFixStatusBarGuide = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 6) {
@@ -940,12 +948,30 @@ struct TweakCard: View {
             Text(tweak.title)
                 .font(.subheadline.weight(.semibold))
                 .fixedSize(horizontal: false, vertical: true)
-            Text(stateLine)
-                .font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                Text(stateLine)
+                    .font(.caption).foregroundStyle(.secondary)
+                // The status-bar fix guide lives next to the
+                // "On" line of the Dynamic Island card only.
+                if tweak.id == "enable_dynamic_island_capability", tweak.isOn(in: manager.dictNow) {
+                    Button("Fix Status Bar!") {
+                        SoundEffects.playTap()
+                        showFixStatusBarGuide = true
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+                    .buttonStyle(.plain)
+                }
+            }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
+        .alert("Fix Status Bar", isPresented: $showFixStatusBarGuide) {
+            Button("OK") { }
+        } message: {
+            Text("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional).")
+        }
     }
 
     private var stateLine: String {

@@ -28,6 +28,9 @@ struct SandboxView: View {
     /// ("new" = the current two-column layout, "old" = the v1
     /// list layout). Default is the current UI.
     @AppStorage("wt.tweaksUIVersion") private var tweaksUIVersion = "new"
+    /// UI sounds on/off (v5.1): soft tap on menus and
+    /// features, soft swipe on tab switches. On by default.
+    @AppStorage("wt.soundEffectsEnabled") private var soundEffectsEnabled = true
 
     /// This build's version as recorded in the bundle
     /// (CFBundleShortVersionString), e.g. "3.7" — the same
@@ -111,6 +114,19 @@ struct SandboxView: View {
                             }
                             .pickerStyle(.segmented)
                             Text("Applies to the Tweaks tab only.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Divider()
+                            .padding(.vertical, 4)
+
+                        // UI sounds — soft tap on menus and
+                        // features, soft swipe on tab switches.
+                        VStack(alignment: .leading, spacing: 6) {
+                            Toggle("Sound Effects", isOn: $soundEffectsEnabled)
+                                .font(.subheadline.weight(.semibold))
+                            Text("Plays a soft sound when you tap menus and features. Respects the silent switch.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -209,6 +225,7 @@ struct SandboxView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
     }
 
     /// One label/value line of the identity card's device-details

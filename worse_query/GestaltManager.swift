@@ -925,19 +925,46 @@ final class GestaltManager: ObservableObject {
     // MARK: Subtype tables (mond: selected_st_value / st_to_sel)
 
     var selectedSTValue: Int {
-        switch selectedST {
-        case "og": return ogST
+        if selectedST == "og" { return ogST }
+        return Self.stValue(for: selectedST)
+    }
+
+    /// ArtworkDeviceSubType value for a subtype tag. iPhone 18
+    /// Pro shares iPhone 16 Pro's value (2622) and iPhone 18
+    /// Pro Max shares iPhone 16 Pro Max's (2868); iPhone Duo
+    /// is 2034.
+    static func stValue(for tag: String) -> Int {
+        switch tag {
         case "no_dynamic_island": return 0
         case "14p": return 2436
         case "14pm": return 2796
         case "15pm": return 2976
         case "16p": return 2622
-        case "18pm": return 2622
+        case "18p": return 2622
+        case "18pm": return 2868
         case "16pm": return 2868
+        case "duo": return 2034
         case "air": return 2736
         case "x": return 2436
         default: return 0
         }
+    }
+
+    /// The subtype tag the user last applied, remembered so the
+    /// picker keeps showing it: several tags share one value
+    /// (18 Pro = 16 Pro, 18 Pro Max = 16 Pro Max), so the
+    /// reverse map alone cannot tell them apart after a reload
+    /// — that is why a picked 18 Pro Max used to "disappear"
+    /// back into iPhone 16 Pro.
+    private static let lastSubtypeTagKey = "wt.lastSubtypeTag"
+
+    /// The stored tag, but only when it still matches the
+    /// device's actual subtype value — a stale tag (subtype
+    /// changed elsewhere) is never trusted.
+    static func rememberedSubtypeTag(forDeviceValue value: Int) -> String? {
+        guard let tag = UserDefaults.standard.string(forKey: lastSubtypeTagKey), !tag.isEmpty else { return nil }
+        if tag == "og" { return stToSelMap[value] == nil ? tag : nil }
+        return stValue(for: tag) == value ? tag : nil
     }
 
     static let stToSelMap: [Int: String] = [0: "no_dynamic_island", 2436: "14p", 2796: "14pm", 2976: "15pm", 2622: "16p", 2868: "16pm", 2736: "air"]
@@ -1039,7 +1066,9 @@ final class GestaltManager: ObservableObject {
 
                 let extra = loaded["CacheExtra"] as? NSMutableDictionary ?? NSMutableDictionary()
                 let artwork = extra["oPeik/9e8lQWMszEjbPzng"] as? NSMutableDictionary ?? NSMutableDictionary()
-                let newSelected = GestaltManager.stToSelMap[artwork["ArtworkDeviceSubType"] as? Int ?? ogSubtype] ?? "og"
+                let deviceSubtype = artwork["ArtworkDeviceSubType"] as? Int ?? ogSubtype
+                let newSelected = GestaltManager.rememberedSubtypeTag(forDeviceValue: deviceSubtype)
+                    ?? GestaltManager.stToSelMap[deviceSubtype] ?? "og"
                 let newDeviceName = artwork["ArtworkDeviceProductDescription"] as? String ?? ogDeviceName
                 let newProductType: String
                 if let pt = extra["h9jDsbgj7xIVeIQ8S3/X3Q"] as? String, !pt.isEmpty {
@@ -1103,7 +1132,7 @@ final class GestaltManager: ObservableObject {
         let extra = dict["CacheExtra"] as? NSMutableDictionary ?? NSMutableDictionary()
         let artwork = extra["oPeik/9e8lQWMszEjbPzng"] as? NSMutableDictionary ?? NSMutableDictionary()
         if let subtype = artwork["ArtworkDeviceSubType"] as? Int {
-            selectedST = stToSel[subtype] ?? "og"
+            selectedST = Self.rememberedSubtypeTag(forDeviceValue: subtype) ?? stToSel[subtype] ?? "og"
         }
         if let name = artwork["ArtworkDeviceProductDescription"] as? String {
             deviceName = name
@@ -1135,6 +1164,7 @@ final class GestaltManager: ObservableObject {
                     tweak.writeOff(self.dictNow)
                 }
                 self.dictVersion += 1
+                SoundEffects.playTap()
             }
         )
     }
@@ -1243,6 +1273,10 @@ final class GestaltManager: ObservableObject {
             let artwork = extra["oPeik/9e8lQWMszEjbPzng"] as? NSMutableDictionary ?? NSMutableDictionary()
             extra["oPeik/9e8lQWMszEjbPzng"] = artwork
             artwork["ArtworkDeviceSubType"] = selectedSTValue
+            // Remember the picked tag: several tags share one
+            // value, so only the tag remembers which one the
+            // user actually chose.
+            UserDefaults.standard.set(selectedST, forKey: Self.lastSubtypeTagKey)
             if enableDeviceName {
                 artwork["ArtworkDeviceProductDescription"] = deviceName
             }
