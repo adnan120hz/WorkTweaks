@@ -165,6 +165,8 @@ struct OldTweaksView: View {
                 if doubleSystemVersion() >= 18.0 {
                     Text("iPhone 16 Pro").tag("16p")
                     Text("iPhone 16 Pro Max").tag("16pm")
+                    Text("iPhone 17 Pro").tag("17p")
+                    Text("iPhone 17 Pro Max").tag("17pm")
                     Text("iPhone 18 Pro (iOS 27.0.1+)").tag("18p")
                     Text("iPhone 18 Pro Max (iOS 27.0.1+)").tag("18pm")
                     Text("iPhone Duo (iOS 27.3+)").tag("duo")
@@ -272,6 +274,7 @@ struct OldTweaksView: View {
                             Text("iPhone 17 Pro").tag("iPhone18,1")
                             Text("iPhone 17 Pro Max").tag("iPhone18,2")
                             Text("iPhone Air").tag("iPhone18,4")
+                            Text("iPhone Duo (iOS 27.3+)").tag("iPhone19,4")
                         }
                     }
                 }
