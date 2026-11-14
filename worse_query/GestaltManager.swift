@@ -319,7 +319,7 @@ enum NuggetIPadOSLocator {
 //
 // The published "turn on new Siri AI" method edits one line of the
 // cached MobileGestalt plist in Filza: the base64 line that decodes
-// to 51 bytes — twelve zero bytes, 0x01, then zeros — has the byte
+// to 51 bytes — thirteen zero bytes, 0x01, then zeros — has the byte
 // at offset 21 of that line flipped from 0x00 to 0x02. WorkTweaks
 // does the same edit in memory (staged until Apply writes it),
 // located the same file-based way as Nugget's iPadOS locator:
@@ -345,11 +345,11 @@ enum SiriAICachePatch {
     private static var cachedOffset: Int?
 
     /// The chunk matches the target line with the flip byte at
-    /// `flip` (0x00 = patch off, 0x02 = patch on): byte 12 is
+    /// `flip` (0x00 = patch off, 0x02 = patch on): byte 13 is
     /// 0x01 and every other byte is 0x00.
     private static func lineMatches(_ bytes: UnsafePointer<UInt8>, at offset: Int, flip: UInt8) -> Bool {
-        guard bytes[offset + 12] == 0x01, bytes[offset + flipOffsetInLine] == flip else { return false }
-        for i in 0..<lineLength where i != 12 && i != flipOffsetInLine {
+        guard bytes[offset + 13] == 0x01, bytes[offset + flipOffsetInLine] == flip else { return false }
+        for i in 0..<lineLength where i != 13 && i != flipOffsetInLine {
             if bytes[offset + i] != 0 { return false }
         }
         return true

@@ -175,8 +175,8 @@ final class PosterBoardManager: ObservableObject {
             DispatchQueue.main.async {
                 self.resolveInFlight = false
                 guard let found else {
-                    print("[PosterBoard] container not found")
-                    self.state = .blocked("No container with the identifier \(Self.posterBoardBundleID) was found — not in the App Data scan and not in the daemon / plug-in container roots. Nothing was written.")
+                    print("[PosterBoard] container not found (scan held \(scanned.count) container(s))")
+                    self.state = .blocked("No container with the identifier \(Self.posterBoardBundleID) was found — not in the App Data scan (\(scanned.count) container(s)), not in the daemon / plug-in container roots, and not in a direct enumeration of the Application containers root. Nothing was written.")
                     return
                 }
                 self.containerPath = found
@@ -195,7 +195,16 @@ final class PosterBoardManager: ObservableObject {
     /// identifier, then the metadata plist for candidates
     /// whose xattr could not be read), then pathleak
     /// enumeration of the InternalDaemon and PluginKitPlugin
-    /// roots with the same two identification methods.
+    /// roots with the same two identification methods, then a
+    /// direct pathleak enumeration of the Application
+    /// containers root itself. That last step is the iOS 27.3
+    /// fallback: on 27.3 the shared scan can come back empty
+    /// or stale and the PosterBoard container is not found
+    /// ("Could not find container for com.apple.PosterBoard"
+    /// — the same failure Pocket Poster reports there), so the
+    /// page re-enumerates the Application root on its own
+    /// instead of trusting the scan alone. Slow, but it only
+    /// runs after every other source missed.
     private func findContainer(in scanned: [AppContainer]) -> String? {
         if let hit = scanned.first(where: { $0.bundleID == Self.posterBoardBundleID }) {
             print("[PosterBoard] container found in the App Data scan: \(hit.path)")
@@ -208,20 +217,29 @@ final class PosterBoardManager: ObservableObject {
             }
         }
         for root in Self.fallbackRoots {
-            setPhase("Searching \(root)…")
-            print("[PosterBoard] searching \(root)…")
-            guard let children = wtPathleakChildren(root) else { continue }
-            for child in children {
-                let identifier = wtContainerIdentifier(atPath: child)
-                if identifier == Self.posterBoardBundleID {
-                    print("[PosterBoard] container found under \(root): \(child)")
-                    return child
-                }
-                if identifier == nil,
-                   Self.metadataIdentifier(atPath: child) == Self.posterBoardBundleID {
-                    print("[PosterBoard] container found under \(root) via its metadata plist: \(child)")
-                    return child
-                }
+            if let found = searchRoot(root) { return found }
+        }
+        if let found = searchRoot(AppDataManager.rootPath) { return found }
+        return nil
+    }
+
+    /// Enumerate one container root with pathleak and identify
+    /// each child by xattr, then by its metadata plist.
+    /// Returns the PosterBoard container path, if found there.
+    private func searchRoot(_ root: String) -> String? {
+        setPhase("Searching \(root)…")
+        print("[PosterBoard] searching \(root)…")
+        guard let children = wtPathleakChildren(root) else { return nil }
+        for child in children {
+            let identifier = wtContainerIdentifier(atPath: child)
+            if identifier == Self.posterBoardBundleID {
+                print("[PosterBoard] container found under \(root): \(child)")
+                return child
+            }
+            if identifier == nil,
+               Self.metadataIdentifier(atPath: child) == Self.posterBoardBundleID {
+                print("[PosterBoard] container found under \(root) via its metadata plist: \(child)")
+                return child
             }
         }
         return nil

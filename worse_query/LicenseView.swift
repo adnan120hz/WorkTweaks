@@ -123,6 +123,19 @@ struct LicenseView: View {
                         detail: "Reference — PosterBoard wallpaper format the maker was verified against.",
                         url: "https://github.com/CAPlayground/CAPlayground"
                     )
+                    Divider()
+                        .padding(.leading, 14)
+                    // Toto is credited without a link: the
+                    // user named the person only, no URL was given.
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Siri AI Method — Toto")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Text("Reference — turn on new Siri AI (CacheData line edit + device spoof)")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
                 }
                 .padding(.vertical, 4)
             }
