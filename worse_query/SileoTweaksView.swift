@@ -278,7 +278,7 @@ struct SileoTweaksView: View {
             }
 
             ForEach(Array(visibleTweaks(for: section).enumerated()), id: \.element.id) { localIndex, tweak in
-                SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconColor: groupedIconColor(at: offset + localIndex))
+                SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconTileColor: groupedIconColor(at: offset + localIndex))
 
                 // The Dynamic Island model picker lives directly
                 // under its tweak's row.
@@ -314,17 +314,17 @@ struct SileoTweaksView: View {
         }
     }
 
-    /// The tweak icon colors, in blocks of four down the page —
-    /// four blue, four gray, four cyan, four dark, then blue
-    /// again — so the colors are grouped, never random. The
-    /// dark tile is the palette's dark (near-black) with a
-    /// white symbol; light is not in the cycle.
-    private func groupedIconColor(at index: Int) -> (tile: Color, symbol: Color) {
+    /// The tweak icon tile colors, in blocks of four down the
+    /// page — four blue, four gray, four cyan, four dark, then
+    /// blue again — so the colors are grouped, never random.
+    /// The symbol is always white. The dark tile is the
+    /// palette's dark (near-black); light is not in the cycle.
+    private func groupedIconColor(at index: Int) -> Color {
         switch (index / 4) % 4 {
-        case 0: return (.blue, .white)
-        case 1: return (.gray, .white)
-        case 2: return (.cyan, .white)
-        default: return (Color(red: 0.16, green: 0.16, blue: 0.18), .white)
+        case 0: return .blue
+        case 1: return .gray
+        case 2: return .cyan
+        default: return Color(red: 0.16, green: 0.16, blue: 0.18)
         }
     }
 
@@ -723,7 +723,7 @@ struct SileoTweaksView: View {
                             .padding(.vertical, 4)
                     } else {
                         ForEach(Array(searchResults.enumerated()), id: \.element.id) { searchIndex, tweak in
-                            SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconColor: groupedIconColor(at: searchIndex))
+                            SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconTileColor: groupedIconColor(at: searchIndex))
                             if tweak.id == "enable_dynamic_island_capability" {
                                 subtypeRow
                             }

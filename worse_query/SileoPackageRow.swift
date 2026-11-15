@@ -99,10 +99,11 @@ struct SileoTweakRow: View {
     @ObservedObject var manager: GestaltManager
     let tweak: GestaltTweak
     let onInfo: (GestaltTweak) -> Void
-    /// The icon colors, when the page groups them (blocks of
-    /// four down the page) instead of the tweak's own catalog
-    /// tint. Nil = the tweak's own tint.
-    let iconColor: (tile: Color, symbol: Color)? = nil
+    /// The icon tile color, when the page groups them (blocks
+    /// of four down the page) instead of the tweak's own catalog
+    /// tint. Nil = the tweak's own tint. The symbol is always
+    /// white for a grouped color, so only the tile is overridden.
+    let iconTileColor: Color? = nil
 
     /// Enable iPadOS Mode stays locked unless the device class in
     /// CacheExtra still reads "iPhone" (unchanged from v2.0).
@@ -124,11 +125,10 @@ struct SileoTweakRow: View {
     }
 
     var body: some View {
-        let icon = iconColor ?? tweak.tint.sileoIcon
         SileoPackageRow(
             icon: tweak.icon,
-            iconColor: icon.tile,
-            iconSymbolColor: icon.symbol,
+            iconColor: iconTileColor ?? tweak.tint.sileoIcon.tile,
+            iconSymbolColor: iconTileColor == nil ? tweak.tint.sileoIcon.symbol : .white,
             title: tweak.title,
             author: TweakCategory.section(of: tweak).title,
             version: stateLine,
