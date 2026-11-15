@@ -5,15 +5,20 @@ import UIKit
 //
 // The Tweaks tab's third layout, styled after the Sileo Featured
 // page (repo adnan120hz/ui3-Ui): a dark page with a big title,
-// a WorkTweaks banner card, a "Hot Right Now" package list, and a
-// floating pill bar — adapted for tweaks. Only the layout differs:
-// every toggle, picker and action reads the same GestaltManager
-// state and runs the same apply/revert/respring code as the New
-// and Old UIs, and the system (engine, backup, resolver, respring)
-// is untouched. The Sileo green/teal accent is blue here, the
-// packages below are WorkTweaks' own tweaks, and the icon shown
-// is the WorkTweaks icon (Image "AppIconDisplay"), not Sileo's.
-// Applies to the Tweaks tab only (wt.tweaksUIVersion: "sileo").
+// a WorkTweaks banner card, a "Hot Right Now" package list, and
+// a chip row switching the six sections — adapted for tweaks.
+// Only the layout differs: every toggle, picker and action
+// reads the same GestaltManager state and runs the same
+// apply/revert/respring code as the New and Old UIs, and the
+// system (engine, backup, resolver, respring) is untouched.
+// The Sileo green/teal accent is blue here, the packages below
+// are WorkTweaks' own tweaks, and the icon shown is the
+// WorkTweaks icon (Image "AppIconDisplay"), not Sileo's.
+// The floating pill tab bar and the search circle belong to the
+// whole app (SileoShell), not to this tab — the pill switches
+// the five menus, the circle opens this tab's search.
+// Applies to the Tweaks tab only in the sense that the layout
+// choice is picked here; in Sileo mode the whole app restyles.
 
 struct SileoTweaksView: View {
     let console: Console
@@ -26,8 +31,13 @@ struct SileoTweaksView: View {
     let onSpoofingInfo: () -> Void
 
     @AppStorage("atomic_write") private var atomicWrite = true
+    /// The shell's shared state: the search cover is opened by
+    /// the shell's floating search circle (and only there), so
+    /// this tab reads it from the environment instead of owning
+    /// its own search button. Present only while the Sileo UI
+    /// is active — which is the only time this view renders.
+    @EnvironmentObject private var shell: SileoShellState
     @State private var selectedSection: TweakSection = .all
-    @State private var searchActive = false
     @State private var searchText = ""
     @FocusState private var searchFocused: Bool
     @State private var showFixStatusBarGuide = false
@@ -49,13 +59,14 @@ struct SileoTweaksView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             sileoBackground.ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     header
                     bannerCard
+                    sectionChips
 
                     if manager.isEmpty || !manager.isValid {
                         warningRow
@@ -77,14 +88,12 @@ struct SileoTweaksView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
-                // Room for the floating pill bar + search button.
+                // Room for the shell's floating pill tab bar.
                 .padding(.bottom, 120)
             }
             .scrollIndicators(.hidden)
-
-            bottomBar
         }
-        .fullScreenCover(isPresented: $searchActive) {
+        .fullScreenCover(isPresented: $shell.searchActive) {
             searchCover
         }
         .alert("Fix Status Bar", isPresented: $showFixStatusBarGuide) {
@@ -657,59 +666,40 @@ struct SileoTweaksView: View {
         }
     }
 
-    // MARK: Floating pill bar (section switcher) + search button
+    // MARK: Section chips (the six sections)
 
-    /// Sileo's floating pill tab bar, adapted: the pill switches
-    /// the Tweaks sections, and the blue circle opens search.
-    private var bottomBar: some View {
-        HStack(spacing: 12) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
-                    ForEach(TweakSection.allCases) { section in
-                        Button {
-                            SoundEffects.playTap()
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                selectedSection = section
-                            }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: section.icon)
-                                    .font(.system(size: 14, weight: .semibold))
-                                Text(section.title)
-                                    .font(.subheadline.weight(.semibold))
-                            }
-                            .foregroundStyle(selectedSection == section ? .white : .white.opacity(0.7))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 9)
-                            .background(
-                                selectedSection == section ? Color.blue : Color.clear,
-                                in: Capsule()
-                            )
-                            .contentShape(Capsule())
+    /// The six sections as a horizontal chip row — in the total
+    /// Sileo UI the floating pill belongs to the whole app (the
+    /// shell's tab bar), so the sections switch here instead.
+    private var sectionChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(TweakSection.allCases) { section in
+                    Button {
+                        SoundEffects.playTap()
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            selectedSection = section
                         }
-                        .buttonStyle(.plain)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: section.icon)
+                                .font(.system(size: 13, weight: .semibold))
+                            Text(section.title)
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .foregroundStyle(selectedSection == section ? .white : .white.opacity(0.7))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            selectedSection == section ? Color.blue : Color.white.opacity(0.1),
+                            in: Capsule()
+                        )
+                        .contentShape(Capsule())
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 6)
             }
-            .background(.ultraThinMaterial, in: Capsule())
-
-            Button {
-                SoundEffects.playTap()
-                searchActive = true
-            } label: {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Color.blue, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Search tweaks")
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 12)
     }
 
     // MARK: Search (dedicated full-screen cover, Sileo style)
@@ -790,7 +780,7 @@ struct SileoTweaksView: View {
 
     private func closeSearch() {
         searchText = ""
-        searchActive = false
+        shell.searchActive = false
         searchFocused = false
     }
 

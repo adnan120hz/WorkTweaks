@@ -109,8 +109,9 @@ struct TweaksView: View {
     /// Master switch for this tab, flipped in the Sandbox tab.
     @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
     /// New / Old / Sileo UI choice, picked in the Sandbox tab
-    /// (wt.tweaksUIVersion: "new", "old" or "sileo"). Applies
-    /// to this tab only — every other tab is untouched.
+    /// (wt.tweaksUIVersion: "new", "old" or "sileo"). Sileo UI
+    /// restyles the WHOLE app (every menu + the tab bar);
+    /// New and Old change this tab only.
     @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "sileo"
 
     private var useOldUI: Bool { uiVersionRaw == "old" }

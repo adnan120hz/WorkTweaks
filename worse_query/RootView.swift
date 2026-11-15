@@ -17,7 +17,13 @@ struct RootView: View {
     /// a reinstall, which wipes the app's defaults). A new key for
     /// v2.0, so everyone sees the new Welcome once after updating.
     @AppStorage("wt.welcomeV2Seen") private var welcomeSeen = false
+    /// Sileo UI (the whole-app restyle) is read here too, so the
+    /// root can swap the TabView for the Sileo shell. Same key
+    /// the Sandbox picker writes.
+    @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "sileo"
     @State private var selectedTab: AppTab = .sandbox
+
+    private var useSileoUI: Bool { uiVersionRaw == "sileo" }
 
     var body: some View {
         Group {
@@ -25,8 +31,21 @@ struct RootView: View {
                 // 1. Welcome gate (first launch of v2.0).
                 WelcomeView { welcomeSeen = true }
             } else if SupportInfo.isSupported {
-                // 2. Supported build → the app itself.
-                tabView
+                // 2. Supported build → the app itself. Sileo UI
+                // restyles the whole app (floating pill tab bar
+                // + dark menus); New/Old UI keep the standard
+                // TabView with the Tweaks tab in that layout.
+                Group {
+                    if useSileoUI {
+                        SileoShell(console: console, manager: gestalt)
+                    } else {
+                        tabView
+                    }
+                }
+                .onAppear {
+                    console.start()
+                    gestalt.load()
+                }
             } else {
                 // 3. Unsupported build → no tab UI, ever.
                 UnsupportedView()
@@ -86,10 +105,6 @@ struct RootView: View {
         }
         .onChange(of: selectedTab) { _, _ in
             SoundEffects.playSwipe()
-        }
-        .onAppear {
-            console.start()
-            gestalt.load()
         }
     }
 }

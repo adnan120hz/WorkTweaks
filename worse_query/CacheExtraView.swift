@@ -41,6 +41,10 @@ private struct KeyRef: Identifiable {
 
 struct CacheExtraView: View {
     @ObservedObject var manager: GestaltManager
+    /// Sileo UI: the whole app restyles (dark page, Sileo rows,
+    /// floating pill tab bar at the root). False = the classic
+    /// Liquid Glass layout.
+    var sileo: Bool = false
 
     @State private var search = ""
     @State private var editing: KeyRef?
@@ -50,7 +54,11 @@ struct CacheExtraView: View {
     var body: some View {
         let _ = manager.dictVersion // re-render when the dict changes
         NavigationStack {
-            WTGlassPage {
+            Group {
+                if sileo {
+                    sileoContent
+                } else {
+                    WTGlassPage {
                 WTSectionCard {
                     Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press **Apply Tweaks** in the Tweaks tab to write them (you'll get the Respring / Restart choice).")
                         .font(.caption).foregroundStyle(.secondary)
@@ -105,8 +113,11 @@ struct CacheExtraView: View {
                         }
                     }
                 }
+                    }
+                }
             }
             .navigationTitle("Cache Extra")
+            .navigationBarTitleDisplayMode(sileo ? .inline : .large)
             .searchable(text: $search, prompt: "Search keys")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -134,6 +145,104 @@ struct CacheExtraView: View {
         let keys = extra.allKeys.compactMap { $0 as? String }.sorted()
         guard !search.isEmpty else { return keys }
         return keys.filter { $0.localizedCaseInsensitiveContains(search) }
+    }
+
+    /// The Extra tab in Sileo UI: big title, dark cards, and the
+    /// keys as Sileo rows. Same editor, add flow and reset — only
+    /// the menu layout changes.
+    private var sileoContent: some View {
+        SileoPage {
+            Text("Cache Extra")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(Sileo.primary)
+
+            SileoCard {
+                Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press Apply Tweaks in the Tweaks tab to write them (you'll get the Respring / Restart choice).")
+                    .font(.caption)
+                    .foregroundStyle(Sileo.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+            }
+
+            if !manager.isValid {
+                SileoCard {
+                    Label("MobileGestalt is not loaded yet — keys are unavailable.", systemImage: "exclamationmark.triangle")
+                        .font(.subheadline)
+                        .foregroundStyle(Sileo.primary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    SileoSectionTitle(text: "CacheExtra Keys (\(filteredKeys.count))")
+                    SileoCard {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(filteredKeys.enumerated()), id: \.element) { index, key in
+                                if index > 0 {
+                                    Divider().background(Sileo.separator)
+                                }
+                                Button { editing = KeyRef(key: key) } label: {
+                                    sileoRow(for: key)
+                                        .padding(.horizontal, 14)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        manager.removeExtraKey(key)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+
+            if manager.isValid {
+                SileoCard(footer: "Undoes everything changed or added in this tab: edited and deleted keys return to the values they had when MobileGestalt was loaded, and added keys disappear. Tweak states are not affected, and — like the edits — the reset is only written when you press Apply Tweaks.") {
+                    Button(role: .destructive) {
+                        showResetConfirm = true
+                    } label: {
+                        Label("Reset Extra", systemImage: "arrow.counterclockwise")
+                            .foregroundStyle(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                    }
+                }
+            }
+        }
+    }
+
+    /// One CacheExtra key as a Sileo row (same content as the
+    /// classic row, dark colors).
+    private func sileoRow(for key: String) -> some View {
+        let value = manager.cacheExtra?[key] ?? "—"
+        return HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(key)
+                    .font(.system(.footnote, design: .monospaced).weight(.medium))
+                    .foregroundStyle(Sileo.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Text(PlistValue.describe(value as Any))
+                    .font(.caption).foregroundStyle(Sileo.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            Spacer()
+            Text(ExtraValueKind.of(value)?.rawValue ?? "Complex")
+                .font(.caption)
+                .foregroundStyle(Sileo.secondary)
+            Image(systemName: "chevron.right")
+                .font(.caption2).foregroundStyle(.white.opacity(0.6))
+        }
+        .padding(.vertical, 8)
     }
 
     private func row(for key: String) -> some View {
