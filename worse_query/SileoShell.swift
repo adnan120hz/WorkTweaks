@@ -88,31 +88,36 @@ struct SileoShell: View {
         ZStack {
             Sileo.background.ignoresSafeArea()
 
-            // The native TabView drives the pages, but its
-            // own tab bar is hidden — the visible bottom
-            // bar below replaces it (see the note above).
-            TabView(selection: $shell.selectedTab) {
+            // The pages, switched by the bottom bar. This is
+            // NOT a TabView: a TabView always draws its own
+            // native tab bar, and `.toolbar(.hidden, for:
+            // .tabBar)` did not hide it in v6.0.8 — the user
+            // saw it doubled behind the custom pill. So the
+            // pages live in a ZStack and only the selected
+            // one is visible; the others stay in the
+            // hierarchy (opacity 0) so their NavigationStack
+            // state is kept when switching back. The custom
+            // bottom bar below drives `shell.selectedTab`.
+            ZStack {
                 TweaksView(console: console, manager: manager,
                            onOpenSandbox: { shell.settingsActive = true },
                            onOpenExtra: { shell.settingsActive = true },
                            onOpenBackup: { shell.settingsActive = true })
-                    .tabItem { Label(SileoTab.featured.title, systemImage: SileoTab.featured.icon) }
-                    .tag(SileoTab.featured)
+                    .opacity(shell.selectedTab == .featured ? 1 : 0)
+                    .disabled(shell.selectedTab != .featured)
 
                 NavigationStack { AppDataView() }
-                    .tabItem { Label(SileoTab.appData.title, systemImage: SileoTab.appData.icon) }
-                    .tag(SileoTab.appData)
+                    .opacity(shell.selectedTab == .appData ? 1 : 0)
+                    .disabled(shell.selectedTab != .appData)
 
                 NavigationStack { PosterBoardView() }
-                    .tabItem { Label(SileoTab.posterBoard.title, systemImage: SileoTab.posterBoard.icon) }
-                    .tag(SileoTab.posterBoard)
+                    .opacity(shell.selectedTab == .posterBoard ? 1 : 0)
+                    .disabled(shell.selectedTab != .posterBoard)
 
                 NavigationStack { CacheCleanerView() }
-                    .tabItem { Label(SileoTab.cacheCleaner.title, systemImage: SileoTab.cacheCleaner.icon) }
-                    .tag(SileoTab.cacheCleaner)
+                    .opacity(shell.selectedTab == .cacheCleaner ? 1 : 0)
+                    .disabled(shell.selectedTab != .cacheCleaner)
             }
-            .tint(Sileo.accent)
-            .toolbar(.hidden, for: .tabBar)
             .environmentObject(shell)
             .onChange(of: shell.selectedTab) { _, _ in
                 SoundEffects.playSwipe()
@@ -161,11 +166,13 @@ struct SileoShell: View {
                         SoundEffects.playTap()
                         shell.selectedTab = tab
                     } label: {
-                        VStack(spacing: 3) {
+                        VStack(spacing: 2) {
                             Image(systemName: tab.icon)
                                 .font(.system(size: 20, weight: .semibold))
                             Text(tab.title)
-                                .font(.system(size: 11, weight: .medium))
+                                .font(.system(size: 10, weight: .medium))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
@@ -176,7 +183,7 @@ struct SileoShell: View {
                     .accessibilityLabel(tab.title)
                 }
             }
-            .padding(.horizontal, 6)
+            .padding(.horizontal, 4)
             .glassEffect(.regular, in: Capsule())
             .frame(maxWidth: .infinity)
 
