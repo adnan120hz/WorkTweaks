@@ -144,7 +144,6 @@ struct TweaksView: View {
                         SileoTweaksView(
                             console: console,
                             manager: manager,
-                            onInfo: showInfo(for:),
                             onRevert: { showRevertConfirm = true },
                             onSpoofingInfo: {
                                 infoTitle = "Device Spoofing Info"

@@ -93,27 +93,34 @@ struct SileoPackageRow<Trailing: View>: View {
 /// tint as the glass icon tile, the section name as the author
 /// line, the state as the version line ("On · WorkTweaks").
 /// Shared by the Featured and Packages tabs so the two lists
-/// can never drift. The info alert only opens for tweaks that
-/// actually have info text.
+/// can never drift. Tapping the row — or its GET pill — opens
+/// the tweak's detail sheet (explanation, fix, toggle), like
+/// Sileo opening a package's depiction; the row itself carries
+/// no toggle anymore, only the GET pill, which reads ON when
+/// the tweak is on.
 struct SileoTweakRow: View {
     @ObservedObject var manager: GestaltManager
     let tweak: GestaltTweak
-    let onInfo: (GestaltTweak) -> Void
+    let onOpen: (GestaltTweak) -> Void
     /// The icon tile color, when the page groups them (blocks
     /// of four down the page) instead of the tweak's own catalog
     /// tint. Nil = the tweak's own tint. The symbol is always
     /// white for a grouped color, so only the tile is overridden.
     let iconTileColor: Color?
+    /// The author line — the group the tweak sits in. Nil =
+    /// the tweak's catalog section name.
+    let author: String?
 
     /// Explicit initializer: the synthesized memberwise init
     /// did not pick up the added iconTileColor parameter (CI
     /// failed twice with "extra argument"), so the init is
     /// written out here instead of relying on synthesis.
-    init(manager: GestaltManager, tweak: GestaltTweak, onInfo: @escaping (GestaltTweak) -> Void, iconTileColor: Color? = nil) {
+    init(manager: GestaltManager, tweak: GestaltTweak, onOpen: @escaping (GestaltTweak) -> Void, iconTileColor: Color? = nil, author: String? = nil) {
         self.manager = manager
         self.tweak = tweak
-        self.onInfo = onInfo
+        self.onOpen = onOpen
         self.iconTileColor = iconTileColor
+        self.author = author
     }
 
     /// Enable iPadOS Mode stays locked unless the device class in
@@ -141,20 +148,30 @@ struct SileoTweakRow: View {
             iconColor: iconTileColor ?? tweak.tint.sileoIcon.tile,
             iconSymbolColor: iconTileColor == nil ? tweak.tint.sileoIcon.symbol : .white,
             title: tweak.title,
-            author: TweakCategory.section(of: tweak).title,
+            author: author ?? TweakCategory.section(of: tweak).title,
             version: stateLine,
             onTap: {
-                if tweak.infoMessage != nil {
-                    onInfo(tweak)
-                }
+                SoundEffects.playTap()
+                onOpen(tweak)
             }
         ) {
-            // The native Toggle: the system's own Liquid Glass
-            // switch, the same one the New and Old UIs use.
-            Toggle(isOn: manager.toggleBinding(for: tweak)) {
-                Text(tweak.title)
+            // Sileo's GET pill: it opens the tweak's detail
+            // sheet (explanation, fix, toggle). It reads ON
+            // in green when the tweak is on, GET in blue
+            // when it is off — so the state is visible at a
+            // glance without a toggle on the row.
+            Button {
+                SoundEffects.playTap()
+                onOpen(tweak)
+            } label: {
+                Text(tweak.isOn(in: manager.dictNow) ? "ON" : "GET")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(tweak.isOn(in: manager.dictNow) ? Color.green : Sileo.accent, in: Capsule())
             }
-            .labelsHidden()
+            .buttonStyle(.plain)
             .disabled(pillDisabled)
             .opacity(pillDisabled ? 0.4 : 1)
         }

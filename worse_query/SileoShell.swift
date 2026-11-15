@@ -26,12 +26,16 @@ final class SileoShellState: ObservableObject {
 enum SileoTab: String, CaseIterable {
     case featured, appData, posterBoard, cacheCleaner
 
+    /// Short labels, so the native tab bar stays narrow and
+    /// leaves room at the right for the search circle beside
+    /// it (level, not on top of a tab) — the menu is shrunk
+    /// on purpose, not the search.
     var title: String {
         switch self {
         case .featured: "Featured"
-        case .appData: "App Data"
-        case .posterBoard: "PosterBoard"
-        case .cacheCleaner: "Cache Cleaner"
+        case .appData: "Data"
+        case .posterBoard: "Poster"
+        case .cacheCleaner: "Cleaner"
         }
     }
 

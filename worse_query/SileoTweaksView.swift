@@ -24,17 +24,12 @@ import UIKit
 struct SileoTweaksView: View {
     let console: Console
     @ObservedObject var manager: GestaltManager
-    /// Shows the info alert (owned by TweaksView) for a tweak.
-    let onInfo: (GestaltTweak) -> Void
     /// Shows the Revert confirmation (owned by TweaksView).
     let onRevert: () -> Void
     /// Shows the Device Spoofing info alert (owned by TweaksView).
     let onSpoofingInfo: () -> Void
 
     @AppStorage("atomic_write") private var atomicWrite = true
-    /// The Tweaks UI choice, picked here too (the settings
-    /// sheet has the same picker) — Sileo / New / Old.
-    @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "sileo"
     /// The shell's shared state: the search cover is opened by
     /// the floating search circle at the bottom right, the
     /// banner opens the News tab, and the avatar opens the
@@ -46,12 +41,83 @@ struct SileoTweaksView: View {
     @State private var showFixAppleIntelligenceGuide = false
     /// The changelog sheet, opened by tapping a release banner.
     @State private var showNews = false
+    /// The tweak whose detail sheet is open (GET tapped) —
+    /// the sheet holds its explanation, its fix if it has
+    /// one, and its toggle. It carries the grouped icon color
+    /// and group title the row showed, so the sheet matches.
+    private struct TweakDetail: Identifiable {
+        let tweak: GestaltTweak
+        let iconColor: Color
+        let groupTitle: String
+        var id: String { tweak.id }
+    }
+    @State private var detailTweak: TweakDetail?
+    /// The custom row whose detail sheet is open (GET tapped).
+    @State private var detailFollower: FollowerDetail?
 
-    /// The sections, stacked in order on the Featured page —
-    /// no "All" filter (the Packages tab lists everything).
-    private let featuredSections: [TweakSection] = [
-        .dynamicIsland, .tweaks, .appleIntelligence, .addFeature, .applyRevert,
-    ]
+    /// One row on the Featured page: a catalog tweak, or one
+    /// of the custom rows (pickers, custom name/region,
+    /// persist, footnote).
+    private enum FeaturedRow: Identifiable {
+        case tweak(GestaltTweak)
+        case subtype
+        case spoofing
+        case deviceName
+        case regionModel
+        case persist
+        case footnote
+        var id: String {
+            switch self {
+            case .tweak(let tweak): return tweak.id
+            case .subtype: return "subtype"
+            case .spoofing: return "spoofing"
+            case .deviceName: return "deviceName"
+            case .regionModel: return "regionModel"
+            case .persist: return "persist"
+            case .footnote: return "footnote"
+            }
+        }
+    }
+
+    /// One group on the Featured page: a title and its rows.
+    private struct FeaturedGroup {
+        let title: String
+        let rows: [FeaturedRow]
+    }
+
+    /// A custom row whose detail sheet is open.
+    private enum FollowerDetail: String, Identifiable {
+        case deviceName, regionModel, persist
+        var id: String { rawValue }
+    }
+
+    /// The groups, stacked in order on the Featured page —
+    /// the user's own grouping, not the catalog sections.
+    /// Tweaks he did not list (Apple Pencil, Stage Manager,
+    /// Charge Limit, Tap to Wake, the Liquid Glass modes,
+    /// Boot Chime) sit in "More Tweaks" so nothing is lost,
+    /// then Apply / Revert / Respring close the page.
+    private var featuredGroups: [FeaturedGroup] {
+        let byId = Dictionary(uniqueKeysWithValues: TweakCatalog.all.map { ($0.id, $0) })
+        func pick(_ ids: [String]) -> [FeaturedRow] {
+            ids.compactMap { byId[$0] }.filter { tweak in
+                if tweak.id == "tap_to_wake" && !hasHomeButton() { return false }
+                if tweak.id == "stage_manager_support" && UIDevice.current.userInterfaceIdiom != .pad { return false }
+                return true
+            }.map { .tweak($0) }
+        }
+        return [
+            FeaturedGroup(title: "Dynamic Island", rows: pick(["enable_dynamic_island_capability"]) + [.subtype]),
+            FeaturedGroup(title: "Apple Intelligence", rows: pick(["apple_intelligence"]) + [.spoofing] + pick(["siri_ai_cache_patch", "disable_region_restrictions"])),
+            FeaturedGroup(title: "Internal", rows: pick(["internal_features", "internal_storage_view", "apple_internal_install"])),
+            FeaturedGroup(title: "Always On Display", rows: pick(["always_on_display", "aod_vibrancy"])),
+            FeaturedGroup(title: "System", rows: pick(["disable_wallpaper_parallax", "pulse_width_modulation", "security_research_device_mode", "collision_sos"])),
+            FeaturedGroup(title: "Buttons", rows: pick(["iphone_16_camera_control_settings", "action_button_settings"])),
+            FeaturedGroup(title: "Custom", rows: [.deviceName, .regionModel, .footnote]),
+            FeaturedGroup(title: "iPad", rows: pick(["enable_ipados_mode", "allow_ipad_apps"])),
+            FeaturedGroup(title: "More Tweaks", rows: pick(["apple_pencil_settings", "stage_manager_support", "charge_limit_menu", "tap_to_wake", "enable_liquid_glass_low_performance_mode", "disable_liquid_glass_low_performance_mode", "boot_shutdown_chime"]) + [.persist]),
+        ]
+    }
 
     /// The info banners: the version, the supported iOS list,
     /// the iPhone lineup, and the tweak count — each its own
@@ -88,18 +154,22 @@ struct SileoTweaksView: View {
                 warningRow
             }
 
-            ForEach(Array(featuredSections.enumerated()), id: \.offset) { sectionIndex, section in
-                SileoSectionTitle(text: section.title)
+            ForEach(Array(featuredGroups.enumerated()), id: \.offset) { groupIndex, group in
+                SileoSectionTitle(text: group.title)
                 // The icon colors run in one continuous sequence
                 // down the page (four blue, four gray, four
-                // cyan, four dark), so each section starts where
+                // cyan, four dark), so each group starts where
                 // the previous one left off. The offset counts
-                // EVERY icon row (tweaks plus the follower
-                // rows, the UI picker and the footnote) — not
-                // just the tweaks — so the blocks never break
-                // where a follower sits.
-                sectionRows(section, startingAt: featuredSections.prefix(sectionIndex).reduce(0) { $0 + rowCount(for: $1) })
+                // EVERY icon row in the group — not just the
+                // tweaks — so the blocks never break where a
+                // picker or custom row sits.
+                groupRows(group, startingAt: featuredGroups.prefix(groupIndex).reduce(0) { $0 + $1.rows.count })
             }
+
+            // Apply / Revert / Respring close the page, after
+            // every group.
+            SileoSectionTitle(text: "Actions")
+            actionsBlock
 
             footerCredit
         }
@@ -164,6 +234,12 @@ struct SileoTweaksView: View {
             Button("OK") { }
         } message: {
             Text("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading.")
+        }
+        .sheet(item: $detailTweak) { detail in
+            SileoTweakDetailSheet(manager: manager, detail: detail)
+        }
+        .sheet(item: $detailFollower) { follower in
+            SileoFollowerDetailSheet(manager: manager, follower: follower, atomicWrite: $atomicWrite)
         }
     }
 
@@ -254,109 +330,34 @@ struct SileoTweaksView: View {
         .padding(.vertical, 8)
     }
 
-    // MARK: Sections
+    // MARK: Groups
 
     @ViewBuilder
-    /// The rows of one section, in catalog order. `startingAt`
-    /// is the section's first icon row's position in the
-    /// page's whole row sequence, so the icon colors run
-    /// continuously down the page instead of restarting per
-    /// section — and every icon row (tweak, follower, UI
-    /// picker, footnote) takes the next color in the
-    /// sequence, so a follower never breaks a block.
-    private func sectionRows(_ section: TweakSection, startingAt offset: Int) -> some View {
-        if section == .applyRevert {
-            actionsBlock
-        } else {
-            // The Tweaks UI choice sits at the top of the
-            // Tweaks section, where it can't get hidden —
-            // it is the section's first icon row.
-            if section == .tweaks {
-                uiPickerRow(color: groupedIconColor(at: offset))
+    /// The rows of one group, in order. `startingAt` is the
+    /// group's first row's position in the page's whole row
+    /// sequence, so the icon colors run continuously down
+    /// the page instead of restarting per group.
+    private func groupRows(_ group: FeaturedGroup, startingAt offset: Int) -> some View {
+        ForEach(Array(group.rows.enumerated()), id: \.element.id) { rowIndex, row in
+            let color = groupedIconColor(at: offset + rowIndex)
+            switch row {
+            case .tweak(let tweak):
+                SileoTweakRow(manager: manager, tweak: tweak, onOpen: { detailTweak = TweakDetail(tweak: $0, iconColor: color, groupTitle: group.title) }, iconTileColor: color, author: group.title)
+                // The fix guides live in the tweak's detail
+                // sheet now (GET opens it), not under the row.
+            case .subtype:
+                subtypeRow(color: color)
+            case .spoofing:
+                spoofingRow(color: color)
+            case .deviceName:
+                deviceNameRow(color: color)
+            case .regionModel:
+                regionModelRow(color: color)
+            case .persist:
+                persistRow(color: color)
+            case .footnote:
+                footnoteRow(color: color)
             }
-
-            ForEach(Array(visibleTweaks(for: section).enumerated()), id: \.element.id) { localIndex, tweak in
-                SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconTileColor: groupedIconColor(at: offset + tweakRowNumber(in: section, localIndex: localIndex, tweak: tweak)))
-
-                // The Dynamic Island model picker lives directly
-                // under its tweak's row — it takes the next
-                // color in the sequence, right after its tweak.
-                if tweak.id == "enable_dynamic_island_capability" {
-                    subtypeRow(color: groupedIconColor(at: offset + tweakRowNumber(in: section, localIndex: localIndex, tweak: tweak) + 1))
-                }
-                // The spoofing model picker sits next to Apple
-                // Intelligence — it takes the next color in
-                // the sequence, right after its tweak.
-                if tweak.id == "apple_intelligence" {
-                    spoofingRow(color: groupedIconColor(at: offset + tweakRowNumber(in: section, localIndex: localIndex, tweak: tweak) + 1))
-                }
-
-                // The fix guides live under their tweak's row
-                // while the tweak is on (same guides as the
-                // New UI cards).
-                if tweak.id == "enable_dynamic_island_capability", tweak.isOn(in: manager.dictNow) {
-                    fixButton("Fix Status Bar!") { showFixStatusBarGuide = true }
-                }
-                if tweak.id == "apple_intelligence", tweak.isOn(in: manager.dictNow) {
-                    fixButton("Fix Apple Intelligence Here!") { showFixAppleIntelligenceGuide = true }
-                }
-            }
-
-            if section == .tweaks {
-                // The three custom rows sit after the Tweaks
-                // section's tweaks (and after the UI picker),
-                // so they continue the sequence from there.
-                let tweakCount = visibleTweaks(for: .tweaks).count
-                deviceNameRow(color: groupedIconColor(at: offset + tweakCount + 1))
-                regionModelRow(color: groupedIconColor(at: offset + tweakCount + 2))
-                persistRow(color: groupedIconColor(at: offset + tweakCount + 3))
-            }
-
-            if section == .addFeature {
-                // The footnote sits after the Add Feature
-                // tweaks, so it continues the sequence.
-                let tweakCount = visibleTweaks(for: .addFeature).count
-                footnoteRow(color: groupedIconColor(at: offset + tweakCount))
-            }
-        }
-    }
-
-    /// How many icon rows a section has — its tweaks plus
-    /// every follower row, the UI picker and the footnote
-    /// that carry an icon — so the next section's color
-    /// offset counts them all.
-    private func rowCount(for section: TweakSection) -> Int {
-        let tweaks = visibleTweaks(for: section).count
-        switch section {
-        case .dynamicIsland:
-            return tweaks + 1 // the subtype picker
-        case .tweaks:
-            return tweaks + 4 // UI picker + device name + region + persist
-        case .appleIntelligence:
-            return tweaks + 1 // the spoofing picker
-        case .addFeature:
-            return tweaks + 1 // the footnote
-        case .applyRevert:
-            return 0 // actions keep their own colors
-        case .all:
-            return tweaks
-        }
-    }
-
-    /// A tweak's row number inside its section, counting
-    /// every icon row before it. The Tweaks section starts
-    /// with the UI picker (row 0), so its tweaks shift by
-    /// one; the Apple Intelligence section has the spoofing
-    /// picker after Apple Intelligence (row 1), so every
-    /// AI tweak after it shifts by one.
-    private func tweakRowNumber(in section: TweakSection, localIndex: Int, tweak: GestaltTweak) -> Int {
-        switch section {
-        case .tweaks:
-            return localIndex + 1
-        case .appleIntelligence:
-            return localIndex + (tweak.id == "apple_intelligence" ? 0 : 1)
-        default:
-            return localIndex
         }
     }
 
@@ -372,34 +373,6 @@ struct SileoTweaksView: View {
         case 2: return .cyan
         default: return Color(red: 0.16, green: 0.16, blue: 0.18)
         }
-    }
-
-    /// The tweaks shown for a section, in catalog order — the
-    /// same filter and device conditionals as the New UI.
-    private func visibleTweaks(for section: TweakSection) -> [GestaltTweak] {
-        TweakCatalog.all.filter { tweak in
-            if tweak.id == "tap_to_wake" && !hasHomeButton() { return false }
-            if tweak.id == "stage_manager_support" && UIDevice.current.userInterfaceIdiom != .pad { return false }
-            switch section {
-            case .all:
-                return true
-            default:
-                return TweakCategory.section(of: tweak) == section
-            }
-        }
-    }
-
-    private func fixButton(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(title) {
-            SoundEffects.playTap()
-            action()
-        }
-        .font(.subheadline.weight(.semibold))
-        .foregroundStyle(Color.blue)
-        .buttonStyle(.plain)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 4)
     }
 
     // MARK: Follower rows (pickers + custom name/region + persist)
@@ -520,66 +493,65 @@ struct SileoTweaksView: View {
         }
     }
 
-    /// Device Artwork: Custom Device Name toggle + field.
-    /// The icon color comes from the page's grouped sequence,
-    /// so it continues the block the Tweaks section sits in.
+    /// Sileo's GET pill: opens the row's detail sheet. It reads
+    /// ON in green when the row is on, GET in blue when off.
+    private func getPill(isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            SoundEffects.playTap()
+            action()
+        } label: {
+            Text(isOn ? "ON" : "GET")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(isOn ? Color.green : Sileo.accent, in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// The GET pill as a label (not a button) — for rows that
+    /// navigate, where the whole row is the tap target.
+    private func getPillLabel(isOn: Bool) -> some View {
+        Text(isOn ? "ON" : "GET")
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(isOn ? Color.green : Sileo.accent, in: Capsule())
+    }
+
+    /// Device Artwork: Custom Device Name. The row carries a
+    /// GET pill now (no toggle on the row) — GET opens its
+    /// detail sheet, where the toggle and the name field live.
+    /// The icon color comes from the page's grouped sequence.
     private func deviceNameRow(color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SileoPackageRow(icon: "textformat", iconColor: color, title: "Custom Device Name", author: "Shown in Settings > General > About", version: "WorkTweaks", onTap: {}) {
-                Toggle(isOn: $manager.enableDeviceName) { Text("Custom Device Name") }
-                    .labelsHidden()
-            }
-            if manager.enableDeviceName {
-                TextField("Device Name", text: $manager.deviceName)
-                    .autocorrectionDisabled()
-                    .padding(10)
-                    .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .foregroundStyle(Sileo.primary)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
-            }
+        SileoPackageRow(icon: "textformat", iconColor: color, title: "Custom Device Name", author: "Shown in Settings > General > About", version: "WorkTweaks", onTap: { detailFollower = .deviceName }) {
+            getPill(isOn: manager.enableDeviceName) { detailFollower = .deviceName }
         }
     }
 
-    /// Device Artwork: Custom Region Model toggle + field.
-    /// The icon color comes from the page's grouped sequence,
-    /// so it continues the block the Tweaks section sits in.
+    /// Device Artwork: Custom Region Model. The row carries a
+    /// GET pill now — GET opens its detail sheet, where the
+    /// toggle and the region field live.
     private func regionModelRow(color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SileoPackageRow(icon: "globe", iconColor: color, title: "Custom Region Model", author: "Type the sales-region suffix", version: "WorkTweaks", onTap: {}) {
-                Toggle(isOn: $manager.enableCustomRegion) { Text("Custom Region Model") }
-                    .labelsHidden()
-            }
-            if manager.enableCustomRegion {
-                TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.characters)
-                    .padding(10)
-                    .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .foregroundStyle(Sileo.primary)
-                    .padding(.horizontal, 16)
-                Text("Type the region suffix as shown in Settings > General > About, e.g. PA/A or LL/A. It changes the Model Number suffix after Apply.")
-                    .font(.caption).foregroundStyle(Sileo.secondary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-            }
+        SileoPackageRow(icon: "globe", iconColor: color, title: "Custom Region Model", author: "Type the sales-region suffix", version: "WorkTweaks", onTap: { detailFollower = .regionModel }) {
+            getPill(isOn: manager.enableCustomRegion) { detailFollower = .regionModel }
         }
     }
 
     /// Write Method: "Persist after reboot" (atomic_write).
-    /// The icon color comes from the page's grouped sequence,
-    /// so it continues the block the Tweaks section sits in.
+    /// The row carries a GET pill now — GET opens its detail
+    /// sheet, where the toggle lives.
     private func persistRow(color: Color) -> some View {
-        SileoPackageRow(icon: "externaldrive.fill", iconColor: color, title: "Persist after reboot", author: "Write MobileGestalt in-place on the same inode.", version: "WorkTweaks", onTap: {}) {
-            Toggle(isOn: $atomicWrite) { Text("Persist after reboot") }
-                .labelsHidden()
+        SileoPackageRow(icon: "externaldrive.fill", iconColor: color, title: "Persist after reboot", author: "Write MobileGestalt in-place on the same inode.", version: "WorkTweaks", onTap: { detailFollower = .persist }) {
+            getPill(isOn: atomicWrite) { detailFollower = .persist }
         }
     }
 
     /// Lock Screen Footnote: the footnote editor's entry point.
-    /// The icon color comes from the page's grouped sequence,
-    /// so it continues the block the Add Feature section
-    /// sits in.
+    /// The row carries a GET pill now — tapping it (or the row)
+    /// opens the footnote editor.
     private func footnoteRow(color: Color) -> some View {
         NavigationLink {
             FootnoteView()
@@ -603,9 +575,7 @@ struct SileoTweaksView: View {
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Sileo.secondary)
+                getPillLabel(isOn: false)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -689,33 +659,6 @@ struct SileoTweaksView: View {
         }
     }
 
-    // MARK: Tweaks UI choice
-
-    /// The Tweaks UI choice, back on the Featured page (it used
-    /// to live on the Sandbox tab, which is gone from the pill)
-    /// — a package row with a menu picker. The settings sheet
-    /// has the same picker; both write wt.tweaksUIVersion.
-    /// The icon color comes from the page's grouped sequence,
-    /// so it opens the Tweaks section's first block.
-    private func uiPickerRow(color: Color) -> some View {
-        HStack(spacing: 16) {
-            followerRow(icon: "slider.horizontal.3", iconColor: color, title: "Tweaks UI", author: "Change the Tweaks tab layout")
-            Picker("Tweaks UI", selection: $uiVersionRaw) {
-                Text("Sileo UI").tag("sileo")
-                Text("New UI").tag("new")
-                Text("Old UI").tag("old")
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .tint(Sileo.accent)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Sileo.separator).frame(height: 1)
-        }
-    }
-
     // MARK: Footer
 
     private var footerCredit: some View {
@@ -784,7 +727,7 @@ struct SileoTweaksView: View {
                             .padding(.vertical, 4)
                     } else {
                         ForEach(Array(searchResults.enumerated()), id: \.element.id) { searchIndex, tweak in
-                            SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconTileColor: groupedIconColor(at: searchIndex))
+                            SileoTweakRow(manager: manager, tweak: tweak, onOpen: { detailTweak = TweakDetail(tweak: $0, iconColor: groupedIconColor(at: searchIndex), groupTitle: TweakCategory.section(of: $0).title) }, iconTileColor: groupedIconColor(at: searchIndex), author: TweakCategory.section(of: tweak).title)
                             if tweak.id == "enable_dynamic_island_capability" {
                                 subtypeRow(color: groupedIconColor(at: searchIndex + 1))
                             }
@@ -826,6 +769,206 @@ struct SileoTweaksView: View {
             if tweak.id == "tap_to_wake" && !hasHomeButton() { return false }
             if tweak.id == "stage_manager_support" && UIDevice.current.userInterfaceIdiom != .pad { return false }
             return searchText.isEmpty || tweak.title.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    // MARK: Detail sheets (GET)
+
+    /// A tweak's detail sheet, opened by its GET pill: the
+    /// package icon and title, the explanation, the fix if
+    /// it has one (shown while the tweak is on), and then
+    /// the toggle — the only place the toggle lives now.
+    private struct SileoTweakDetailSheet: View {
+        @ObservedObject var manager: GestaltManager
+        let detail: TweakDetail
+        @Environment(\.dismiss) private var dismiss
+
+        private var tweak: GestaltTweak { detail.tweak }
+
+        private var ipadOSModeLocked: Bool {
+            let extra = manager.dictNow["CacheExtra"] as? [String: Any]
+            return extra?["+3Uf0Pm5F8Xy7Onyvko0vA"] as? String != "iPhone"
+        }
+
+        private var toggleDisabled: Bool {
+            !manager.isValid || !tweak.supported()
+                || (tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
+        }
+
+        /// The fix guide, when this tweak has one.
+        private var fix: (title: String, text: String)? {
+            if tweak.id == "enable_dynamic_island_capability" {
+                return ("Fix Status Bar", "1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional).")
+            }
+            if tweak.id == "apple_intelligence" {
+                return ("Fix Apple Intelligence", "1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading.")
+            }
+            return nil
+        }
+
+        var body: some View {
+            NavigationStack {
+                List {
+                    Section {
+                        HStack(spacing: 16) {
+                            SileoIcon(systemImage: tweak.icon, color: detail.iconColor, size: 60)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(tweak.title)
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(Sileo.primary)
+                                Text(detail.groupTitle)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(Sileo.secondary)
+                                Text((tweak.isOn(in: manager.dictNow) ? "On" : "Off") + " · WorkTweaks")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Sileo.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        if let info = tweak.infoMessage {
+                            Text(info)
+                                .font(.subheadline)
+                                .foregroundStyle(Sileo.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        if !tweak.supported(), let minv = tweak.minv {
+                            Text(String(format: "Requires iOS %.1f or newer.", minv))
+                                .font(.subheadline)
+                                .foregroundStyle(Color.red)
+                        }
+                    }
+                    if let fix, tweak.isOn(in: manager.dictNow) {
+                        Section("Fix") {
+                            Text(fix.title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Sileo.primary)
+                            Text(fix.text)
+                                .font(.subheadline)
+                                .foregroundStyle(Sileo.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    Section {
+                        Toggle("Enable \(tweak.title)", isOn: manager.toggleBinding(for: tweak))
+                            .disabled(toggleDisabled)
+                    } footer: {
+                        Text("Apply Tweaks to write the change, then Respring or Restart.")
+                    }
+                }
+                .navigationTitle(tweak.title)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
+                }
+            }
+        }
+    }
+
+    /// A custom row's detail sheet, opened by its GET pill:
+    /// the explanation, then the toggle (and the field, for
+    /// the name and region rows).
+    private struct SileoFollowerDetailSheet: View {
+        @ObservedObject var manager: GestaltManager
+        let follower: FollowerDetail
+        @Binding var atomicWrite: Bool
+        @Environment(\.dismiss) private var dismiss
+
+        private var title: String {
+            switch follower {
+            case .deviceName: return "Custom Device Name"
+            case .regionModel: return "Custom Region Model"
+            case .persist: return "Persist after reboot"
+            }
+        }
+
+        private var icon: String {
+            switch follower {
+            case .deviceName: return "textformat"
+            case .regionModel: return "globe"
+            case .persist: return "externaldrive.fill"
+            }
+        }
+
+        private var iconColor: Color {
+            switch follower {
+            case .deviceName: return .blue
+            case .regionModel: return .cyan
+            case .persist: return .gray
+            }
+        }
+
+        private var explanation: String {
+            switch follower {
+            case .deviceName: return "Shown in Settings > General > About. Turn it on, type a name, then Apply Tweaks."
+            case .regionModel: return "Type the sales-region suffix as shown in Settings > General > About, e.g. PA/A or LL/A. It changes the Model Number suffix after Apply."
+            case .persist: return "Write MobileGestalt in-place on the same inode, so the tweak survives a reboot."
+            }
+        }
+
+        private var isOn: Bool {
+            switch follower {
+            case .deviceName: return manager.enableDeviceName
+            case .regionModel: return manager.enableCustomRegion
+            case .persist: return atomicWrite
+            }
+        }
+
+        var body: some View {
+            NavigationStack {
+                List {
+                    Section {
+                        HStack(spacing: 16) {
+                            SileoIcon(systemImage: icon, color: iconColor, size: 60)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(title)
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(Sileo.primary)
+                                Text("Custom")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(Sileo.secondary)
+                                Text((isOn ? "On" : "Off") + " · WorkTweaks")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Sileo.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        Text(explanation)
+                            .font(.subheadline)
+                            .foregroundStyle(Sileo.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Section {
+                        switch follower {
+                        case .deviceName:
+                            Toggle("Enable \(title)", isOn: $manager.enableDeviceName)
+                            if manager.enableDeviceName {
+                                TextField("Device Name", text: $manager.deviceName)
+                                    .autocorrectionDisabled()
+                            }
+                        case .regionModel:
+                            Toggle("Enable \(title)", isOn: $manager.enableCustomRegion)
+                            if manager.enableCustomRegion {
+                                TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
+                                    .autocorrectionDisabled()
+                                    .textInputAutocapitalization(.characters)
+                            }
+                        case .persist:
+                            Toggle("Enable \(title)", isOn: $atomicWrite)
+                        }
+                    } footer: {
+                        Text("Apply Tweaks to write the change, then Respring or Restart.")
+                    }
+                }
+                .navigationTitle(title)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
+                }
+            }
         }
     }
 }
