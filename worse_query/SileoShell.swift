@@ -108,25 +108,29 @@ struct SileoShell: View {
             // LEVEL with the native tab bar (its centre on
             // the tab bar's centre, like the search circle
             // beside Sileo's pill) — not floating above it.
-            // It opens the tweaks search (the same cover the
-            // nav bar magnifier opened in v5.9.2 — that
-            // magnifier is gone, the circle is the only
-            // search button).
+            // It is 48pt, smaller than the 64pt circle in
+            // v6.0.4: the native tab bar is full-width, so a
+            // 64pt circle sits on top of the Cache Cleaner
+            // tab; a 48pt circle fits beside the bar's right
+            // end without covering the tab's icon. It opens
+            // the tweaks search (the same cover the nav bar
+            // magnifier opened in v5.9.2 — that magnifier
+            // is gone, the circle is the only search button).
             Button {
                 SoundEffects.playTap()
                 shell.selectedTab = .featured
                 shell.searchActive = true
             } label: {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 22, weight: .semibold))
-                    .frame(width: 64, height: 64)
+                    .font(.system(size: 20, weight: .semibold))
+                    .frame(width: 48, height: 48)
             }
             .buttonStyle(.glass)
             .buttonBorderShape(.circle)
             .accessibilityLabel("Search tweaks")
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-            .padding(.trailing, 16)
-            .padding(.bottom, 26)
+            .padding(.trailing, 10)
+            .padding(.bottom, 34)
         }
         .sheet(isPresented: $shell.settingsActive) {
             SileoSettingsSheet(console: console, manager: manager)

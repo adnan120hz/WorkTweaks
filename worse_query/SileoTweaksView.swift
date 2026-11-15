@@ -93,8 +93,12 @@ struct SileoTweaksView: View {
                 // The icon colors run in one continuous sequence
                 // down the page (four blue, four gray, four
                 // cyan, four dark), so each section starts where
-                // the previous one left off.
-                sectionRows(section, startingAt: featuredSections.prefix(sectionIndex).reduce(0) { $0 + visibleTweaks(for: $1).count })
+                // the previous one left off. The offset counts
+                // EVERY icon row (tweaks plus the follower
+                // rows, the UI picker and the footnote) — not
+                // just the tweaks — so the blocks never break
+                // where a follower sits.
+                sectionRows(section, startingAt: featuredSections.prefix(sectionIndex).reduce(0) { $0 + rowCount(for: $1) })
             }
 
             footerCredit
@@ -254,32 +258,37 @@ struct SileoTweaksView: View {
 
     @ViewBuilder
     /// The rows of one section, in catalog order. `startingAt`
-    /// is the section's first tweak's position in the page's
-    /// whole tweak sequence, so the icon colors run
+    /// is the section's first icon row's position in the
+    /// page's whole row sequence, so the icon colors run
     /// continuously down the page instead of restarting per
-    /// section.
+    /// section — and every icon row (tweak, follower, UI
+    /// picker, footnote) takes the next color in the
+    /// sequence, so a follower never breaks a block.
     private func sectionRows(_ section: TweakSection, startingAt offset: Int) -> some View {
         if section == .applyRevert {
             actionsBlock
         } else {
             // The Tweaks UI choice sits at the top of the
-            // Tweaks section, where it can't get hidden.
+            // Tweaks section, where it can't get hidden —
+            // it is the section's first icon row.
             if section == .tweaks {
-                uiPickerRow
+                uiPickerRow(color: groupedIconColor(at: offset))
             }
 
             ForEach(Array(visibleTweaks(for: section).enumerated()), id: \.element.id) { localIndex, tweak in
-                SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconTileColor: groupedIconColor(at: offset + localIndex))
+                SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconTileColor: groupedIconColor(at: offset + tweakRowNumber(in: section, localIndex: localIndex, tweak: tweak)))
 
                 // The Dynamic Island model picker lives directly
-                // under its tweak's row.
+                // under its tweak's row — it takes the next
+                // color in the sequence, right after its tweak.
                 if tweak.id == "enable_dynamic_island_capability" {
-                    subtypeRow
+                    subtypeRow(color: groupedIconColor(at: offset + tweakRowNumber(in: section, localIndex: localIndex, tweak: tweak) + 1))
                 }
                 // The spoofing model picker sits next to Apple
-                // Intelligence.
+                // Intelligence — it takes the next color in
+                // the sequence, right after its tweak.
                 if tweak.id == "apple_intelligence" {
-                    spoofingRow
+                    spoofingRow(color: groupedIconColor(at: offset + tweakRowNumber(in: section, localIndex: localIndex, tweak: tweak) + 1))
                 }
 
                 // The fix guides live under their tweak's row
@@ -294,14 +303,60 @@ struct SileoTweaksView: View {
             }
 
             if section == .tweaks {
-                deviceNameRow
-                regionModelRow
-                persistRow
+                // The three custom rows sit after the Tweaks
+                // section's tweaks (and after the UI picker),
+                // so they continue the sequence from there.
+                let tweakCount = visibleTweaks(for: .tweaks).count
+                deviceNameRow(color: groupedIconColor(at: offset + tweakCount + 1))
+                regionModelRow(color: groupedIconColor(at: offset + tweakCount + 2))
+                persistRow(color: groupedIconColor(at: offset + tweakCount + 3))
             }
 
             if section == .addFeature {
-                footnoteRow
+                // The footnote sits after the Add Feature
+                // tweaks, so it continues the sequence.
+                let tweakCount = visibleTweaks(for: .addFeature).count
+                footnoteRow(color: groupedIconColor(at: offset + tweakCount))
             }
+        }
+    }
+
+    /// How many icon rows a section has — its tweaks plus
+    /// every follower row, the UI picker and the footnote
+    /// that carry an icon — so the next section's color
+    /// offset counts them all.
+    private func rowCount(for section: TweakSection) -> Int {
+        let tweaks = visibleTweaks(for: section).count
+        switch section {
+        case .dynamicIsland:
+            return tweaks + 1 // the subtype picker
+        case .tweaks:
+            return tweaks + 4 // UI picker + device name + region + persist
+        case .appleIntelligence:
+            return tweaks + 1 // the spoofing picker
+        case .addFeature:
+            return tweaks + 1 // the footnote
+        case .applyRevert:
+            return 0 // actions keep their own colors
+        case .all:
+            return tweaks
+        }
+    }
+
+    /// A tweak's row number inside its section, counting
+    /// every icon row before it. The Tweaks section starts
+    /// with the UI picker (row 0), so its tweaks shift by
+    /// one; the Apple Intelligence section has the spoofing
+    /// picker after Apple Intelligence (row 1), so every
+    /// AI tweak after it shifts by one.
+    private func tweakRowNumber(in section: TweakSection, localIndex: Int, tweak: GestaltTweak) -> Int {
+        switch section {
+        case .tweaks:
+            return localIndex + 1
+        case .appleIntelligence:
+            return localIndex + (tweak.id == "apple_intelligence" ? 0 : 1)
+        default:
+            return localIndex
         }
     }
 
@@ -376,9 +431,11 @@ struct SileoTweaksView: View {
     }
 
     /// Device Artwork: the Dynamic Island subtype (model) picker.
-    private var subtypeRow: some View {
+    /// The icon color comes from the page's grouped sequence,
+    /// so it continues the block its tweak sits in.
+    private func subtypeRow(color: Color) -> some View {
         HStack(spacing: 16) {
-            followerRow(icon: "capsule.fill", iconColor: .blue, title: "Subtype", author: "Dynamic Island")
+            followerRow(icon: "capsule.fill", iconColor: color, title: "Subtype", author: "Dynamic Island")
             Picker("Subtype", selection: $manager.selectedST) {
                 Text("Original (\(manager.ogST))").tag("og")
                 if isDeviceGoodForNoDynamicIsland() {
@@ -415,9 +472,11 @@ struct SileoTweaksView: View {
     }
 
     /// Eligibility: the device-model spoofing picker.
-    private var spoofingRow: some View {
+    /// The icon color comes from the page's grouped sequence,
+    /// so it continues the block its tweak sits in.
+    private func spoofingRow(color: Color) -> some View {
         HStack(spacing: 16) {
-            followerRow(icon: "iphone.gen3", iconColor: .blue, title: "Spoofing", author: "Device model")
+            followerRow(icon: "iphone.gen3", iconColor: color, title: "Spoofing", author: "Device model")
             Picker("Spoofing", selection: $manager.productType) {
                 Text("Default").tag(machineName())
                 if UIDevice.current.userInterfaceIdiom == .pad {
@@ -462,9 +521,11 @@ struct SileoTweaksView: View {
     }
 
     /// Device Artwork: Custom Device Name toggle + field.
-    private var deviceNameRow: some View {
+    /// The icon color comes from the page's grouped sequence,
+    /// so it continues the block the Tweaks section sits in.
+    private func deviceNameRow(color: Color) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            SileoPackageRow(icon: "textformat", iconColor: .blue, title: "Custom Device Name", author: "Shown in Settings > General > About", version: "WorkTweaks", onTap: {}) {
+            SileoPackageRow(icon: "textformat", iconColor: color, title: "Custom Device Name", author: "Shown in Settings > General > About", version: "WorkTweaks", onTap: {}) {
                 Toggle(isOn: $manager.enableDeviceName) { Text("Custom Device Name") }
                     .labelsHidden()
             }
@@ -481,9 +542,11 @@ struct SileoTweaksView: View {
     }
 
     /// Device Artwork: Custom Region Model toggle + field.
-    private var regionModelRow: some View {
+    /// The icon color comes from the page's grouped sequence,
+    /// so it continues the block the Tweaks section sits in.
+    private func regionModelRow(color: Color) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            SileoPackageRow(icon: "globe", iconColor: .cyan, title: "Custom Region Model", author: "Type the sales-region suffix", version: "WorkTweaks", onTap: {}) {
+            SileoPackageRow(icon: "globe", iconColor: color, title: "Custom Region Model", author: "Type the sales-region suffix", version: "WorkTweaks", onTap: {}) {
                 Toggle(isOn: $manager.enableCustomRegion) { Text("Custom Region Model") }
                     .labelsHidden()
             }
@@ -504,20 +567,25 @@ struct SileoTweaksView: View {
     }
 
     /// Write Method: "Persist after reboot" (atomic_write).
-    private var persistRow: some View {
-        SileoPackageRow(icon: "externaldrive.fill", iconColor: .gray, title: "Persist after reboot", author: "Write MobileGestalt in-place on the same inode.", version: "WorkTweaks", onTap: {}) {
+    /// The icon color comes from the page's grouped sequence,
+    /// so it continues the block the Tweaks section sits in.
+    private func persistRow(color: Color) -> some View {
+        SileoPackageRow(icon: "externaldrive.fill", iconColor: color, title: "Persist after reboot", author: "Write MobileGestalt in-place on the same inode.", version: "WorkTweaks", onTap: {}) {
             Toggle(isOn: $atomicWrite) { Text("Persist after reboot") }
                 .labelsHidden()
         }
     }
 
     /// Lock Screen Footnote: the footnote editor's entry point.
-    private var footnoteRow: some View {
+    /// The icon color comes from the page's grouped sequence,
+    /// so it continues the block the Add Feature section
+    /// sits in.
+    private func footnoteRow(color: Color) -> some View {
         NavigationLink {
             FootnoteView()
         } label: {
             HStack(spacing: 16) {
-                SileoIcon(systemImage: "text.bubble", color: .blue, size: 60)
+                SileoIcon(systemImage: "text.bubble", color: color, size: 60)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Lock Screen Footnote")
                         .font(.system(size: 17, weight: .semibold))
@@ -627,9 +695,11 @@ struct SileoTweaksView: View {
     /// to live on the Sandbox tab, which is gone from the pill)
     /// — a package row with a menu picker. The settings sheet
     /// has the same picker; both write wt.tweaksUIVersion.
-    private var uiPickerRow: some View {
+    /// The icon color comes from the page's grouped sequence,
+    /// so it opens the Tweaks section's first block.
+    private func uiPickerRow(color: Color) -> some View {
         HStack(spacing: 16) {
-            followerRow(icon: "slider.horizontal.3", iconColor: .blue, title: "Tweaks UI", author: "Change the Tweaks tab layout")
+            followerRow(icon: "slider.horizontal.3", iconColor: color, title: "Tweaks UI", author: "Change the Tweaks tab layout")
             Picker("Tweaks UI", selection: $uiVersionRaw) {
                 Text("Sileo UI").tag("sileo")
                 Text("New UI").tag("new")
@@ -716,10 +786,10 @@ struct SileoTweaksView: View {
                         ForEach(Array(searchResults.enumerated()), id: \.element.id) { searchIndex, tweak in
                             SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconTileColor: groupedIconColor(at: searchIndex))
                             if tweak.id == "enable_dynamic_island_capability" {
-                                subtypeRow
+                                subtypeRow(color: groupedIconColor(at: searchIndex + 1))
                             }
                             if tweak.id == "apple_intelligence" {
-                                spoofingRow
+                                spoofingRow(color: groupedIconColor(at: searchIndex + 1))
                             }
                         }
                     }
