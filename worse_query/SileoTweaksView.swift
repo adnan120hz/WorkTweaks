@@ -71,15 +71,6 @@ struct SileoTweaksView: View {
             InfoBanner(id: "version", title: "WorkTweaks v\(appVersion)",
                        headline: "Liquid Glass everywhere — glass toggles, glass search, light & dark",
                        colors: [.blue, .indigo], icon: nil),
-            InfoBanner(id: "ios", title: "iOS Support",
-                       headline: "iOS 26.7.2 · 27.0 · 27.0.1 · 27.2 · 27.3",
-                       colors: [.purple, .pink], icon: "apple.logo"),
-            InfoBanner(id: "iphones", title: "iPhone Lineup",
-                       headline: "iPhone 14 Pro to 18 Pro Max, Air & Duo",
-                       colors: [.teal, .green], icon: "iphone"),
-            InfoBanner(id: "tweaks", title: "24 Tweaks",
-                       headline: "Dynamic Island, Apple Intelligence, iPadOS Mode & more",
-                       colors: [.orange, .red], icon: "wand.and.stars"),
         ]
     }
 
