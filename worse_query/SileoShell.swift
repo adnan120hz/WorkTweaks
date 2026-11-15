@@ -154,8 +154,22 @@ struct SileoShell: View {
 
     /// The bottom bar: the menu pill + the search circle,
     /// level, with a gap — like the real Sileo picture.
+    ///
+    /// Sizes, measured off the real Sileo bar the user sent
+    /// (v6.0.9's circle was too big and taller than the
+    /// pill): the pill is ~66% of the screen wide, the
+    /// search circle ~20% wide, the gap ~8pt, and the two
+    /// are the SAME height. On a 390pt screen that is a
+    /// 76pt circle, a 76pt-tall pill, 24pt side margins,
+    /// and an 8pt gap. The circle is built as a plain
+    /// button with the glass on a fixed 76pt circle —
+    /// `.buttonStyle(.glass)` inflated the 64pt frame to
+    /// ~97pt in v6.0.9, which is what made the circle too
+    /// big and taller than the pill. The pill's height is
+    /// forced to 76pt (not left to content + padding) so
+    /// it can never drift from the circle's height.
     private var bottomBar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             // The menu pill: the four tabs, icon + label.
             // It takes the flexible width (the menu that
             // was shrunk), so the search circle fits beside
@@ -166,16 +180,15 @@ struct SileoShell: View {
                         SoundEffects.playTap()
                         shell.selectedTab = tab
                     } label: {
-                        VStack(spacing: 2) {
+                        VStack(spacing: 3) {
                             Image(systemName: tab.icon)
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(.system(size: 26, weight: .semibold))
                             Text(tab.title)
-                                .font(.system(size: 10, weight: .medium))
+                                .font(.system(size: 12, weight: .medium))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.85)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -183,31 +196,35 @@ struct SileoShell: View {
                     .accessibilityLabel(tab.title)
                 }
             }
-            .padding(.horizontal, 4)
-            .glassEffect(.regular, in: Capsule())
+            .padding(.horizontal, 6)
             .frame(maxWidth: .infinity)
+            .frame(height: 76)
+            .glassEffect(.regular, in: Capsule())
 
-            // The search circle: LARGE, the same height as
-            // the pill (64pt), level with it — not the small
-            // 48pt circle of v6.0.7. It opens the tweaks
-            // search (the same cover the nav bar magnifier
-            // opened in v5.9.2 — that magnifier is gone, the
-            // circle is the only search button).
+            // The search circle: the SAME height as the
+            // pill (76pt), level with it. It opens the
+            // tweaks search (the same cover the nav bar
+            // magnifier opened in v5.9.2 — that magnifier
+            // is gone, the circle is the only search
+            // button). Plain button + glass on the fixed
+            // circle, so it renders at exactly 76pt.
             Button {
                 SoundEffects.playTap()
                 shell.selectedTab = .featured
                 shell.searchActive = true
             } label: {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 22, weight: .semibold))
-                    .frame(width: 64, height: 64)
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(Sileo.accent)
+                    .frame(width: 76, height: 76)
+                    .glassEffect(.regular, in: Circle())
+                    .contentShape(Circle())
             }
-            .buttonStyle(.glass)
-            .buttonBorderShape(.circle)
+            .buttonStyle(.plain)
             .accessibilityLabel("Search tweaks")
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 24)
         .padding(.bottom, 8)
     }
 }
