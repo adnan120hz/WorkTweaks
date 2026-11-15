@@ -103,7 +103,18 @@ struct SileoTweakRow: View {
     /// of four down the page) instead of the tweak's own catalog
     /// tint. Nil = the tweak's own tint. The symbol is always
     /// white for a grouped color, so only the tile is overridden.
-    let iconTileColor: Color? = nil
+    let iconTileColor: Color?
+
+    /// Explicit initializer: the synthesized memberwise init
+    /// did not pick up the added iconTileColor parameter (CI
+    /// failed twice with "extra argument"), so the init is
+    /// written out here instead of relying on synthesis.
+    init(manager: GestaltManager, tweak: GestaltTweak, onInfo: @escaping (GestaltTweak) -> Void, iconTileColor: Color? = nil) {
+        self.manager = manager
+        self.tweak = tweak
+        self.onInfo = onInfo
+        self.iconTileColor = iconTileColor
+    }
 
     /// Enable iPadOS Mode stays locked unless the device class in
     /// CacheExtra still reads "iPhone" (unchanged from v2.0).
