@@ -14,15 +14,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode 26.6 (v1.0 toolchain)
+      - name: Select Xcode 26 or newer
         run: |
-          # Pin the toolchain v1.0 was built with (verified from
-          # the v1.0 CI log: Xcode 26.6, build 17F113, runner
-          # image 20261028.624 — the same as every build since).
-          # The workflow never pinned a version, so it always
-          # used the macos-26 default; pinning locks it so a
-          # future image update cannot silently change it.
-          sudo xcode-select -s /Applications/Xcode_26.6.app
+          # Use Xcode 26 or newer: on iOS 26+ the system renders
+          # Liquid Glass automatically, so the toolchain only
+          # needs to be 26+. Pick the newest installed Xcode
+          # whose major version is 26 or higher (26.6 today;
+          # a future 27 counts too).
+          LATEST=$(for app in /Applications/Xcode_*.app; do
+            ver=$(basename "$app" .app | sed 's/^Xcode_//')
+            major=${ver%%.*}
+            if [ "$major" -ge 26 ]; then echo "$ver"; fi
+          done | sort -V | tail -1)
+          if [ -z "$LATEST" ]; then
+            echo "No Xcode 26 or newer found" >&2
+            exit 1
+          fi
+          echo "Selecting Xcode $LATEST"
+          sudo xcode-select -s "/Applications/Xcode_${LATEST}.app"
           xcodebuild -version
 
       - name: Show toolchain

@@ -36,9 +36,9 @@ struct SileoTweaksView: View {
     /// sheet has the same picker) — Sileo / New / Old.
     @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "sileo"
     /// The shell's shared state: the search cover is opened by
-    /// the shell's floating search circle (and only there), the
-    /// banner opens the News tab, and the avatar opens the
-    /// settings sheet — all through this environment object.
+    /// the magnifier in the nav bar, the banner opens the News
+    /// tab, and the avatar opens the settings sheet — all
+    /// through this environment object.
     @EnvironmentObject private var shell: SileoShellState
     @State private var searchText = ""
     @FocusState private var searchFocused: Bool
@@ -103,6 +103,19 @@ struct SileoTweaksView: View {
             footerCredit
         }
         .toolbar {
+            // Search lives in the nav bar now (a magnifier next
+            // to the avatar): the floating search circle went
+            // away with the custom pill in v5.9.2, and the nav
+            // bar is where the New UI puts its search too.
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    SoundEffects.playTap()
+                    shell.searchActive = true
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                }
+                .accessibilityLabel("Search tweaks")
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     SoundEffects.playTap()
