@@ -89,8 +89,8 @@ struct SileoTweaksView: View {
 
     var body: some View {
         // Extra bottom padding so the last rows clear the
-        // floating search circle above the tab bar.
-        SileoPage(bottomPadding: 175) {
+        // floating pill + search circle at the bottom.
+        SileoPage(bottomPadding: 120) {
             bannerCarousel
 
             if manager.isEmpty || !manager.isValid {
