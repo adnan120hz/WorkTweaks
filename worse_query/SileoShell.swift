@@ -40,8 +40,9 @@ enum SileoTab: String, CaseIterable {
     }
 }
 
-/// The whole app in Sileo UI: the four tabs inside a dark
-/// shell with Sileo's floating pill tab bar + search circle at
+/// The whole app in Sileo UI: the four tabs inside a shell
+/// that follows the system appearance (Light or Dark Mode),
+/// with Sileo's floating pill tab bar + search circle at
 /// the bottom. This replaces the standard TabView while
 /// wt.tweaksUIVersion == "sileo". The pill and the search
 /// circle are real Liquid Glass (glassEffect, iOS 26): the
@@ -79,7 +80,6 @@ struct SileoShell: View {
 
             tabBar
         }
-        .preferredColorScheme(.dark)
         .sheet(isPresented: $shell.settingsActive) {
             SileoSettingsSheet(console: console, manager: manager)
         }
@@ -111,7 +111,7 @@ struct SileoShell: View {
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.85)
                             }
-                            .foregroundStyle(shell.selectedTab == tab ? Sileo.accent : .white.opacity(0.7))
+                            .foregroundStyle(shell.selectedTab == tab ? Sileo.accent : Color.primary.opacity(0.6))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 7)
                             .contentShape(Rectangle())
@@ -131,8 +131,8 @@ struct SileoShell: View {
             } label: {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 52, height: 52)
+                    .foregroundStyle(Color.primary)
+                    .frame(width: 56, height: 56)
             }
             .buttonStyle(.plain)
             .glassEffect(.regular, in: Circle())

@@ -22,6 +22,7 @@ struct SileoNewsContent: View {
     }
 
     private let entries: [Entry] = [
+        Entry(version: "v5.8", date: "15 Nov 2026", notes: "Liquid Glass everywhere — every tweak has a glass toggle switch instead of ON/OFF, the search field and close button are glass, the banners are colorful info cards (version, iOS support, iPhone lineup, 24 tweaks), the icons are tinted glass tiles, and the app follows Light Mode too."),
         Entry(version: "v5.7", date: "15 Nov 2026", notes: "Liquid Glass pill and search circle, the pill tabs are now Featured / App Data / PosterBoard / Cache Cleaner, bigger tweak icons, and the Tweaks UI choice is back on the Featured page."),
         Entry(version: "v5.6", date: "15 Nov 2026", notes: "Sileo UI, faithful replica — Featured, News, Sources and Packages, release banners, tweak packages."),
         Entry(version: "v5.5", date: "15 Nov 2026", notes: "Sileo UI restyles the whole app — the floating pill tab bar and every menu in the Sileo style."),
@@ -102,6 +103,5 @@ struct SileoNewsView: View {
                     }
                 }
         }
-        .preferredColorScheme(.dark)
     }
 }

@@ -108,7 +108,6 @@ struct SileoSettingsSheet: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
         .tint(.blue)
     }
 }

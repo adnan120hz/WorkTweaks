@@ -8,13 +8,14 @@ import UIKit
 // the user's screen recording) — a horizontal banner carousel
 // on top, then the tweak sections stacked with 22pt headers,
 // each tweak as a Sileo package row (its own tint icon, three
-// lines, GET-style ON/OFF pill). The banner shows release
-// version information (tap it for the News tab); the packages
-// are WorkTweaks' own tweaks; the accent is blue, not Sileo's
-// teal. No Twitter / Website / Discord / Support buttons —
-// the user had those removed. The big "Featured" title and the
-// avatar (top right, opens settings) live in the navigation
-// bar, like Sileo's — there is no second title in the content.
+// lines, a Liquid Glass toggle). The banners are colorful info
+// cards now — the version, the supported iOS list, the iPhone
+// lineup, and the tweak count — not just the release version.
+// The big "Featured" title and the avatar (top right, opens
+// settings) live in the navigation bar, like Sileo's — there
+// is no second title in the content. No Twitter / Website /
+// Discord / Support buttons — the user had those removed.
+// The page follows the system appearance (Light or Dark Mode).
 // Only the layout differs: every toggle, picker and action
 // reads the same GestaltManager state and runs the same
 // apply/revert/respring code as the New and Old UIs, and the
@@ -52,13 +53,35 @@ struct SileoTweaksView: View {
         .dynamicIsland, .tweaks, .appleIntelligence, .addFeature, .applyRevert,
     ]
 
-    /// The release banners: version + headline, newest first.
+    /// The info banners: the version, the supported iOS list,
+    /// the iPhone lineup, and the tweak count — each its own
+    /// color, so the carousel is colorful, not one flat blue.
     /// Tap one to open the News tab (the full changelog).
-    private let releaseBanners: [(version: String, headline: String, colors: [Color])] = [
-        ("v5.6", "Sileo UI, faithful replica — Featured, News, Sources, Packages", [.blue, .indigo]),
-        ("v5.5", "Total Sileo UI — every menu restyled", [.indigo, .purple]),
-        ("v5.4", "Sileo UI comes to the Tweaks tab", [.blue, .cyan]),
-    ]
+    private struct InfoBanner: Identifiable {
+        let id: String
+        let title: String
+        let headline: String
+        let colors: [Color]
+        /// SF symbol in a glass circle; nil shows the WT icon.
+        let icon: String?
+    }
+
+    private var infoBanners: [InfoBanner] {
+        [
+            InfoBanner(id: "version", title: "WorkTweaks v\(appVersion)",
+                       headline: "Liquid Glass everywhere — glass toggles, glass search, light & dark",
+                       colors: [.blue, .indigo], icon: nil),
+            InfoBanner(id: "ios", title: "iOS Support",
+                       headline: "iOS 26.7.2 · 27.0 · 27.0.1 · 27.2 · 27.3",
+                       colors: [.purple, .pink], icon: "apple.logo"),
+            InfoBanner(id: "iphones", title: "iPhone Lineup",
+                       headline: "iPhone 14 Pro to 18 Pro Max, Air & Duo",
+                       colors: [.teal, .green], icon: "iphone"),
+            InfoBanner(id: "tweaks", title: "24 Tweaks",
+                       headline: "Dynamic Island, Apple Intelligence, iPadOS Mode & more",
+                       colors: [.orange, .red], icon: "wand.and.stars"),
+        ]
+    }
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
@@ -76,8 +99,6 @@ struct SileoTweaksView: View {
                 SileoSectionTitle(text: section.title)
                 sectionRows(section)
             }
-
-            uiPickerRow
 
             footerCredit
         }
@@ -116,16 +137,17 @@ struct SileoTweaksView: View {
         }
     }
 
-    // MARK: Banner carousel (release version information)
+    // MARK: Banner carousel (info cards)
 
-    /// Sileo's banner carousel: full-width image cards, swiped
-    /// sideways, the package name at the bottom left. Here each
-    /// card is a release — version + headline — and tapping one
-    /// opens the News tab.
+    /// Sileo's banner carousel: full-width cards, swiped
+    /// sideways. Each card is one piece of information — the
+    /// version, the supported iOS list, the iPhone lineup, the
+    /// tweak count — in its own color, and tapping one opens
+    /// the News tab (the full changelog).
     private var bannerCarousel: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(releaseBanners, id: \.version) { banner in
+                ForEach(infoBanners) { banner in
                     Button {
                         SoundEffects.playTap()
                         showNews = true
@@ -137,13 +159,21 @@ struct SileoTweaksView: View {
                                 endPoint: .bottomTrailing
                             )
                             VStack(alignment: .leading, spacing: 8) {
-                                Image("AppIconDisplay")
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 56, height: 56)
-                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                if let icon = banner.icon {
+                                    Image(systemName: icon)
+                                        .font(.system(size: 28, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 56, height: 56)
+                                        .glassEffect(.regular, in: Circle())
+                                } else {
+                                    Image("AppIconDisplay")
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 56, height: 56)
+                                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                }
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("WorkTweaks \(banner.version)")
+                                    Text(banner.title)
                                         .font(.system(size: 24, weight: .semibold))
                                         .foregroundStyle(.white)
                                     Text(banner.headline)
@@ -172,13 +202,13 @@ struct SileoTweaksView: View {
             Label {
                 Text("Do not reboot! Your MobileGestalt.plist seems to be \(manager.isEmpty ? "empty" : "invalid").")
                     .font(.subheadline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Sileo.primary)
                     .fixedSize(horizontal: false, vertical: true)
             } icon: {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
             }
             Text("Rebooting now might cause a bootloop. Try pressing 'Revert Tweaks'.")
-                .font(.caption).foregroundStyle(.white.opacity(0.6))
+                .font(.caption).foregroundStyle(Sileo.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 16)
@@ -192,6 +222,12 @@ struct SileoTweaksView: View {
         if section == .applyRevert {
             actionsBlock
         } else {
+            // The Tweaks UI choice sits at the top of the
+            // Tweaks section, where it can't get hidden.
+            if section == .tweaks {
+                uiPickerRow
+            }
+
             ForEach(visibleTweaks(for: section)) { tweak in
                 SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo)
 
@@ -269,11 +305,13 @@ struct SileoTweaksView: View {
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Sileo.primary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(author)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Sileo.secondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text("WorkTweaks")
                     .font(.system(size: 11))
                     .foregroundStyle(Sileo.secondary)
@@ -313,10 +351,10 @@ struct SileoTweaksView: View {
             }
             .labelsHidden()
             .pickerStyle(.menu)
-            .tint(.white)
+            .tint(Sileo.accent)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .overlay(alignment: .bottom) {
             Rectangle().fill(Sileo.separator).frame(height: 1)
         }
@@ -355,15 +393,15 @@ struct SileoTweaksView: View {
             }
             .labelsHidden()
             .pickerStyle(.menu)
-            .tint(.white)
+            .tint(Sileo.accent)
             Button { onSpoofingInfo() } label: {
                 Image(systemName: "info.circle")
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(Sileo.secondary)
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .overlay(alignment: .bottom) {
             Rectangle().fill(Sileo.separator).frame(height: 1)
         }
@@ -373,8 +411,7 @@ struct SileoTweaksView: View {
     private var deviceNameRow: some View {
         VStack(alignment: .leading, spacing: 0) {
             SileoPackageRow(icon: "textformat", iconColor: .blue, title: "Custom Device Name", author: "Shown in Settings > General > About", version: "WorkTweaks", onTap: {}) {
-                SileoGetPill(isOn: manager.enableDeviceName) {
-                    SoundEffects.playTap()
+                SileoGlassToggle(isOn: manager.enableDeviceName) {
                     manager.enableDeviceName.toggle()
                 }
             }
@@ -382,8 +419,8 @@ struct SileoTweaksView: View {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
                     .padding(10)
-                    .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .foregroundStyle(.white)
+                    .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .foregroundStyle(Sileo.primary)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
             }
@@ -394,8 +431,7 @@ struct SileoTweaksView: View {
     private var regionModelRow: some View {
         VStack(alignment: .leading, spacing: 0) {
             SileoPackageRow(icon: "globe", iconColor: .green, title: "Custom Region Model", author: "Type the sales-region suffix", version: "WorkTweaks", onTap: {}) {
-                SileoGetPill(isOn: manager.enableCustomRegion) {
-                    SoundEffects.playTap()
+                SileoGlassToggle(isOn: manager.enableCustomRegion) {
                     manager.enableCustomRegion.toggle()
                 }
             }
@@ -404,11 +440,11 @@ struct SileoTweaksView: View {
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.characters)
                     .padding(10)
-                    .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .foregroundStyle(.white)
+                    .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .foregroundStyle(Sileo.primary)
                     .padding(.horizontal, 16)
                 Text("Type the region suffix as shown in Settings > General > About, e.g. PA/A or LL/A. It changes the Model Number suffix after Apply.")
-                    .font(.caption).foregroundStyle(.white.opacity(0.6))
+                    .font(.caption).foregroundStyle(Sileo.secondary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
             }
@@ -418,8 +454,7 @@ struct SileoTweaksView: View {
     /// Write Method: "Persist after reboot" (atomic_write).
     private var persistRow: some View {
         SileoPackageRow(icon: "externaldrive.fill", iconColor: .gray, title: "Persist after reboot", author: "Write MobileGestalt in-place on the same inode.", version: "WorkTweaks", onTap: {}) {
-            SileoGetPill(isOn: atomicWrite) {
-                SoundEffects.playTap()
+            SileoGlassToggle(isOn: atomicWrite) {
                 atomicWrite.toggle()
             }
         }
@@ -436,11 +471,13 @@ struct SileoTweaksView: View {
                     Text("Lock Screen Footnote")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Sileo.primary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text("Custom text at the bottom of the Lock Screen")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Sileo.secondary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text("WorkTweaks")
                         .font(.system(size: 11))
                         .foregroundStyle(Sileo.secondary)
@@ -449,10 +486,10 @@ struct SileoTweaksView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.right")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(Sileo.secondary)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -481,7 +518,7 @@ struct SileoTweaksView: View {
             .disabled(!manager.isValid)
 
             Text("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores require a full device restart.")
-                .font(.caption).foregroundStyle(.white.opacity(0.6))
+                .font(.caption).foregroundStyle(Sileo.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -520,7 +557,7 @@ struct SileoTweaksView: View {
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .contentShape(Rectangle())
         .onTapGesture {
             SoundEffects.playTap()
@@ -547,10 +584,10 @@ struct SileoTweaksView: View {
             }
             .labelsHidden()
             .pickerStyle(.menu)
-            .tint(.white)
+            .tint(Sileo.accent)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .overlay(alignment: .bottom) {
             Rectangle().fill(Sileo.separator).frame(height: 1)
         }
@@ -575,17 +612,17 @@ struct SileoTweaksView: View {
             HStack(spacing: 10) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(Sileo.secondary)
                     TextField("Search for Tweaks", text: $searchText)
                         .autocorrectionDisabled()
                         .focused($searchFocused)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Sileo.primary)
                     if !searchText.isEmpty {
                         Button {
                             searchText = ""
                         } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.white.opacity(0.6))
+                                .foregroundStyle(Sileo.secondary)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Clear search")
@@ -593,17 +630,18 @@ struct SileoTweaksView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color.white.opacity(0.1), in: Capsule())
+                .glassEffect(.regular, in: Capsule())
 
-                // Sileo's search closes with a gray X circle.
+                // Sileo's search closes with an X circle — glass,
+                // like the search circle on the pill.
                 Button {
                     closeSearch()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(Sileo.primary)
                         .frame(width: 40, height: 40)
-                        .background(Color.white.opacity(0.25), in: Circle())
+                        .glassEffect(.regular, in: Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Close search")
@@ -617,7 +655,7 @@ struct SileoTweaksView: View {
                     if searchResults.isEmpty {
                         Text("No tweaks match \"\(searchText)\".")
                             .font(.subheadline)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(Sileo.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 4)

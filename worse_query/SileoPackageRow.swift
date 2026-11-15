@@ -6,11 +6,13 @@ import SwiftUI
 // (repo adnan120hz/ui3-Ui): a square package icon in the
 // package's own color, a three-line title stack (name 17
 // semibold / author 13 medium gray / version 11 gray), and
-// the action where Sileo puts its GET pill — here an ON/OFF
-// pill, because a tweak's action is its on/off state. The
-// whole row is tappable (opens the package's info, like
-// Sileo opening a depiction); the pill handles its own taps.
-// A 1pt separator runs full width under every row.
+// the action where Sileo puts its GET pill — here a Liquid
+// Glass toggle switch, because a tweak's action is its on/off
+// state. The whole row is tappable (opens the package's info,
+// like Sileo opening a depiction); the toggle handles its own
+// taps. A 1pt separator runs full width under every row.
+// Titles wrap to two lines so long tweak names never truncate
+// mid-word ("Enable Dynami…").
 
 extension TweakTint {
     /// The tweak's own color, used as its package icon square
@@ -34,22 +36,36 @@ extension TweakTint {
     }
 }
 
-/// Sileo's GET pill, in blue: filled blue + white "ON" when the
-/// tweak is on, a gray pill + "OFF" when it is off.
-struct SileoGetPill: View {
+/// A tweak's toggle, as a Liquid Glass switch: a glass
+/// capsule track (blue-tinted glass when on, plain glass when
+/// off) with a white knob that slides. Same size as the
+/// system switch (51 x 31), same tap behavior as the old
+/// ON/OFF pill — only the look changed, and every tweak row
+/// now has a real toggle instead of an ON/OFF label.
+struct SileoGlassToggle: View {
     let isOn: Bool
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text(isOn ? "ON" : "OFF")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(isOn ? .white : .white.opacity(0.85))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 7)
-                .background(isOn ? Sileo.accent : Color.white.opacity(0.25), in: Capsule())
+        Button(action: {
+            SoundEffects.playTap()
+            action()
+        }) {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                Capsule()
+                    .frame(width: 51, height: 31)
+                    .glassEffect(isOn ? .regular.tint(.blue) : .regular, in: Capsule())
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 27, height: 27)
+                    .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
+                    .padding(2)
+            }
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isOn)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(isOn ? "On" : "Off")
+        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -72,11 +88,13 @@ struct SileoPackageRow<Trailing: View>: View {
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Sileo.primary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(author)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Sileo.secondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(version)
                     .font(.system(size: 11))
                     .foregroundStyle(Sileo.secondary)
@@ -86,7 +104,7 @@ struct SileoPackageRow<Trailing: View>: View {
             trailing()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .contentShape(Rectangle())
         .onTapGesture { onTap() }
         .overlay(alignment: .bottom) {
@@ -96,7 +114,7 @@ struct SileoPackageRow<Trailing: View>: View {
 }
 
 /// One catalog tweak as a Sileo package row: the tweak's own
-/// tint as the icon square, the section name as the author
+/// tint as the glass icon tile, the section name as the author
 /// line, the state as the version line ("On · WorkTweaks").
 /// Shared by the Featured and Packages tabs so the two lists
 /// can never drift. The info alert only opens for tweaks that
@@ -138,11 +156,12 @@ struct SileoTweakRow: View {
                 }
             }
         ) {
-            SileoGetPill(isOn: tweak.isOn(in: manager.dictNow)) {
+            SileoGlassToggle(isOn: tweak.isOn(in: manager.dictNow)) {
                 let binding = manager.toggleBinding(for: tweak)
                 binding.wrappedValue.toggle()
             }
             .disabled(pillDisabled)
+            .opacity(pillDisabled ? 0.4 : 1)
         }
         .disabled(tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
     }
