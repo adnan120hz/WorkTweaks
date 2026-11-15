@@ -4,9 +4,10 @@ import SwiftUI
 //
 // The Sileo UI (wt.tweaksUIVersion == "sileo") restyles the app
 // after Sileo 2.5.1 (repo adnan120hz/ui3-Ui): flat package rows
-// with 1pt separators (no cards), Sileo's exact dark-theme
-// colors, and the green/teal accent changed to blue. The
-// components here are the Sileo-mode replacements for
+// with 1pt separators (no cards), Sileo's separator gray, and
+// the green/teal accent changed to blue. The page follows the
+// system appearance — truly black in Dark Mode, light in Light
+// Mode. The components here are the Sileo-mode replacements for
 // WTGlassPage / WTSectionCard / RowIcon; the system behind them
 // (engine, backup, resolver, respring) is untouched.
 //
@@ -25,15 +26,16 @@ import SwiftUI
 //   RGB(143,142,148); separator 1pt, full width.
 // - FeaturedHeaderView: section title 22 bold, 16pt margins.
 // - PackageIconView: corner radius = width / 4.
-// - SileoThemeManager (dark): background RGB(28,28,30),
-//   separator RGB(71,71,73).
+// - SileoThemeManager (dark): separator RGB(71,71,73); the
+//   page background here is truly black instead.
 
 enum Sileo {
-    /// The page background: Sileo's dark #1C1C1E in Dark Mode,
-    /// the system background in Light Mode.
+    /// The page background: truly black in Dark Mode (not the
+    /// old dark gray #1C1C1E), the system background in Light
+    /// Mode.
     static let background = Color(UIColor { traits in
         traits.userInterfaceStyle == .dark
-            ? UIColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 1)
+            ? UIColor.black
             : UIColor.systemBackground
     })
     /// The 1pt separator, full width: RGB(71,71,73) in Dark
@@ -77,19 +79,22 @@ struct SileoPage<Content: View>: View {
 
 /// The package icon Sileo puts on every row: a Liquid Glass
 /// tile tinted with the package's own color (here the tweak's
-/// tint) and a white symbol, corner radius width / 4
-/// (PackageIconView). The glass tint replaces the flat neon
-/// squares of v5.6/v5.7 — the colors stay, but as translucent
-/// glass, so the whole app reads as Liquid Glass.
+/// tint) and a symbol in the matching color, corner radius
+/// width / 4 (PackageIconView). The glass tint replaces the
+/// flat neon squares of v5.6/v5.7 — the colors stay, but as
+/// translucent glass, so the whole app reads as Liquid Glass.
 struct SileoIcon: View {
     let systemImage: String
     var color: Color = .blue
     var size: CGFloat = 60
+    /// The symbol's color — white, except on a light tile,
+    /// where it is dark so it stays readable.
+    var symbolColor: Color = .white
 
     var body: some View {
         Image(systemName: systemImage)
             .font(.system(size: size * 0.55, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(symbolColor)
             .frame(width: size, height: size)
             .glassEffect(.regular.tint(color.opacity(0.55)), in: RoundedRectangle(cornerRadius: size / 4, style: .continuous))
     }

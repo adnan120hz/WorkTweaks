@@ -15,23 +15,25 @@ import SwiftUI
 // mid-word ("Enable Dynami…").
 
 extension TweakTint {
-    /// The tweak's own color, used as its package icon square
-    /// (Sileo packages each carry their own icon color).
-    var color: Color {
+    /// The tweak's Sileo icon colors: the glass tile tint +
+    /// the symbol color, from the five-color palette only —
+    /// blue, cyan, gray (abu), dark, light. The catalog's 13
+    /// tints are folded into those five by hue family: cool
+    /// blues to blue, teals/greens to cyan, browns/grays to
+    /// gray, reds/oranges to dark, pinks/yellows to light. A
+    /// light tile gets a dark symbol so it stays readable.
+    var sileoIcon: (tile: Color, symbol: Color) {
         switch self {
-        case .blue: .blue
-        case .indigo: .indigo
-        case .purple: .purple
-        case .pink: .pink
-        case .red: .red
-        case .orange: .orange
-        case .yellow: .yellow
-        case .green: .green
-        case .mint: .mint
-        case .teal: .teal
-        case .cyan: .cyan
-        case .brown: .brown
-        case .gray: .gray
+        case .blue, .indigo, .purple:
+            (.blue, .white)
+        case .green, .mint, .teal, .cyan:
+            (.cyan, .white)
+        case .brown, .gray:
+            (.gray, .white)
+        case .red, .orange:
+            (Color(red: 0.16, green: 0.16, blue: 0.18), .white)
+        case .pink, .yellow:
+            (.white, Color(red: 0.16, green: 0.16, blue: 0.18))
         }
     }
 }
@@ -75,6 +77,9 @@ struct SileoGlassToggle: View {
 struct SileoPackageRow<Trailing: View>: View {
     let icon: String
     let iconColor: Color
+    /// The icon's symbol color — white, except on a light
+    /// tile, where it is dark so it stays readable.
+    var iconSymbolColor: Color = .white
     let title: String
     let author: String
     let version: String
@@ -83,7 +88,7 @@ struct SileoPackageRow<Trailing: View>: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            SileoIcon(systemImage: icon, color: iconColor, size: 60)
+            SileoIcon(systemImage: icon, color: iconColor, size: 60, symbolColor: iconSymbolColor)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
@@ -146,7 +151,8 @@ struct SileoTweakRow: View {
     var body: some View {
         SileoPackageRow(
             icon: tweak.icon,
-            iconColor: tweak.tint.color,
+            iconColor: tweak.tint.sileoIcon.tile,
+            iconSymbolColor: tweak.tint.sileoIcon.symbol,
             title: tweak.title,
             author: TweakCategory.section(of: tweak).title,
             version: stateLine,

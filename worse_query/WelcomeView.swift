@@ -217,7 +217,7 @@ struct WelcomeView: View {
     }
 
     private var developerCard: some View {
-        glassCard(icon: "person.fill", tint: .purple, title: "Developer") {
+        glassCard(icon: "person.fill", tint: .cyan, title: "Developer") {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 12) {
                     ZStack {
@@ -265,13 +265,13 @@ struct WelcomeView: View {
     }
 
     private var creditsCard: some View {
-        glassCard(icon: "heart.fill", tint: .pink, title: "Credits & License") {
+        glassCard(icon: "heart.fill", tint: .cyan, title: "Credits & License") {
             VStack(alignment: .leading, spacing: 0) {
                 creditRow(icon: "terminal", tint: .blue, name: "ForceQuit OS", role: "worse_query — the core system (sandbox escape)")
                 Divider().padding(.vertical, 4)
-                creditRow(icon: "slider.horizontal.3", tint: .purple, name: "mond — rooootdev", role: "the CacheExtra key knowledge behind the tweak catalog")
+                creditRow(icon: "slider.horizontal.3", tint: .blue, name: "mond — rooootdev", role: "the CacheExtra key knowledge behind the tweak catalog")
                 Divider().padding(.vertical, 4)
-                creditRow(icon: "cube", tint: .green, name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode)")
+                creditRow(icon: "cube", tint: .cyan, name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode)")
                 Divider().padding(.vertical, 4)
                 creditRow(icon: "arrow.counterclockwise", tint: .cyan, name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
             }
@@ -284,7 +284,7 @@ struct WelcomeView: View {
     }
 
     private var compatibilityCard: some View {
-        glassCard(icon: "checkmark.shield", tint: .green, title: "Compatibility") {
+        glassCard(icon: "checkmark.shield", tint: .cyan, title: "Compatibility") {
             VStack(alignment: .leading, spacing: 8) {
                 Text("iOS 26.7.2 (23H128) — iOS 27.3 Beta 1 (24C5037i)")
                     .font(.subheadline.weight(.semibold))

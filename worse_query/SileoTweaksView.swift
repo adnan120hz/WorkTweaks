@@ -324,7 +324,7 @@ struct SileoTweaksView: View {
     /// Device Artwork: the Dynamic Island subtype (model) picker.
     private var subtypeRow: some View {
         HStack(spacing: 16) {
-            followerRow(icon: "capsule.fill", iconColor: .indigo, title: "Subtype", author: "Dynamic Island")
+            followerRow(icon: "capsule.fill", iconColor: .blue, title: "Subtype", author: "Dynamic Island")
             Picker("Subtype", selection: $manager.selectedST) {
                 Text("Original (\(manager.ogST))").tag("og")
                 if isDeviceGoodForNoDynamicIsland() {
@@ -363,7 +363,7 @@ struct SileoTweaksView: View {
     /// Eligibility: the device-model spoofing picker.
     private var spoofingRow: some View {
         HStack(spacing: 16) {
-            followerRow(icon: "iphone.gen3", iconColor: .purple, title: "Spoofing", author: "Device model")
+            followerRow(icon: "iphone.gen3", iconColor: .blue, title: "Spoofing", author: "Device model")
             Picker("Spoofing", selection: $manager.productType) {
                 Text("Default").tag(machineName())
                 if UIDevice.current.userInterfaceIdiom == .pad {
@@ -430,7 +430,7 @@ struct SileoTweaksView: View {
     /// Device Artwork: Custom Region Model toggle + field.
     private var regionModelRow: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SileoPackageRow(icon: "globe", iconColor: .green, title: "Custom Region Model", author: "Type the sales-region suffix", version: "WorkTweaks", onTap: {}) {
+            SileoPackageRow(icon: "globe", iconColor: .cyan, title: "Custom Region Model", author: "Type the sales-region suffix", version: "WorkTweaks", onTap: {}) {
                 SileoGlassToggle(isOn: manager.enableCustomRegion) {
                     manager.enableCustomRegion.toggle()
                 }
