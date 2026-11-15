@@ -22,6 +22,7 @@ struct SileoNewsContent: View {
     }
 
     private let entries: [Entry] = [
+        Entry(version: "v6.0.2", date: "15 Nov 2026", notes: "Back to the v6.0 native TabView — no self-coded pill. The search circle now sits level with the tab bar instead of floating above it."),
         Entry(version: "v6.0.1", date: "15 Nov 2026", notes: "The floating pill tab bar is back — the search circle sits beside it at the same height, like real Sileo, instead of floating above the native tab bar."),
         Entry(version: "v6.0", date: "15 Nov 2026", notes: "Tweak icons now run in blocks of four down the page (four blue, four gray, four cyan, four dark), the Fix Issue menu sits at the top left with the Apple Intelligence and status bar guides, and opa334 is credited for the Sileo UI in the license."),
         Entry(version: "v5.9.3", date: "15 Nov 2026", notes: "The search circle is back at the bottom right, floating above the tab bar like before, and Backup sits at the top left of the Featured page, on the same row as the profile avatar. The native tab bar stays."),
