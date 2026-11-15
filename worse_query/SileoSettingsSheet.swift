@@ -58,15 +58,6 @@ struct SileoSettingsSheet: View {
                     NavigationLink("App Group") {
                         AppGroupPage(groupText: $groupText)
                     }
-                    NavigationLink("App Data") {
-                        AppDataView()
-                    }
-                    NavigationLink("PosterBoard") {
-                        PosterBoardView()
-                    }
-                    NavigationLink("Cache Data Cleaner") {
-                        CacheCleanerView()
-                    }
                     NavigationLink("CacheExtra") {
                         CacheExtraView(manager: manager, sileo: true)
                     }
@@ -79,6 +70,12 @@ struct SileoSettingsSheet: View {
                 }
 
                 Section("About") {
+                    NavigationLink("What's New") {
+                        SileoNewsContent()
+                            .navigationTitle("News")
+                            .navigationBarTitleDisplayMode(.large)
+                    }
+                    Link("WorkTweaks on GitHub", destination: URL(string: "https://github.com/adnan120hz/WorkTweaks")!)
                     NavigationLink("Tutorials") {
                         TutorialsView()
                     }

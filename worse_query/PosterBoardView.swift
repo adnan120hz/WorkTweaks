@@ -122,7 +122,7 @@ struct PosterBoardView: View {
             }
         }
         .navigationTitle("PosterBoard")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
         .onAppear {
             manager.loadReceipts()
             kickResolution()

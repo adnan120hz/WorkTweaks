@@ -56,7 +56,9 @@ struct SileoPage<Content: View>: View {
 
 /// The package icon Sileo puts on every row: a square with the
 /// package's own color (here the tweak's tint) and a white
-/// symbol, corner radius width / 4 (PackageIconView).
+/// symbol, corner radius width / 4 (PackageIconView). The
+/// symbol is large and semibold so the icon reads clearly at
+/// a glance — the v5.6 symbols were too small and faint.
 struct SileoIcon: View {
     let systemImage: String
     var color: Color = .blue
@@ -64,7 +66,7 @@ struct SileoIcon: View {
 
     var body: some View {
         Image(systemName: systemImage)
-            .font(.system(size: size * 0.43, weight: .regular))
+            .font(.system(size: size * 0.55, weight: .semibold))
             .foregroundStyle(.white)
             .frame(width: size, height: size)
             .background(color, in: RoundedRectangle(cornerRadius: size / 4, style: .continuous))

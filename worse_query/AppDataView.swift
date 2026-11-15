@@ -97,7 +97,7 @@ struct AppDataView: View {
             }
         }
         .navigationTitle("App Data")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Rescan") {

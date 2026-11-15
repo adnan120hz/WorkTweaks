@@ -31,6 +31,9 @@ struct SileoTweaksView: View {
     let onSpoofingInfo: () -> Void
 
     @AppStorage("atomic_write") private var atomicWrite = true
+    /// The Tweaks UI choice, picked here too (the settings
+    /// sheet has the same picker) — Sileo / New / Old.
+    @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "sileo"
     /// The shell's shared state: the search cover is opened by
     /// the shell's floating search circle (and only there), the
     /// banner opens the News tab, and the avatar opens the
@@ -40,6 +43,8 @@ struct SileoTweaksView: View {
     @FocusState private var searchFocused: Bool
     @State private var showFixStatusBarGuide = false
     @State private var showFixAppleIntelligenceGuide = false
+    /// The changelog sheet, opened by tapping a release banner.
+    @State private var showNews = false
 
     /// The sections, stacked in order on the Featured page —
     /// no "All" filter (the Packages tab lists everything).
@@ -72,6 +77,8 @@ struct SileoTweaksView: View {
                 sectionRows(section)
             }
 
+            uiPickerRow
+
             footerCredit
         }
         .toolbar {
@@ -83,7 +90,7 @@ struct SileoTweaksView: View {
                     Image("AppIconDisplay")
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 32, height: 32)
+                        .frame(width: 40, height: 40)
                         .clipShape(Circle())
                         .overlay(Circle().stroke(Color.blue, lineWidth: 2))
                 }
@@ -93,6 +100,9 @@ struct SileoTweaksView: View {
         }
         .fullScreenCover(isPresented: $shell.searchActive) {
             searchCover
+        }
+        .sheet(isPresented: $showNews) {
+            SileoNewsView()
         }
         .alert("Fix Status Bar", isPresented: $showFixStatusBarGuide) {
             Button("OK") { }
@@ -118,7 +128,7 @@ struct SileoTweaksView: View {
                 ForEach(releaseBanners, id: \.version) { banner in
                     Button {
                         SoundEffects.playTap()
-                        shell.selectedTab = .news
+                        showNews = true
                     } label: {
                         ZStack(alignment: .bottomLeading) {
                             LinearGradient(
@@ -126,18 +136,25 @@ struct SileoTweaksView: View {
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("WorkTweaks \(banner.version)")
-                                    .font(.system(size: 24, weight: .semibold))
-                                    .foregroundStyle(.white)
-                                Text(banner.headline)
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(.white.opacity(0.85))
-                                    .fixedSize(horizontal: false, vertical: true)
+                            VStack(alignment: .leading, spacing: 8) {
+                                Image("AppIconDisplay")
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 56, height: 56)
+                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("WorkTweaks \(banner.version)")
+                                        .font(.system(size: 24, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                    Text(banner.headline)
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundStyle(.white.opacity(0.85))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
                             .padding(16)
                         }
-                        .frame(width: UIScreen.main.bounds.width - 32, height: 180)
+                        .frame(width: UIScreen.main.bounds.width - 32, height: 196)
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                     .buttonStyle(.plain)
@@ -269,7 +286,7 @@ struct SileoTweaksView: View {
     /// Device Artwork: the Dynamic Island subtype (model) picker.
     private var subtypeRow: some View {
         HStack(spacing: 16) {
-            followerRow(icon: "capsule.fill", iconColor: .indigo, title: "Subtype", author: "Dynamic Island model")
+            followerRow(icon: "capsule.fill", iconColor: .indigo, title: "Subtype", author: "Dynamic Island")
             Picker("Subtype", selection: $manager.selectedST) {
                 Text("Original (\(manager.ogST))").tag("og")
                 if isDeviceGoodForNoDynamicIsland() {
@@ -509,6 +526,31 @@ struct SileoTweaksView: View {
             SoundEffects.playTap()
             action()
         }
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Sileo.separator).frame(height: 1)
+        }
+    }
+
+    // MARK: Tweaks UI choice
+
+    /// The Tweaks UI choice, back on the Featured page (it used
+    /// to live on the Sandbox tab, which is gone from the pill)
+    /// — a package row with a menu picker. The settings sheet
+    /// has the same picker; both write wt.tweaksUIVersion.
+    private var uiPickerRow: some View {
+        HStack(spacing: 16) {
+            followerRow(icon: "slider.horizontal.3", iconColor: .blue, title: "Tweaks UI", author: "Change the Tweaks tab layout")
+            Picker("Tweaks UI", selection: $uiVersionRaw) {
+                Text("Sileo UI").tag("sileo")
+                Text("New UI").tag("new")
+                Text("Old UI").tag("old")
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .tint(.white)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
         .overlay(alignment: .bottom) {
             Rectangle().fill(Sileo.separator).frame(height: 1)
         }

@@ -14,30 +14,42 @@ final class SileoShellState: ObservableObject {
     @Published var settingsActive = false
 }
 
-/// Sileo's four tabs, in Sileo's order: Featured (our tweaks),
-/// News (version updates), Sources (our GitHub link),
-/// Packages (all tweaks).
+/// The four pill tabs: Featured (our tweaks) and the three
+/// tools the user opens most — App Data, PosterBoard and the
+/// Cache Cleaner. News (changelog) and Sources (GitHub) live
+/// in the avatar's settings sheet instead.
 enum SileoTab: String, CaseIterable {
-    case featured, news, sources, packages
+    case featured, appData, posterBoard, cacheCleaner
 
-    var title: String { rawValue.capitalized }
+    var title: String {
+        switch self {
+        case .featured: "Featured"
+        case .appData: "App Data"
+        case .posterBoard: "PosterBoard"
+        case .cacheCleaner: "Cache Cleaner"
+        }
+    }
 
     var icon: String {
         switch self {
         case .featured: "star.fill"
-        case .news: "newspaper"
-        case .sources: "globe"
-        case .packages: "doc.text.fill"
+        case .appData: "folder.fill"
+        case .posterBoard: "photo.fill"
+        case .cacheCleaner: "trash.fill"
         }
     }
 }
 
-/// The whole app in Sileo UI: Sileo's four tabs inside a dark
-/// shell with Sileo's floating pill tab bar + blue search
-/// circle at the bottom. This replaces the standard TabView
-/// while wt.tweaksUIVersion == "sileo". The avatar (top right
-/// of the Featured tab) opens the settings sheet, which holds
-/// the Sandbox controls and tools. The system (engine, backup,
+/// The whole app in Sileo UI: the four tabs inside a dark
+/// shell with Sileo's floating pill tab bar + search circle at
+/// the bottom. This replaces the standard TabView while
+/// wt.tweaksUIVersion == "sileo". The pill and the search
+/// circle are real Liquid Glass (glassEffect, iOS 26): the
+/// scrolling content shows through them, refracted at the
+/// edges, like Sileo 2.5.1's pill — not a solid color and not
+/// the old frosted material. The avatar (top right of the
+/// Featured tab) opens the settings sheet, which holds the
+/// Sandbox controls and tools. The system (engine, backup,
 /// resolver, respring) is untouched.
 struct SileoShell: View {
     @ObservedObject var console: Console
@@ -55,12 +67,12 @@ struct SileoShell: View {
                                onOpenSandbox: { shell.settingsActive = true },
                                onOpenExtra: { shell.settingsActive = true },
                                onOpenBackup: { shell.settingsActive = true })
-                case .news:
-                    SileoNewsView()
-                case .sources:
-                    SileoSourcesView()
-                case .packages:
-                    SileoPackagesView(manager: manager)
+                case .appData:
+                    NavigationStack { AppDataView() }
+                case .posterBoard:
+                    NavigationStack { PosterBoardView() }
+                case .cacheCleaner:
+                    NavigationStack { CacheCleanerView() }
                 }
             }
             .environmentObject(shell)
@@ -73,37 +85,44 @@ struct SileoShell: View {
         }
     }
 
-    /// Sileo's floating pill tab bar: the four tabs as
-    /// icon-over-label items (like Sileo's pill), the selected
-    /// one in blue, and the blue search circle beside it —
-    /// the circle opens the tweaks search.
+    /// Sileo's floating pill tab bar in Liquid Glass: the four
+    /// tabs as icon-over-label items (the selected one in
+    /// blue, the rest white), and the glass search circle
+    /// beside it — the circle opens the tweaks search. The
+    /// pill scrolls horizontally if the labels ever need more
+    /// room, so a label can never wrap to two lines (the
+    /// "Featu / red" mess in v5.6).
     private var tabBar: some View {
         HStack(spacing: 12) {
-            HStack(spacing: 4) {
-                ForEach(SileoTab.allCases, id: \.self) { tab in
-                    Button {
-                        SoundEffects.playSwipe()
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            shell.selectedTab = tab
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 2) {
+                    ForEach(SileoTab.allCases, id: \.self) { tab in
+                        Button {
+                            SoundEffects.playSwipe()
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                shell.selectedTab = tab
+                            }
+                        } label: {
+                            VStack(spacing: 2) {
+                                Image(systemName: tab.icon)
+                                    .font(.system(size: 17, weight: .semibold))
+                                Text(tab.title)
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.85)
+                            }
+                            .foregroundStyle(shell.selectedTab == tab ? Sileo.accent : .white.opacity(0.7))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 7)
+                            .contentShape(Rectangle())
                         }
-                    } label: {
-                        VStack(spacing: 2) {
-                            Image(systemName: tab.icon)
-                                .font(.system(size: 17, weight: .semibold))
-                            Text(tab.title)
-                                .font(.system(size: 10, weight: .semibold))
-                        }
-                        .foregroundStyle(shell.selectedTab == tab ? Sileo.accent : .white.opacity(0.7))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 6)
             }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 6)
-            .background(.ultraThinMaterial, in: Capsule())
+            .glassEffect(.regular, in: Capsule())
 
             Button {
                 SoundEffects.playTap()
@@ -113,13 +132,13 @@ struct SileoShell: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Sileo.accent, in: Circle())
+                    .frame(width: 52, height: 52)
             }
             .buttonStyle(.plain)
+            .glassEffect(.regular, in: Circle())
             .accessibilityLabel("Search tweaks")
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.bottom, 12)
     }
 }

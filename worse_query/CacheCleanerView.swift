@@ -92,8 +92,8 @@ struct CacheCleanerView: View {
                 }
             }
         }
-        .navigationTitle("Cache Data Cleaner")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Cache Cleaner")
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Rescan") {

@@ -1,12 +1,15 @@
 import SwiftUI
 
-// MARK: - News tab (version updates)
+// MARK: - News (version updates)
 //
-// Sileo's News tab, for WorkTweaks: the version changelog,
-// newest first — what changed in each release. The current
-// version carries a blue LATEST pill.
+// The version changelog, newest first — what changed in each
+// release. The current version carries a blue LATEST pill.
+// SileoNewsContent is the list itself (no NavigationStack), so
+// it can be pushed inside the settings sheet; SileoNewsView
+// wraps it in its own stack with a Done button, for the sheet
+// the release banners open.
 
-struct SileoNewsView: View {
+struct SileoNewsContent: View {
     private struct Entry: Identifiable {
         let id = UUID()
         let version: String
@@ -19,6 +22,7 @@ struct SileoNewsView: View {
     }
 
     private let entries: [Entry] = [
+        Entry(version: "v5.7", date: "15 Nov 2026", notes: "Liquid Glass pill and search circle, the pill tabs are now Featured / App Data / PosterBoard / Cache Cleaner, bigger tweak icons, and the Tweaks UI choice is back on the Featured page."),
         Entry(version: "v5.6", date: "15 Nov 2026", notes: "Sileo UI, faithful replica — Featured, News, Sources and Packages, release banners, tweak packages."),
         Entry(version: "v5.5", date: "15 Nov 2026", notes: "Sileo UI restyles the whole app — the floating pill tab bar and every menu in the Sileo style."),
         Entry(version: "v5.4", date: "15 Nov 2026", notes: "Third Tweaks UI: Sileo UI, styled after the Sileo Featured page, blue accent, WorkTweaks icon."),
@@ -39,41 +43,65 @@ struct SileoNewsView: View {
     ]
 
     var body: some View {
-        NavigationStack {
-            SileoPage {
-                ForEach(entries) { entry in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) {
-                            Text("WorkTweaks \(entry.version)")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundStyle(Sileo.primary)
-                            if entry.version == "v\(appVersion)" {
-                                Text("LATEST")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(Sileo.accent, in: Capsule())
-                            }
-                            Spacer()
-                            Text(entry.date)
-                                .font(.system(size: 13))
-                                .foregroundStyle(Sileo.secondary)
+        SileoPage(bottomPadding: 24) {
+            ForEach(entries) { entry in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text("WorkTweaks \(entry.version)")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Sileo.primary)
+                        if entry.version == "v\(appVersion)" {
+                            Text("LATEST")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Sileo.accent, in: Capsule())
                         }
-                        Text(entry.notes)
-                            .font(.system(size: 14))
-                            .foregroundStyle(Sileo.primary.opacity(0.85))
-                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer()
+                        Text(entry.date)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Sileo.secondary)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(Sileo.separator).frame(height: 1)
-                    }
+                    Text(entry.notes)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Sileo.primary.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(Sileo.separator).frame(height: 1)
                 }
             }
-            .navigationTitle("News")
-            .navigationBarTitleDisplayMode(.large)
         }
+    }
+}
+
+struct SileoNewsView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            SileoNewsContent()
+                .navigationTitle("News")
+                .navigationBarTitleDisplayMode(.large)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Text("Done")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 7)
+                                .background(Color.blue, in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+        }
+        .preferredColorScheme(.dark)
     }
 }
