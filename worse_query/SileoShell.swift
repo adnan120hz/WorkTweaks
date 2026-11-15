@@ -50,16 +50,15 @@ enum SileoTab: String, CaseIterable {
 ///
 /// The pill is real Liquid Glass (glassEffect, iOS 26): the
 /// scrolling content shows through it, refracted at the
-/// edges, like Sileo 2.5.1's pill. The glass is a milky
-/// translucent material — a white tint over .regular — so it
-/// reads as a liquid bubble even on the black page, the way
-/// the real Sileo pill does over its dark lists. The selected
-/// tab carries a soft blue highlight that glides between tabs
-/// on a spring (matchedGeometryEffect), so the pill morphs
-/// instead of snapping — the liquid feel. The avatar (top
-/// right of the Featured tab) opens the settings sheet, which
-/// holds the Sandbox controls and tools. The system (engine,
-/// backup, resolver, respring) is untouched.
+/// edges, like Sileo 2.5.1's pill. Plain .regular glass, no
+/// tint — a white tint was tried in v5.9 and turned the pill
+/// into frosted gray instead of liquid, so it is gone. The
+/// selected tab carries a soft blue highlight that glides
+/// between tabs on a spring (matchedGeometryEffect), so the
+/// pill morphs instead of snapping — the liquid feel. The
+/// avatar (top right of the Featured tab) opens the settings
+/// sheet, which holds the Sandbox controls and tools. The
+/// system (engine, backup, resolver, respring) is untouched.
 ///
 /// One rule for glass in this shell, learned in v5.9:
 /// glassEffect goes on non-interactive surfaces only (the
@@ -151,7 +150,7 @@ struct SileoShell: View {
                     .padding(.horizontal, 6)
                     .padding(.vertical, 6)
                 }
-                .glassEffect(.regular.tint(.white.opacity(0.2)), in: Capsule())
+                .glassEffect(.regular, in: Capsule())
                 .onChange(of: shell.selectedTab) { _, tab in
                     withAnimation { proxy.scrollTo(tab, anchor: .center) }
                 }

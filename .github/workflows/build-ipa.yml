@@ -14,6 +14,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Select Xcode 26.6 (v1.0 toolchain)
+        run: |
+          # Pin the toolchain v1.0 was built with (verified from
+          # the v1.0 CI log: Xcode 26.6, build 17F113, runner
+          # image 20261028.624 — the same as every build since).
+          # The workflow never pinned a version, so it always
+          # used the macos-26 default; pinning locks it so a
+          # future image update cannot silently change it.
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
+
       - name: Show toolchain
         run: |
           xcodebuild -version
