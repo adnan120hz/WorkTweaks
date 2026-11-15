@@ -136,6 +136,13 @@ struct LicenseView: View {
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 7)
+                    Divider()
+                        .padding(.leading, 14)
+                    creditRow(
+                        title: "Sileo UI — opa334",
+                        detail: "Reference — Sileo UI",
+                        url: "https://github.com/opa334"
+                    )
                 }
                 .padding(.vertical, 4)
             }

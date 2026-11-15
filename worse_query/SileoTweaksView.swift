@@ -97,18 +97,25 @@ struct SileoTweaksView: View {
                 warningRow
             }
 
-            ForEach(featuredSections) { section in
+            ForEach(Array(featuredSections.enumerated()), id: \.offset) { sectionIndex, section in
                 SileoSectionTitle(text: section.title)
-                sectionRows(section)
+                // The icon colors run in one continuous sequence
+                // down the page (four blue, four gray, four
+                // cyan, four dark), so each section starts where
+                // the previous one left off.
+                sectionRows(section, startingAt: featuredSections.prefix(sectionIndex).reduce(0) { $0 + visibleTweaks(for: $1).count })
             }
 
             footerCredit
         }
         .toolbar {
-            // Backup sits at the top left, on the same row as
-            // the profile avatar (top right) — it jumps straight
-            // to the Backup tab.
-            ToolbarItem(placement: .navigationBarLeading) {
+            // Backup and Fix Issue sit at the top left, on the
+            // same row as the profile avatar (top right).
+            // Backup jumps straight to the Backup tab; Fix
+            // Issue holds the two fix guides (Apple Intelligence
+            // and the status bar) so they are always one tap
+            // away instead of only under their tweak's row.
+            ToolbarItemGroup(placement: .navigationBarLeading) {
                 Button {
                     SoundEffects.playTap()
                     shell.selectedTab = .backup
@@ -116,6 +123,20 @@ struct SileoTweaksView: View {
                     Label("Backup", systemImage: "externaldrive.fill")
                 }
                 .accessibilityLabel("Backup")
+
+                Menu {
+                    Button("Fix Apple Intelligence") {
+                        SoundEffects.playTap()
+                        showFixAppleIntelligenceGuide = true
+                    }
+                    Button("Fix Status Bar") {
+                        SoundEffects.playTap()
+                        showFixStatusBarGuide = true
+                    }
+                } label: {
+                    Label("Fix Issue", systemImage: "wrench.and.screwdriver.fill")
+                }
+                .accessibilityLabel("Fix Issue")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
@@ -241,7 +262,12 @@ struct SileoTweaksView: View {
     // MARK: Sections
 
     @ViewBuilder
-    private func sectionRows(_ section: TweakSection) -> some View {
+    /// The rows of one section, in catalog order. `startingAt`
+    /// is the section's first tweak's position in the page's
+    /// whole tweak sequence, so the icon colors run
+    /// continuously down the page instead of restarting per
+    /// section.
+    private func sectionRows(_ section: TweakSection, startingAt offset: Int) -> some View {
         if section == .applyRevert {
             actionsBlock
         } else {
@@ -251,8 +277,8 @@ struct SileoTweaksView: View {
                 uiPickerRow
             }
 
-            ForEach(visibleTweaks(for: section)) { tweak in
-                SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo)
+            ForEach(Array(visibleTweaks(for: section).enumerated()), id: \.element.id) { localIndex, tweak in
+                SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconColor: groupedIconColor(at: offset + localIndex))
 
                 // The Dynamic Island model picker lives directly
                 // under its tweak's row.
@@ -285,6 +311,20 @@ struct SileoTweaksView: View {
             if section == .addFeature {
                 footnoteRow
             }
+        }
+    }
+
+    /// The tweak icon colors, in blocks of four down the page —
+    /// four blue, four gray, four cyan, four dark, then blue
+    /// again — so the colors are grouped, never random. The
+    /// dark tile is the palette's dark (near-black) with a
+    /// white symbol; light is not in the cycle.
+    private func groupedIconColor(at index: Int) -> (tile: Color, symbol: Color) {
+        switch (index / 4) % 4 {
+        case 0: return (.blue, .white)
+        case 1: return (.gray, .white)
+        case 2: return (.cyan, .white)
+        default: return (Color(red: 0.16, green: 0.16, blue: 0.18), .white)
         }
     }
 
@@ -682,8 +722,8 @@ struct SileoTweaksView: View {
                             .padding(.horizontal, 16)
                             .padding(.vertical, 4)
                     } else {
-                        ForEach(searchResults) { tweak in
-                            SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo)
+                        ForEach(Array(searchResults.enumerated()), id: \.element.id) { searchIndex, tweak in
+                            SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo, iconColor: groupedIconColor(at: searchIndex))
                             if tweak.id == "enable_dynamic_island_capability" {
                                 subtypeRow
                             }

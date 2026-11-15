@@ -22,6 +22,7 @@ struct SileoNewsContent: View {
     }
 
     private let entries: [Entry] = [
+        Entry(version: "v5.9.4", date: "15 Nov 2026", notes: "Tweak icons now run in blocks of four down the page (four blue, four gray, four cyan, four dark), the Fix Issue menu sits at the top left with the Apple Intelligence and status bar guides, and opa334 is credited for the Sileo UI in the license."),
         Entry(version: "v5.9.3", date: "15 Nov 2026", notes: "The search circle is back at the bottom right, floating above the tab bar like before, and Backup sits at the top left of the Featured page, on the same row as the profile avatar. The native tab bar stays."),
         Entry(version: "v5.9.2", date: "15 Nov 2026", notes: "The custom pill is gone — the Sileo UI now uses the native TabView, whose tab bar is the system's own Liquid Glass (the same automatic glass v1.0 had). Search moved to a magnifier in the nav bar. CI now picks the newest Xcode 26 or newer instead of pinning one version."),
         Entry(version: "v5.9.1", date: "15 Nov 2026", notes: "The pill is plain Liquid Glass again — the white tint from v5.9 turned it into frosted gray, so it is gone — and CI now pins Xcode 26.6, the exact toolchain v1.0 was built with."),
