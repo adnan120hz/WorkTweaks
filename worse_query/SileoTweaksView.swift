@@ -143,7 +143,10 @@ struct SileoTweaksView: View {
     /// sideways. Each card is one piece of information — the
     /// version, the supported iOS list, the iPhone lineup, the
     /// tweak count — in its own color, and tapping one opens
-    /// the News tab (the full changelog).
+    /// the News tab (the full changelog). The text sits in the
+    /// middle of the card, centered, so a long list (the iOS
+    /// versions) reads as a centered block instead of spilling
+    /// down the left edge.
     private var bannerCarousel: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
@@ -152,19 +155,23 @@ struct SileoTweaksView: View {
                         SoundEffects.playTap()
                         showNews = true
                     } label: {
-                        ZStack(alignment: .bottomLeading) {
+                        ZStack(alignment: .center) {
                             LinearGradient(
                                 colors: banner.colors,
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .center, spacing: 8) {
                                 if let icon = banner.icon {
                                     Image(systemName: icon)
                                         .font(.system(size: 28, weight: .semibold))
                                         .foregroundStyle(.white)
                                         .frame(width: 56, height: 56)
-                                        .glassEffect(.regular, in: Circle())
+                                        // A plain translucent circle, not
+                                        // glassEffect: the icon sits inside
+                                        // a Button label, and glassEffect on
+                                        // a button broke taps in v5.8.
+                                        .background(.white.opacity(0.25), in: Circle())
                                 } else {
                                     Image("AppIconDisplay")
                                         .resizable()
@@ -172,13 +179,15 @@ struct SileoTweaksView: View {
                                         .frame(width: 56, height: 56)
                                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                                 }
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .center, spacing: 2) {
                                     Text(banner.title)
                                         .font(.system(size: 24, weight: .semibold))
                                         .foregroundStyle(.white)
+                                        .multilineTextAlignment(.center)
                                     Text(banner.headline)
                                         .font(.system(size: 13, weight: .medium))
                                         .foregroundStyle(.white.opacity(0.85))
+                                        .multilineTextAlignment(.center)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
@@ -411,9 +420,8 @@ struct SileoTweaksView: View {
     private var deviceNameRow: some View {
         VStack(alignment: .leading, spacing: 0) {
             SileoPackageRow(icon: "textformat", iconColor: .blue, title: "Custom Device Name", author: "Shown in Settings > General > About", version: "WorkTweaks", onTap: {}) {
-                SileoGlassToggle(isOn: manager.enableDeviceName) {
-                    manager.enableDeviceName.toggle()
-                }
+                Toggle(isOn: $manager.enableDeviceName) { Text("Custom Device Name") }
+                    .labelsHidden()
             }
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
@@ -431,9 +439,8 @@ struct SileoTweaksView: View {
     private var regionModelRow: some View {
         VStack(alignment: .leading, spacing: 0) {
             SileoPackageRow(icon: "globe", iconColor: .cyan, title: "Custom Region Model", author: "Type the sales-region suffix", version: "WorkTweaks", onTap: {}) {
-                SileoGlassToggle(isOn: manager.enableCustomRegion) {
-                    manager.enableCustomRegion.toggle()
-                }
+                Toggle(isOn: $manager.enableCustomRegion) { Text("Custom Region Model") }
+                    .labelsHidden()
             }
             if manager.enableCustomRegion {
                 TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
@@ -454,9 +461,8 @@ struct SileoTweaksView: View {
     /// Write Method: "Persist after reboot" (atomic_write).
     private var persistRow: some View {
         SileoPackageRow(icon: "externaldrive.fill", iconColor: .gray, title: "Persist after reboot", author: "Write MobileGestalt in-place on the same inode.", version: "WorkTweaks", onTap: {}) {
-            SileoGlassToggle(isOn: atomicWrite) {
-                atomicWrite.toggle()
-            }
+            Toggle(isOn: $atomicWrite) { Text("Persist after reboot") }
+                .labelsHidden()
         }
     }
 
@@ -502,7 +508,7 @@ struct SileoTweaksView: View {
 
     private var actionsBlock: some View {
         VStack(alignment: .leading, spacing: 0) {
-            actionRow(title: "Apply Tweaks", author: "Write the staged tweaks", systemImage: "checkmark.circle", pill: "APPLY", destructive: false) {
+            actionRow(title: "Apply Tweaks", author: "Write staged tweaks", systemImage: "checkmark.circle", pill: "APPLY", destructive: false) {
                 manager.apply()
                 console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
             }
@@ -512,7 +518,7 @@ struct SileoTweaksView: View {
                 RespringCenter.shared.trigger()
             }
 
-            actionRow(title: "Revert Tweaks", author: "Restore the original MobileGestalt", systemImage: "arrow.uturn.backward", pill: "REVERT", destructive: true) {
+            actionRow(title: "Revert Tweaks", author: "Restore the original", systemImage: "arrow.uturn.backward", pill: "REVERT", destructive: true) {
                 onRevert()
             }
             .disabled(!manager.isValid)
@@ -533,10 +539,12 @@ struct SileoTweaksView: View {
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(destructive ? Color.red : Sileo.primary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 Text(author)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Sileo.secondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 Text("WorkTweaks")
                     .font(.system(size: 11))
                     .foregroundStyle(Sileo.secondary)
@@ -548,9 +556,9 @@ struct SileoTweaksView: View {
                 action()
             } label: {
                 Text(pill)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 12)
                     .padding(.vertical, 7)
                     .background(destructive ? Color.red : Sileo.accent, in: Capsule())
             }
@@ -633,17 +641,17 @@ struct SileoTweaksView: View {
                 .glassEffect(.regular, in: Capsule())
 
                 // Sileo's search closes with an X circle — glass,
-                // like the search circle on the pill.
+                // like the search circle on the pill — the
+                // native glass button, so it stays tappable.
                 Button {
                     closeSearch()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Sileo.primary)
                         .frame(width: 40, height: 40)
-                        .glassEffect(.regular, in: Circle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.glass)
+                .buttonBorderShape(.circle)
                 .accessibilityLabel("Close search")
             }
             .padding(.horizontal, 16)

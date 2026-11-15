@@ -6,13 +6,17 @@ import SwiftUI
 // (repo adnan120hz/ui3-Ui): a square package icon in the
 // package's own color, a three-line title stack (name 17
 // semibold / author 13 medium gray / version 11 gray), and
-// the action where Sileo puts its GET pill — here a Liquid
-// Glass toggle switch, because a tweak's action is its on/off
-// state. The whole row is tappable (opens the package's info,
-// like Sileo opening a depiction); the toggle handles its own
-// taps. A 1pt separator runs full width under every row.
-// Titles wrap to two lines so long tweak names never truncate
-// mid-word ("Enable Dynami…").
+// the action where Sileo puts its GET pill — here the native
+// Toggle switch, because a tweak's action is its on/off
+// state. The native switch is the system's own Liquid Glass
+// switch (the same one the New and Old UIs use) — a custom
+// glass toggle was tried in v5.8 and rendered as a flat blue
+// capsule, not glass, so it is gone. The whole row is
+// tappable (opens the package's info, like Sileo opening a
+// depiction); the toggle handles its own taps. A 1pt
+// separator runs full width under every row. Titles wrap to
+// two lines so long tweak names never truncate mid-word
+// ("Enable Dynami…").
 
 extension TweakTint {
     /// The tweak's Sileo icon colors: the glass tile tint +
@@ -35,39 +39,6 @@ extension TweakTint {
         case .pink, .yellow:
             (.white, Color(red: 0.16, green: 0.16, blue: 0.18))
         }
-    }
-}
-
-/// A tweak's toggle, as a Liquid Glass switch: a glass
-/// capsule track (blue-tinted glass when on, plain glass when
-/// off) with a white knob that slides. Same size as the
-/// system switch (51 x 31), same tap behavior as the old
-/// ON/OFF pill — only the look changed, and every tweak row
-/// now has a real toggle instead of an ON/OFF label.
-struct SileoGlassToggle: View {
-    let isOn: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: {
-            SoundEffects.playTap()
-            action()
-        }) {
-            ZStack(alignment: isOn ? .trailing : .leading) {
-                Capsule()
-                    .frame(width: 51, height: 31)
-                    .glassEffect(isOn ? .regular.tint(.blue) : .regular, in: Capsule())
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 27, height: 27)
-                    .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
-                    .padding(2)
-            }
-            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isOn)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(isOn ? "On" : "Off")
-        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -162,10 +133,12 @@ struct SileoTweakRow: View {
                 }
             }
         ) {
-            SileoGlassToggle(isOn: tweak.isOn(in: manager.dictNow)) {
-                let binding = manager.toggleBinding(for: tweak)
-                binding.wrappedValue.toggle()
+            // The native Toggle: the system's own Liquid Glass
+            // switch, the same one the New and Old UIs use.
+            Toggle(isOn: manager.toggleBinding(for: tweak)) {
+                Text(tweak.title)
             }
+            .labelsHidden()
             .disabled(pillDisabled)
             .opacity(pillDisabled ? 0.4 : 1)
         }

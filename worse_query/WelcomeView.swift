@@ -60,10 +60,14 @@ struct WelcomeView: View {
                                 .foregroundStyle(Sileo.secondary)
                         }
                         .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    // The glass is the card itself, not the button:
+                    // glassEffect on a button's label broke taps
+                    // in v5.8 (Get Started would not press).
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
 
                     Text(versionText)
                         .font(.caption)
@@ -76,6 +80,13 @@ struct WelcomeView: View {
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
+                // The buttons use the native glass button styles
+                // — glassProminent for Get Started, glass for
+                // Tutorials — instead of glassEffect on their
+                // labels: in v5.8 a glassEffect'd label would
+                // not press at all, and the glass bar behind
+                // them blurred the page weirdly. No bar
+                // background here anymore — the buttons float.
                 Button {
                     onStart()
                 } label: {
@@ -88,26 +99,25 @@ struct WelcomeView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
-                    .glassEffect(.regular.tint(.blue), in: Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.glassProminent)
+                .buttonBorderShape(.capsule)
+                .tint(.blue)
 
                 Button {
                     showTutorials = true
                 } label: {
                     Label("Tutorials", systemImage: "book")
                         .font(.headline)
-                        .foregroundStyle(Sileo.primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 13)
-                        .glassEffect(.regular, in: Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.glass)
+                .buttonBorderShape(.capsule)
             }
             .padding(.horizontal, 22)
             .padding(.top, 10)
             .padding(.bottom, 12)
-            .glassEffect(.regular, in: Rectangle())
         }
         .sheet(isPresented: $showTutorials) {
             NavigationStack {
@@ -244,21 +254,17 @@ struct WelcomeView: View {
                     Link(destination: URL(string: "https://www.tiktok.com/@adnan.120hz")!) {
                         Label("TikTok", systemImage: "music.note")
                             .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Sileo.primary)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .glassEffect(.regular, in: Capsule())
+                            .padding(.vertical, 4)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.bordered)
                     Link(destination: URL(string: "https://github.com/adnan120hz")!) {
                         Label("GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
                             .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Sileo.primary)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .glassEffect(.regular, in: Capsule())
+                            .padding(.vertical, 4)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.bordered)
                 }
             }
         }
