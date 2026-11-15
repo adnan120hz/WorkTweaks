@@ -642,6 +642,7 @@ struct TweaksView: View {
 
         if selectedSection == .tweaks || selectedSection == .all {
             deviceNameCard
+            regionModelCard
             persistCard
         }
 
@@ -749,6 +750,34 @@ struct TweaksView: View {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .wtGlassCard(cornerRadius: 14)
+    }
+
+    /// Device Artwork: Custom Region Model toggle + field.
+    /// The typed suffix (e.g. PA/A) is the sales region shown
+    /// in Settings > General > About as the Model Number
+    /// suffix; it is written on Apply, like Custom Device Name.
+    private var regionModelCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: $manager.enableCustomRegion) {
+                HStack(spacing: 8) {
+                    RowIcon(systemImage: "globe")
+                    Text("Custom Region Model")
+                        .font(.subheadline.weight(.semibold))
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
+            if manager.enableCustomRegion {
+                TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.characters)
+                    .textFieldStyle(.roundedBorder)
+                Text("Type the region suffix as shown in Settings > General > About, e.g. PA/A or LL/A. It changes the Model Number suffix after Apply.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
         .padding(12)
