@@ -371,17 +371,23 @@ enum SiriAICachePatch {
             print("(siri-ai) cache patch slot at byte \(guideOffset) (guide line 104)")
             return (guideOffset, nil)
         }
-        // 2. Scan every 51-byte-aligned chunk for the pattern.
+        // 2. Scan every byte offset for the pattern, not just
+        // 51-byte-aligned chunks: on newer iOS the same 51-byte
+        // shape can sit at a shifted offset when CacheData grows.
+        // The shape itself is unchanged (byte 13 = 0x01, flip
+        // byte 21 = 0x00/0x02, rest 0x00) and exactly one match
+        // is required, so no offset is ever guessed.
         var matches: [Int] = []
         var offset = 0
         while offset + lineLength <= cacheData.length {
             if lineMatches(bytes, at: offset, flip: 0x00) || lineMatches(bytes, at: offset, flip: 0x02) {
                 matches.append(offset)
             }
-            offset += lineLength
+            offset += 1
         }
         guard matches.count == 1 else {
             if matches.isEmpty {
+                logPatternDiagnostics(bytes: bytes, length: cacheData.length)
                 return (nil, "Siri AI cache pattern not found in CacheData.")
             }
             return (nil, "Siri AI cache pattern is ambiguous (\(matches.count) matches) — edit line 104 in Filza instead.")
@@ -389,6 +395,31 @@ enum SiriAICachePatch {
         cachedOffset = matches[0]
         print("(siri-ai) cache patch slot at byte \(matches[0]) (pattern scan)")
         return (matches[0], nil)
+    }
+
+    /// Logs the bytes a future iOS version needs to add support:
+    /// CacheData length, the guide chunk, and every 51-byte-aligned
+    /// chunk with only a few nonzero bytes. The user can paste the
+    /// Log and the pattern for their iOS version can be added.
+    private static func logPatternDiagnostics(bytes: UnsafePointer<UInt8>, length: Int) {
+        print("(siri-ai) no pattern: CacheData \(length) bytes")
+        func hex(_ offset: Int) -> String {
+            (0..<lineLength).map { String(format: "%02x", bytes[offset + $0]) }.joined()
+        }
+        let guideOffset = guideLineChunk * lineLength
+        if guideOffset + lineLength <= length {
+            print("(siri-ai) guide chunk 97 (byte \(guideOffset)): \(hex(guideOffset))")
+        }
+        var shown = 0
+        var offset = 0
+        while offset + lineLength <= length, shown < 20 {
+            let nonzero = (0..<lineLength).filter { bytes[offset + $0] != 0 }.count
+            if nonzero > 0, nonzero <= 4 {
+                print("(siri-ai) sparse chunk at byte \(offset): \(hex(offset))")
+                shown += 1
+            }
+            offset += lineLength
+        }
     }
 
     static func isOn(in cacheData: NSData) -> Bool {
