@@ -26,14 +26,9 @@ final class SileoShellState: ObservableObject {
 enum SileoTab: String, CaseIterable {
     case featured, appData, posterBoard, cacheCleaner
 
-    /// Short labels, used only for accessibility — the tab
-    /// bar shows ICONS ONLY. The native pill sizes to its
-    /// content, so text labels made it almost full-width and
-    /// the search circle sat on top of the Cleaner tab. With
-    /// icons only the pill shrinks to about two-thirds of the
-    /// screen, leaving a clear gap at the right for the
-    /// search circle beside it, level — like Sileo. (That is
-    /// the "shrink the menu" the user ordered.)
+    /// Short labels — SHOWN on the tab bar, like Sileo.
+    /// (v6.0.7 hid them by going icon-only; the user
+    /// corrected that — the text stays.)
     var title: String {
         switch self {
         case .featured: "Featured"
@@ -53,30 +48,37 @@ enum SileoTab: String, CaseIterable {
     }
 }
 
-/// The whole app in Sileo UI: four tabs in a native
-/// TabView, following the system appearance (Light or Dark
-/// Mode). The tab bar is the system's own Liquid Glass — it
-/// renders automatically on iOS 26+, the same way v1.0's tab
-/// bar did, with no manual glassEffect anywhere on it. That
-/// is the lesson of v5.6–v5.9.1: a custom pill built from
-/// glassEffect never looked like the system's glass (flat in
-/// v5.7, stiff in v5.8, frosted gray with a white tint in
-/// v5.9), so the pill is gone for good — never restore it.
-/// The floating glass search circle sits at the bottom right,
-/// LEVEL with the tab bar (its centre on the tab bar's
-/// centre), like the search circle beside Sileo's pill. The
-/// avatar (top right of the Featured tab) opens the settings
-/// sheet, which holds the Sandbox controls and tools; Backup
-/// lives only at the top left of the Featured page, on the
-/// same row as the avatar, and opens as a sheet. The system
+/// The whole app in Sileo UI: four tabs, following the
+/// system appearance (Light or Dark Mode). The bottom bar is
+/// built to match the real Sileo picture the user sent:
+/// a glass pill with the four tabs (icon + label) on the
+/// left, and a LARGE glass search circle beside it on the
+/// right — the same height as the pill, level with it
+/// (sejajar), with a clear gap between them. That is the
+/// "shrink the menu" the user ordered: the MENU (the pill)
+/// is shrunk, not the search.
+///
+/// Why a custom bottom bar instead of the native TabView
+/// tab bar: the native pill cannot be narrowed. Measured
+/// on the user's screenshots, it stays ~88% of the screen
+/// wide whether the tabs have labels or are icon-only
+/// (v6.0.6 with labels: 878 units; v6.0.7 icon-only: 876),
+/// so there is never room for a search circle beside it —
+/// any circle overlaps the Cleaner tab. Sileo's pill is
+/// ~66% wide. The native TabView still drives the pages
+/// (its own tab bar is hidden); only the visible bottom
+/// bar is custom. The glass is `.glassEffect(.regular)`
+/// with no tint and no background — the same glass the
+/// user already approved on the search field — not the
+/// frosted manual glass of the old pill builds. The system
 /// (engine, backup, resolver, respring) is untouched.
 ///
 /// One rule for glass in this shell: nothing manual. The
-/// system renders the tab bar, the toggles and the buttons;
-/// the only glassEffect left in the Sileo UI is on
-/// non-interactive surfaces (the search field, the Welcome
-/// cards), and those stay because the user confirmed they
-/// already look right.
+/// system renders the toggles and the buttons; the only
+/// glassEffect left in the Sileo UI is on non-interactive
+/// surfaces (the search field, the Welcome cards) and on
+/// this bottom bar, and those stay because the user
+/// confirmed they already look right.
 struct SileoShell: View {
     @ObservedObject var console: Console
     @ObservedObject var manager: GestaltManager
@@ -86,79 +88,48 @@ struct SileoShell: View {
         ZStack {
             Sileo.background.ignoresSafeArea()
 
+            // The native TabView drives the pages, but its
+            // own tab bar is hidden — the visible bottom
+            // bar below replaces it (see the note above).
             TabView(selection: $shell.selectedTab) {
                 TweaksView(console: console, manager: manager,
                            onOpenSandbox: { shell.settingsActive = true },
                            onOpenExtra: { shell.settingsActive = true },
                            onOpenBackup: { shell.settingsActive = true })
-                    .tabItem {
-                        Image(systemName: SileoTab.featured.icon)
-                            .accessibilityLabel(SileoTab.featured.title)
-                    }
+                    .tabItem { Label(SileoTab.featured.title, systemImage: SileoTab.featured.icon) }
                     .tag(SileoTab.featured)
 
                 NavigationStack { AppDataView() }
-                    .tabItem {
-                        Image(systemName: SileoTab.appData.icon)
-                            .accessibilityLabel(SileoTab.appData.title)
-                    }
+                    .tabItem { Label(SileoTab.appData.title, systemImage: SileoTab.appData.icon) }
                     .tag(SileoTab.appData)
 
                 NavigationStack { PosterBoardView() }
-                    .tabItem {
-                        Image(systemName: SileoTab.posterBoard.icon)
-                            .accessibilityLabel(SileoTab.posterBoard.title)
-                    }
+                    .tabItem { Label(SileoTab.posterBoard.title, systemImage: SileoTab.posterBoard.icon) }
                     .tag(SileoTab.posterBoard)
 
                 NavigationStack { CacheCleanerView() }
-                    .tabItem {
-                        Image(systemName: SileoTab.cacheCleaner.icon)
-                            .accessibilityLabel(SileoTab.cacheCleaner.title)
-                    }
+                    .tabItem { Label(SileoTab.cacheCleaner.title, systemImage: SileoTab.cacheCleaner.icon) }
                     .tag(SileoTab.cacheCleaner)
             }
             .tint(Sileo.accent)
+            .toolbar(.hidden, for: .tabBar)
             .environmentObject(shell)
             .onChange(of: shell.selectedTab) { _, _ in
                 SoundEffects.playSwipe()
             }
 
-            // The search button sits at the bottom right,
-            // LEVEL with the native tab bar — its centre on
-            // the tab bar pill's centre, like the search
-            // circle beside Sileo's pill. Measured on the
-            // user's v6.0.6 screenshot: the pill's centre is
-            // 67pt above the screen bottom, so a 48pt circle
-            // needs its bottom 43pt above the screen bottom.
-            // The frame ignores the safe area, so that 43pt
-            // is measured from the screen bottom, not from
-            // the safe-area edge — that is why v6.0.6's
-            // padding bottom 34 (safe-area-relative) left
-            // the circle ~50pt too high. The 48pt frame is
-            // on the Button itself, not the image: in v6.0.6
-            // the frame was on the image and the glass style
-            // inflated the button to ~81pt, which is why it
-            // covered the Cleaner tab. It opens the tweaks
-            // search (the same cover the nav bar magnifier
-            // opened in v5.9.2 — that magnifier is gone, the
-            // circle is the only search button).
-            Button {
-                SoundEffects.playTap()
-                shell.selectedTab = .featured
-                shell.searchActive = true
-            } label: {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 20, weight: .semibold))
+            // The bottom bar, built to match the real Sileo
+            // picture: a glass pill with the four tabs
+            // (icon + label) and a LARGE glass search circle
+            // beside it — same height as the pill, level
+            // with it, with a clear gap. The pill is the
+            // menu that was shrunk (not the search); the
+            // search stays large, like Sileo's. It is an
+            // overlay, so it only takes the size of its
+            // content and never blocks taps to the pages.
+            .overlay(alignment: .bottom) {
+                bottomBar
             }
-            .buttonStyle(.glass)
-            .buttonBorderShape(.circle)
-            .frame(width: 48, height: 48)
-            .accessibilityLabel("Search tweaks")
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-            .padding(.trailing, 10)
-            .padding(.bottom, 43)
-            .ignoresSafeArea()
         }
         .sheet(isPresented: $shell.settingsActive) {
             SileoSettingsSheet(console: console, manager: manager)
@@ -174,5 +145,62 @@ struct SileoShell: View {
                     }
                 }
         }
+    }
+
+    /// The bottom bar: the menu pill + the search circle,
+    /// level, with a gap — like the real Sileo picture.
+    private var bottomBar: some View {
+        HStack(spacing: 12) {
+            // The menu pill: the four tabs, icon + label.
+            // It takes the flexible width (the menu that
+            // was shrunk), so the search circle fits beside
+            // it. The selected tab reads blue, like Sileo.
+            HStack(spacing: 0) {
+                ForEach(SileoTab.allCases, id: \.self) { tab in
+                    Button {
+                        SoundEffects.playTap()
+                        shell.selectedTab = tab
+                    } label: {
+                        VStack(spacing: 3) {
+                            Image(systemName: tab.icon)
+                                .font(.system(size: 20, weight: .semibold))
+                            Text(tab.title)
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(shell.selectedTab == tab ? Sileo.accent : Sileo.primary)
+                    .accessibilityLabel(tab.title)
+                }
+            }
+            .padding(.horizontal, 6)
+            .glassEffect(.regular, in: Capsule())
+            .frame(maxWidth: .infinity)
+
+            // The search circle: LARGE, the same height as
+            // the pill (64pt), level with it — not the small
+            // 48pt circle of v6.0.7. It opens the tweaks
+            // search (the same cover the nav bar magnifier
+            // opened in v5.9.2 — that magnifier is gone, the
+            // circle is the only search button).
+            Button {
+                SoundEffects.playTap()
+                shell.selectedTab = .featured
+                shell.searchActive = true
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 22, weight: .semibold))
+                    .frame(width: 64, height: 64)
+            }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .accessibilityLabel("Search tweaks")
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
     }
 }
