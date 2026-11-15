@@ -1,24 +1,24 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Sileo UI (third Tweaks layout)
+// MARK: - Featured page (Sileo UI)
 //
-// The Tweaks tab's third layout, styled after the Sileo Featured
-// page (repo adnan120hz/ui3-Ui): a dark page with a big title,
-// a WorkTweaks banner card, a "Hot Right Now" package list, and
-// a chip row switching the six sections — adapted for tweaks.
+// The Featured tab of the Sileo UI: a faithful copy of Sileo
+// 2.5.1's Featured page (repo adnan120hz/ui3-Ui, as shown in
+// the user's screen recording) — a horizontal banner carousel
+// on top, then the tweak sections stacked with 22pt headers,
+// each tweak as a Sileo package row (its own tint icon, three
+// lines, GET-style ON/OFF pill). The banner shows release
+// version information (tap it for the News tab); the packages
+// are WorkTweaks' own tweaks; the accent is blue, not Sileo's
+// teal. No Twitter / Website / Discord / Support buttons —
+// the user had those removed. The big "Featured" title and the
+// avatar (top right, opens settings) live in the navigation
+// bar, like Sileo's — there is no second title in the content.
 // Only the layout differs: every toggle, picker and action
 // reads the same GestaltManager state and runs the same
 // apply/revert/respring code as the New and Old UIs, and the
 // system (engine, backup, resolver, respring) is untouched.
-// The Sileo green/teal accent is blue here, the packages below
-// are WorkTweaks' own tweaks, and the icon shown is the
-// WorkTweaks icon (Image "AppIconDisplay"), not Sileo's.
-// The floating pill tab bar and the search circle belong to the
-// whole app (SileoShell), not to this tab — the pill switches
-// the five menus, the circle opens this tab's search.
-// Applies to the Tweaks tab only in the sense that the layout
-// choice is picked here; in Sileo mode the whole app restyles.
 
 struct SileoTweaksView: View {
     let console: Console
@@ -32,66 +32,64 @@ struct SileoTweaksView: View {
 
     @AppStorage("atomic_write") private var atomicWrite = true
     /// The shell's shared state: the search cover is opened by
-    /// the shell's floating search circle (and only there), so
-    /// this tab reads it from the environment instead of owning
-    /// its own search button. Present only while the Sileo UI
-    /// is active — which is the only time this view renders.
+    /// the shell's floating search circle (and only there), the
+    /// banner opens the News tab, and the avatar opens the
+    /// settings sheet — all through this environment object.
     @EnvironmentObject private var shell: SileoShellState
-    @State private var selectedSection: TweakSection = .all
     @State private var searchText = ""
     @FocusState private var searchFocused: Bool
     @State private var showFixStatusBarGuide = false
     @State private var showFixAppleIntelligenceGuide = false
 
-    /// Sileo's dark page background (#1C1C1E).
-    private var sileoBackground: Color {
-        Color(red: 0.11, green: 0.11, blue: 0.12)
-    }
+    /// The sections, stacked in order on the Featured page —
+    /// no "All" filter (the Packages tab lists everything).
+    private let featuredSections: [TweakSection] = [
+        .dynamicIsland, .tweaks, .appleIntelligence, .addFeature, .applyRevert,
+    ]
 
-    /// The list header: the All section keeps Sileo's
-    /// "Hot Right Now" name; every other section shows its own.
-    private var listTitle: String {
-        selectedSection == .all ? "Hot Right Now" : selectedSection.title
-    }
+    /// The release banners: version + headline, newest first.
+    /// Tap one to open the News tab (the full changelog).
+    private let releaseBanners: [(version: String, headline: String, colors: [Color])] = [
+        ("v5.6", "Sileo UI, faithful replica — Featured, News, Sources, Packages", [.blue, .indigo]),
+        ("v5.5", "Total Sileo UI — every menu restyled", [.indigo, .purple]),
+        ("v5.4", "Sileo UI comes to the Tweaks tab", [.blue, .cyan]),
+    ]
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
     }
 
     var body: some View {
-        ZStack {
-            sileoBackground.ignoresSafeArea()
+        SileoPage {
+            bannerCarousel
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    header
-                    bannerCard
-                    sectionChips
-
-                    if manager.isEmpty || !manager.isValid {
-                        warningRow
-                    }
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(listTitle)
-                            .font(.system(size: 26, weight: .bold))
-                            .foregroundStyle(.white)
-
-                        if selectedSection == .applyRevert {
-                            actionsBlock
-                        } else {
-                            tweakRows
-                        }
-                    }
-
-                    footerLinks
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                // Room for the shell's floating pill tab bar.
-                .padding(.bottom, 120)
+            if manager.isEmpty || !manager.isValid {
+                warningRow
             }
-            .scrollIndicators(.hidden)
+
+            ForEach(featuredSections) { section in
+                SileoSectionTitle(text: section.title)
+                sectionRows(section)
+            }
+
+            footerCredit
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    SoundEffects.playTap()
+                    shell.settingsActive = true
+                } label: {
+                    Image("AppIconDisplay")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 32, height: 32)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.blue, lineWidth: 2))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("WorkTweaks settings")
+            }
         }
         .fullScreenCover(isPresented: $shell.searchActive) {
             searchCover
@@ -108,85 +106,48 @@ struct SileoTweaksView: View {
         }
     }
 
-    // MARK: Header (big title + WorkTweaks icon avatar)
+    // MARK: Banner carousel (release version information)
 
-    private var header: some View {
-        HStack(alignment: .center) {
-            Text("Tweaks")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(.white)
-            Spacer(minLength: 0)
-            NavigationLink {
-                LicenseView()
-            } label: {
-                Image("AppIconDisplay")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 44, height: 44)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.blue, lineWidth: 2))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("License & Credits")
-        }
-    }
-
-    // MARK: Banner card (WorkTweaks featured card, blue)
-
-    private var bannerCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 14) {
-                Image("AppIconDisplay")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 56, height: 56)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("WorkTweaks")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundStyle(.white)
-                    Text("MobileGestalt Tweak App for iOS")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.85))
+    /// Sileo's banner carousel: full-width image cards, swiped
+    /// sideways, the package name at the bottom left. Here each
+    /// card is a release — version + headline — and tapping one
+    /// opens the News tab.
+    private var bannerCarousel: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(releaseBanners, id: \.version) { banner in
+                    Button {
+                        SoundEffects.playTap()
+                        shell.selectedTab = .news
+                    } label: {
+                        ZStack(alignment: .bottomLeading) {
+                            LinearGradient(
+                                colors: banner.colors,
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("WorkTweaks \(banner.version)")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                Text(banner.headline)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.white.opacity(0.85))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .padding(16)
+                        }
+                        .frame(width: UIScreen.main.bounds.width - 32, height: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            HStack(spacing: 6) {
-                Image(systemName: statusIcon)
-                    .font(.caption.weight(.semibold))
-                Text(statusLine)
-                    .font(.caption.weight(.medium))
-                Text("•")
-                Text("Version \(appVersion)")
-                Text("•")
-                Text(SupportInfo.deviceSummary)
-            }
-            .foregroundStyle(.white.opacity(0.65))
-            .fixedSize(horizontal: false, vertical: true)
+            .scrollTargetLayout()
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                colors: [Color.blue, Color(red: 0.0, green: 0.25, blue: 0.75)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
-    }
-
-    private var statusIcon: String {
-        if manager.isEmpty { return "exclamationmark.triangle.fill" }
-        if manager.isValid { return "checkmark.seal.fill" }
-        return "exclamationmark.triangle.fill"
-    }
-
-    private var statusLine: String {
-        if manager.isEmpty { return "MobileGestalt is empty" }
-        if manager.isValid { return "MobileGestalt loaded" }
-        if manager.mgGranted == false { return "Sandbox access denied" }
-        if let error = manager.lastError { return error }
-        return "Granting sandbox access…"
+        .scrollTargetBehavior(.paging)
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
     }
 
     private var warningRow: some View {
@@ -203,12 +164,56 @@ struct SileoTweaksView: View {
                 .font(.caption).foregroundStyle(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 
-    // MARK: Tweak rows (Sileo package style)
+    // MARK: Sections
 
-    /// The tweaks shown for the selected section, in catalog order
-    /// — the same filter and device conditionals as the New UI.
+    @ViewBuilder
+    private func sectionRows(_ section: TweakSection) -> some View {
+        if section == .applyRevert {
+            actionsBlock
+        } else {
+            ForEach(visibleTweaks(for: section)) { tweak in
+                SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo)
+
+                // The Dynamic Island model picker lives directly
+                // under its tweak's row.
+                if tweak.id == "enable_dynamic_island_capability" {
+                    subtypeRow
+                }
+                // The spoofing model picker sits next to Apple
+                // Intelligence.
+                if tweak.id == "apple_intelligence" {
+                    spoofingRow
+                }
+
+                // The fix guides live under their tweak's row
+                // while the tweak is on (same guides as the
+                // New UI cards).
+                if tweak.id == "enable_dynamic_island_capability", tweak.isOn(in: manager.dictNow) {
+                    fixButton("Fix Status Bar!") { showFixStatusBarGuide = true }
+                }
+                if tweak.id == "apple_intelligence", tweak.isOn(in: manager.dictNow) {
+                    fixButton("Fix Apple Intelligence Here!") { showFixAppleIntelligenceGuide = true }
+                }
+            }
+
+            if section == .tweaks {
+                deviceNameRow
+                regionModelRow
+                persistRow
+            }
+
+            if section == .addFeature {
+                footnoteRow
+            }
+        }
+    }
+
+    /// The tweaks shown for a section, in catalog order — the
+    /// same filter and device conditionals as the New UI.
     private func visibleTweaks(for section: TweakSection) -> [GestaltTweak] {
         TweakCatalog.all.filter { tweak in
             if tweak.id == "tap_to_wake" && !hasHomeButton() { return false }
@@ -222,274 +227,161 @@ struct SileoTweaksView: View {
         }
     }
 
-    private var tweakRows: some View {
-        VStack(spacing: 0) {
-            ForEach(visibleTweaks(for: selectedSection)) { tweak in
-                packageRow(tweak)
-                    .disabled(tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
-
-                // The Dynamic Island model picker lives directly
-                // under its tweak's row.
-                if tweak.id == "enable_dynamic_island_capability" {
-                    subtypeRow
-                }
-                // The spoofing model picker sits next to Apple
-                // Intelligence — in the All section and in the
-                // Apple Intelligence section itself.
-                if tweak.id == "apple_intelligence" && (selectedSection == .all || selectedSection == .appleIntelligence) {
-                    spoofingRow
-                }
-            }
-
-            if selectedSection == .tweaks || selectedSection == .all {
-                deviceNameRow
-                regionModelRow
-                persistRow
-            }
-
-            if selectedSection == .addFeature {
-                footnoteRow
-            }
+    private func fixButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(title) {
+            SoundEffects.playTap()
+            action()
         }
-    }
-
-    /// One tweak as a Sileo package row: the tweak's icon in a
-    /// blue rounded square, title + state line, and a toggle
-    /// where Sileo puts its GET button.
-    private func packageRow(_ tweak: GestaltTweak) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: tweak.icon)
-                    .font(.system(size: 24, weight: .regular))
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(tweak.title)
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if tweak.infoMessage != nil {
-                            Button { onInfo(tweak) } label: {
-                                Image(systemName: tweak.infoType == .warning || tweak.infoType == .error
-                                      ? "exclamationmark.triangle"
-                                      : "info.circle")
-                                    .font(.caption)
-                                    .foregroundStyle(tweak.infoType == .warning || tweak.infoType == .error ? .orange : .white.opacity(0.6))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    Text(stateLine(for: tweak))
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-
-                Spacer(minLength: 8)
-
-                Toggle("", isOn: manager.toggleBinding(for: tweak))
-                    .labelsHidden()
-                    .tint(.blue)
-                    .disabled(!manager.isValid || !tweak.supported())
-            }
-            .padding(.vertical, 12)
-
-            // The fix guides live under their tweak's row while
-            // the tweak is on (same guides as the New UI cards).
-            if tweak.id == "enable_dynamic_island_capability", tweak.isOn(in: manager.dictNow) {
-                Button("Fix Status Bar!") {
-                    SoundEffects.playTap()
-                    showFixStatusBarGuide = true
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.blue)
-                .buttonStyle(.plain)
-                .padding(.bottom, 12)
-            }
-            if tweak.id == "apple_intelligence", tweak.isOn(in: manager.dictNow) {
-                Button("Fix Apple Intelligence Here!") {
-                    SoundEffects.playTap()
-                    showFixAppleIntelligenceGuide = true
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.blue)
-                .buttonStyle(.plain)
-                .padding(.bottom, 12)
-            }
-
-            Divider()
-                .background(Color.white.opacity(0.15))
-        }
-    }
-
-    private func stateLine(for tweak: GestaltTweak) -> String {
-        if !tweak.supported(), let minv = tweak.minv {
-            return String(format: "Requires iOS %.1f+", minv)
-        }
-        return tweak.isOn(in: manager.dictNow) ? "On" : "Off"
-    }
-
-    /// Enable iPadOS Mode stays locked unless the device class in
-    /// CacheExtra still reads "iPhone" (unchanged from v2.0).
-    private var ipadOSModeLocked: Bool {
-        let extra = manager.dictNow["CacheExtra"] as? [String: Any]
-        return extra?["+3Uf0Pm5F8Xy7Onyvko0vA"] as? String != "iPhone"
+        .font(.subheadline.weight(.semibold))
+        .foregroundStyle(Color.blue)
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 4)
     }
 
     // MARK: Follower rows (pickers + custom name/region + persist)
 
+    /// One follower row: the package icon + three lines, with
+    /// the picker on the right (a menu picker shows its current
+    /// value, like Sileo's rows show their state).
+    private func followerRow(icon: String, iconColor: Color, title: String, author: String) -> some View {
+        HStack(spacing: 16) {
+            SileoIcon(systemImage: icon, color: iconColor, size: 60)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Sileo.primary)
+                    .lineLimit(1)
+                Text(author)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Sileo.secondary)
+                    .lineLimit(1)
+                Text("WorkTweaks")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Sileo.secondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     /// Device Artwork: the Dynamic Island subtype (model) picker.
     private var subtypeRow: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "capsule.fill")
-                    .font(.system(size: 24, weight: .regular))
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                Text("Subtype")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-                Spacer(minLength: 8)
-                Picker("Subtype", selection: $manager.selectedST) {
-                    Text("Original (\(manager.ogST))").tag("og")
-                    if isDeviceGoodForNoDynamicIsland() {
-                        Text("Disable Dynamic Island").tag("no_dynamic_island")
-                    }
-                    Text("iPhone 14 Pro").tag("14p")
-                    Text("iPhone 14 Pro Max").tag("14pm")
-                    Text("iPhone 15 Pro Max").tag("15pm")
-                    if doubleSystemVersion() >= 18.0 {
-                        Text("iPhone 16 Pro").tag("16p")
-                        Text("iPhone 16 Pro Max").tag("16pm")
-                        Text("iPhone 17 Pro").tag("17p")
-                        Text("iPhone 17 Pro Max").tag("17pm")
-                        Text("iPhone 18 Pro (iOS 27.0.1+)").tag("18p")
-                        Text("iPhone 18 Pro Max (iOS 27.0.1+)").tag("18pm")
-                        Text("iPhone Duo (iOS 27.3+)").tag("duo")
-                    }
-                    if doubleSystemVersion() >= 26.0 {
-                        Text("iPhone Air").tag("air")
-                    }
-                    if hasHomeButton() {
-                        Text("iPhone X Gestures").tag("x")
-                    }
+        HStack(spacing: 16) {
+            followerRow(icon: "capsule.fill", iconColor: .indigo, title: "Subtype", author: "Dynamic Island model")
+            Picker("Subtype", selection: $manager.selectedST) {
+                Text("Original (\(manager.ogST))").tag("og")
+                if isDeviceGoodForNoDynamicIsland() {
+                    Text("Disable Dynamic Island").tag("no_dynamic_island")
                 }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.white)
+                Text("iPhone 14 Pro").tag("14p")
+                Text("iPhone 14 Pro Max").tag("14pm")
+                Text("iPhone 15 Pro Max").tag("15pm")
+                if doubleSystemVersion() >= 18.0 {
+                    Text("iPhone 16 Pro").tag("16p")
+                    Text("iPhone 16 Pro Max").tag("16pm")
+                    Text("iPhone 17 Pro").tag("17p")
+                    Text("iPhone 17 Pro Max").tag("17pm")
+                    Text("iPhone 18 Pro (iOS 27.0.1+)").tag("18p")
+                    Text("iPhone 18 Pro Max (iOS 27.0.1+)").tag("18pm")
+                    Text("iPhone Duo (iOS 27.3+)").tag("duo")
+                }
+                if doubleSystemVersion() >= 26.0 {
+                    Text("iPhone Air").tag("air")
+                }
+                if hasHomeButton() {
+                    Text("iPhone X Gestures").tag("x")
+                }
             }
-            .padding(.vertical, 12)
-            Divider().background(Color.white.opacity(0.15))
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .tint(.white)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Sileo.separator).frame(height: 1)
         }
     }
 
     /// Eligibility: the device-model spoofing picker.
     private var spoofingRow: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "iphone.gen3")
-                    .font(.system(size: 24, weight: .regular))
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                Text("Spoofing")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-                Spacer(minLength: 8)
-                Picker("Spoofing", selection: $manager.productType) {
-                    Text("Default").tag(machineName())
-                    if UIDevice.current.userInterfaceIdiom == .pad {
-                        if doubleSystemVersion() >= 17.4 {
-                            Text("iPad Pro 11-inch (M4)").tag("iPad16,3")
-                            Text("iPad Pro 11-inch (M4, Cellular)").tag("iPad16,4")
-                        }
-                        Text("iPad Pro 11-inch (4th Gen)").tag("iPad14,3")
-                        Text("iPad Pro 11-inch (4th Gen, Cellular)").tag("iPad14,4")
-                    } else {
-                        Text("iPhone 15 Pro").tag("iPhone16,1")
-                        Text("iPhone 15 Pro Max").tag("iPhone16,2")
-                        if doubleSystemVersion() >= 18.0 {
-                            Text("iPhone 16").tag("iPhone17,3")
-                            Text("iPhone 16 Plus").tag("iPhone17,4")
-                            Text("iPhone 16 Pro").tag("iPhone17,1")
-                            Text("iPhone 16 Pro Max").tag("iPhone17,2")
-                        }
-                        if doubleSystemVersion() >= 19.0 {
-                            Text("iPhone 17").tag("iPhone18,3")
-                            Text("iPhone 17 Pro").tag("iPhone18,1")
-                            Text("iPhone 17 Pro Max").tag("iPhone18,2")
-                            Text("iPhone Air").tag("iPhone18,4")
-                            Text("iPhone Duo (iOS 27.3+)").tag("iPhone19,4")
-                        }
+        HStack(spacing: 16) {
+            followerRow(icon: "iphone.gen3", iconColor: .purple, title: "Spoofing", author: "Device model")
+            Picker("Spoofing", selection: $manager.productType) {
+                Text("Default").tag(machineName())
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    if doubleSystemVersion() >= 17.4 {
+                        Text("iPad Pro 11-inch (M4)").tag("iPad16,3")
+                        Text("iPad Pro 11-inch (M4, Cellular)").tag("iPad16,4")
+                    }
+                    Text("iPad Pro 11-inch (4th Gen)").tag("iPad14,3")
+                    Text("iPad Pro 11-inch (4th Gen, Cellular)").tag("iPad14,4")
+                } else {
+                    Text("iPhone 15 Pro").tag("iPhone16,1")
+                    Text("iPhone 15 Pro Max").tag("iPhone16,2")
+                    if doubleSystemVersion() >= 18.0 {
+                        Text("iPhone 16").tag("iPhone17,3")
+                        Text("iPhone 16 Plus").tag("iPhone17,4")
+                        Text("iPhone 16 Pro").tag("iPhone17,1")
+                        Text("iPhone 16 Pro Max").tag("iPhone17,2")
+                    }
+                    if doubleSystemVersion() >= 19.0 {
+                        Text("iPhone 17").tag("iPhone18,3")
+                        Text("iPhone 17 Pro").tag("iPhone18,1")
+                        Text("iPhone 17 Pro Max").tag("iPhone18,2")
+                        Text("iPhone Air").tag("iPhone18,4")
+                        Text("iPhone Duo (iOS 27.3+)").tag("iPhone19,4")
                     }
                 }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.white)
-                Button { onSpoofingInfo() } label: {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-                .buttonStyle(.plain)
             }
-            .padding(.vertical, 12)
-            Divider().background(Color.white.opacity(0.15))
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .tint(.white)
+            Button { onSpoofingInfo() } label: {
+                Image(systemName: "info.circle")
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Sileo.separator).frame(height: 1)
         }
     }
 
     /// Device Artwork: Custom Device Name toggle + field.
     private var deviceNameRow: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "textformat")
-                    .font(.system(size: 24, weight: .regular))
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                Text("Custom Device Name")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-                Spacer(minLength: 8)
-                Toggle("", isOn: $manager.enableDeviceName)
-                    .labelsHidden()
-                    .tint(.blue)
-                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
+            SileoPackageRow(icon: "textformat", iconColor: .blue, title: "Custom Device Name", author: "Shown in Settings > General > About", version: "WorkTweaks", onTap: {}) {
+                SileoGetPill(isOn: manager.enableDeviceName) {
+                    SoundEffects.playTap()
+                    manager.enableDeviceName.toggle()
+                }
             }
-            .padding(.vertical, 12)
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
                     .padding(10)
                     .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
                     .padding(.bottom, 12)
             }
-            Divider().background(Color.white.opacity(0.15))
         }
     }
 
     /// Device Artwork: Custom Region Model toggle + field.
     private var regionModelRow: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "globe")
-                    .font(.system(size: 24, weight: .regular))
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                Text("Custom Region Model")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-                Spacer(minLength: 8)
-                Toggle("", isOn: $manager.enableCustomRegion)
-                    .labelsHidden()
-                    .tint(.blue)
-                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
+            SileoPackageRow(icon: "globe", iconColor: .green, title: "Custom Region Model", author: "Type the sales-region suffix", version: "WorkTweaks", onTap: {}) {
+                SileoGetPill(isOn: manager.enableCustomRegion) {
+                    SoundEffects.playTap()
+                    manager.enableCustomRegion.toggle()
+                }
             }
-            .padding(.vertical, 12)
             if manager.enableCustomRegion {
                 TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
                     .autocorrectionDisabled()
@@ -497,72 +389,58 @@ struct SileoTweaksView: View {
                     .padding(10)
                     .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
                 Text("Type the region suffix as shown in Settings > General > About, e.g. PA/A or LL/A. It changes the Model Number suffix after Apply.")
                     .font(.caption).foregroundStyle(.white.opacity(0.6))
+                    .padding(.horizontal, 16)
                     .padding(.vertical, 8)
             }
-            Divider().background(Color.white.opacity(0.15))
         }
     }
 
     /// Write Method: "Persist after reboot" (atomic_write).
     private var persistRow: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "externaldrive.fill")
-                    .font(.system(size: 24, weight: .regular))
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Persist after reboot")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
-                    Text("Write MobileGestalt in-place on the same inode.")
-                        .font(.caption).foregroundStyle(.white.opacity(0.6))
-                }
-                Spacer(minLength: 8)
-                Toggle("", isOn: $atomicWrite)
-                    .labelsHidden()
-                    .tint(.blue)
-                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
+        SileoPackageRow(icon: "externaldrive.fill", iconColor: .gray, title: "Persist after reboot", author: "Write MobileGestalt in-place on the same inode.", version: "WorkTweaks", onTap: {}) {
+            SileoGetPill(isOn: atomicWrite) {
+                SoundEffects.playTap()
+                atomicWrite.toggle()
             }
-            .padding(.vertical, 12)
-            Divider().background(Color.white.opacity(0.15))
         }
     }
 
     /// Lock Screen Footnote: the footnote editor's entry point.
     private var footnoteRow: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            NavigationLink {
-                FootnoteView()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "text.bubble")
-                        .font(.system(size: 24, weight: .regular))
-                        .foregroundStyle(.white)
-                        .frame(width: 56, height: 56)
-                        .background(Color.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Lock Screen Footnote")
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(.white)
-                        Text("Custom text shown at the bottom of the Lock Screen.")
-                            .font(.subheadline)
-                            .foregroundStyle(.white.opacity(0.6))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 8)
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.6))
+        NavigationLink {
+            FootnoteView()
+        } label: {
+            HStack(spacing: 16) {
+                SileoIcon(systemImage: "text.bubble", color: .blue, size: 60)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Lock Screen Footnote")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Sileo.primary)
+                        .lineLimit(1)
+                    Text("Custom text at the bottom of the Lock Screen")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Sileo.secondary)
+                        .lineLimit(1)
+                    Text("WorkTweaks")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Sileo.secondary)
+                        .lineLimit(1)
                 }
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.6))
             }
-            .buttonStyle(.plain)
-            Divider().background(Color.white.opacity(0.15))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Sileo.separator).frame(height: 1)
         }
     }
 
@@ -570,17 +448,17 @@ struct SileoTweaksView: View {
 
     private var actionsBlock: some View {
         VStack(alignment: .leading, spacing: 0) {
-            actionRow(title: "Apply Tweaks", systemImage: "checkmark.circle") {
+            actionRow(title: "Apply Tweaks", author: "Write the staged tweaks", systemImage: "checkmark.circle", pill: "APPLY", destructive: false) {
                 manager.apply()
                 console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
             }
             .disabled(!manager.isValid)
 
-            actionRow(title: "Respring", systemImage: "arrow.counterclockwise") {
+            actionRow(title: "Respring", author: "Reload SpringBoard", systemImage: "arrow.counterclockwise", pill: "RESPRING", destructive: false) {
                 RespringCenter.shared.trigger()
             }
 
-            actionRow(title: "Revert Tweaks", systemImage: "arrow.uturn.backward", destructive: true) {
+            actionRow(title: "Revert Tweaks", author: "Restore the original MobileGestalt", systemImage: "arrow.uturn.backward", pill: "REVERT", destructive: true) {
                 onRevert()
             }
             .disabled(!manager.isValid)
@@ -588,118 +466,64 @@ struct SileoTweaksView: View {
             Text("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores require a full device restart.")
                 .font(.caption).foregroundStyle(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 16)
                 .padding(.top, 12)
         }
     }
 
-    private func actionRow(title: String, systemImage: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Button(action: { SoundEffects.playTap(); action() }) {
-                HStack(spacing: 12) {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 24, weight: .regular))
-                        .foregroundStyle(.white)
-                        .frame(width: 56, height: 56)
-                        .background(destructive ? Color.red : Color.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    Text(title)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(destructive ? Color.red : Color.white)
-                    Spacer(minLength: 8)
-                }
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
+    private func actionRow(title: String, author: String, systemImage: String, pill: String, destructive: Bool, action: @escaping () -> Void) -> some View {
+        HStack(spacing: 16) {
+            SileoIcon(systemImage: systemImage, color: destructive ? .red : .blue, size: 60)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(destructive ? Color.red : Sileo.primary)
+                    .lineLimit(1)
+                Text(author)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Sileo.secondary)
+                    .lineLimit(1)
+                Text("WorkTweaks")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Sileo.secondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Button {
+                SoundEffects.playTap()
+                action()
+            } label: {
+                Text(pill)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 7)
+                    .background(destructive ? Color.red : Sileo.accent, in: Capsule())
             }
             .buttonStyle(.plain)
-            Divider().background(Color.white.opacity(0.15))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            SoundEffects.playTap()
+            action()
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Sileo.separator).frame(height: 1)
         }
     }
 
-    // MARK: Footer links
+    // MARK: Footer
 
-    private var footerLinks: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            NavigationLink {
-                TutorialsView()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "book")
-                        .font(.system(size: 20))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    Text("Tutorials")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
-                    Spacer(minLength: 8)
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            NavigationLink {
-                LicenseView()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "doc.text")
-                        .font(.system(size: 20))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    Text("License & Credits")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
-                    Spacer(minLength: 8)
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            Text("Built on the worse_query core system by ForceQuit OS, with CacheExtra key knowledge from mond by rooootdev (AGPL-3.0).")
-                .font(.caption).foregroundStyle(.white.opacity(0.6))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    // MARK: Section chips (the six sections)
-
-    /// The six sections as a horizontal chip row — in the total
-    /// Sileo UI the floating pill belongs to the whole app (the
-    /// shell's tab bar), so the sections switch here instead.
-    private var sectionChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(TweakSection.allCases) { section in
-                    Button {
-                        SoundEffects.playTap()
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            selectedSection = section
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: section.icon)
-                                .font(.system(size: 13, weight: .semibold))
-                            Text(section.title)
-                                .font(.subheadline.weight(.semibold))
-                        }
-                        .foregroundStyle(selectedSection == section ? .white : .white.opacity(0.7))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            selectedSection == section ? Color.blue : Color.white.opacity(0.1),
-                            in: Capsule()
-                        )
-                        .contentShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
+    private var footerCredit: some View {
+        Text("Built on the worse_query core system by ForceQuit OS, with CacheExtra key knowledge from mond by rooootdev (AGPL-3.0).")
+            .font(.caption).foregroundStyle(Sileo.secondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
     }
 
     // MARK: Search (dedicated full-screen cover, Sileo style)
@@ -710,7 +534,7 @@ struct SileoTweaksView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.white.opacity(0.6))
-                    TextField("Search tweaks", text: $searchText)
+                    TextField("Search for Tweaks", text: $searchText)
                         .autocorrectionDisabled()
                         .focused($searchFocused)
                         .foregroundStyle(.white)
@@ -729,10 +553,18 @@ struct SileoTweaksView: View {
                 .padding(.vertical, 10)
                 .background(Color.white.opacity(0.1), in: Capsule())
 
-                Button("Cancel") {
+                // Sileo's search closes with a gray X circle.
+                Button {
                     closeSearch()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .frame(width: 40, height: 40)
+                        .background(Color.white.opacity(0.25), in: Circle())
                 }
-                .foregroundStyle(.blue)
+                .buttonStyle(.plain)
+                .accessibilityLabel("Close search")
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
@@ -745,11 +577,11 @@ struct SileoTweaksView: View {
                             .font(.subheadline)
                             .foregroundStyle(.white.opacity(0.6))
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
                             .padding(.vertical, 4)
                     } else {
                         ForEach(searchResults) { tweak in
-                            packageRow(tweak)
-                                .disabled(tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
+                            SileoTweakRow(manager: manager, tweak: tweak, onInfo: onInfo)
                             if tweak.id == "enable_dynamic_island_capability" {
                                 subtypeRow
                             }
@@ -759,12 +591,11 @@ struct SileoTweaksView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 20)
                 .padding(.bottom, 16)
             }
             .scrollIndicators(.hidden)
         }
-        .background(sileoBackground.ignoresSafeArea())
+        .background(Sileo.background.ignoresSafeArea())
         .onAppear { searchFocused = true }
         .alert("Fix Status Bar", isPresented: $showFixStatusBarGuide) {
             Button("OK") { }
@@ -785,8 +616,8 @@ struct SileoTweaksView: View {
     }
 
     /// Tweaks whose names match the query, across the whole
-    /// catalog regardless of the selected section — with the
-    /// same per-device conditionals as the section lists.
+    /// catalog regardless of section — with the same per-device
+    /// conditionals as the section lists.
     private var searchResults: [GestaltTweak] {
         TweakCatalog.all.filter { tweak in
             if tweak.id == "tap_to_wake" && !hasHomeButton() { return false }

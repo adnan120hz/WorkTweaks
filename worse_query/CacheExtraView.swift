@@ -150,71 +150,64 @@ struct CacheExtraView: View {
     /// The Extra tab in Sileo UI: big title, dark cards, and the
     /// keys as Sileo rows. Same editor, add flow and reset — only
     /// the menu layout changes.
+    /// Sileo UI: flat rows on the dark page (no cards, no
+    /// in-content title — the nav bar carries "Cache Extra"
+    /// when this page is pushed from the settings sheet).
+    /// Bottom padding is 24: there is no floating pill in the
+    /// sheet.
     private var sileoContent: some View {
-        SileoPage {
-            Text("Cache Extra")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(Sileo.primary)
-
-            SileoCard {
-                Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press Apply Tweaks in the Tweaks tab to write them (you'll get the Respring / Restart choice).")
-                    .font(.caption)
-                    .foregroundStyle(Sileo.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-            }
+        SileoPage(bottomPadding: 24) {
+            Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press Apply Tweaks in the Featured tab to write them (you'll get the Respring / Restart choice).")
+                .font(.caption)
+                .foregroundStyle(Sileo.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
 
             if !manager.isValid {
-                SileoCard {
-                    Label("MobileGestalt is not loaded yet — keys are unavailable.", systemImage: "exclamationmark.triangle")
-                        .font(.subheadline)
-                        .foregroundStyle(Sileo.primary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                }
+                Label("MobileGestalt is not loaded yet — keys are unavailable.", systemImage: "exclamationmark.triangle")
+                    .font(.subheadline)
+                    .foregroundStyle(Sileo.primary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
             } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    SileoSectionTitle(text: "CacheExtra Keys (\(filteredKeys.count))")
-                    SileoCard {
-                        LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(Array(filteredKeys.enumerated()), id: \.element) { index, key in
-                                if index > 0 {
-                                    Divider().background(Sileo.separator)
-                                }
-                                Button { editing = KeyRef(key: key) } label: {
-                                    sileoRow(for: key)
-                                        .padding(.horizontal, 14)
-                                        .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
-                                .contextMenu {
-                                    Button(role: .destructive) {
-                                        manager.removeExtraKey(key)
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                }
+                SileoSectionTitle(text: "CacheExtra Keys (\(filteredKeys.count))")
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(filteredKeys.enumerated()), id: \.element) { index, key in
+                        Button { editing = KeyRef(key: key) } label: {
+                            sileoRow(for: key)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                manager.removeExtraKey(key)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
                             }
                         }
-                        .padding(.vertical, 4)
                     }
                 }
             }
 
             if manager.isValid {
-                SileoCard(footer: "Undoes everything changed or added in this tab: edited and deleted keys return to the values they had when MobileGestalt was loaded, and added keys disappear. Tweak states are not affected, and — like the edits — the reset is only written when you press Apply Tweaks.") {
-                    Button(role: .destructive) {
-                        showResetConfirm = true
-                    } label: {
-                        Label("Reset Extra", systemImage: "arrow.counterclockwise")
-                            .foregroundStyle(.red)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 11)
-                            .contentShape(Rectangle())
-                    }
+                Button(role: .destructive) {
+                    showResetConfirm = true
+                } label: {
+                    Label("Reset Extra", systemImage: "arrow.counterclockwise")
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                Text("Undoes everything changed or added in this tab: edited and deleted keys return to the values they had when MobileGestalt was loaded, and added keys disappear. Tweak states are not affected, and — like the edits — the reset is only written when you press Apply Tweaks.")
+                    .font(.caption)
+                    .foregroundStyle(Sileo.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
             }
         }
     }
@@ -242,7 +235,11 @@ struct CacheExtraView: View {
             Image(systemName: "chevron.right")
                 .font(.caption2).foregroundStyle(.white.opacity(0.6))
         }
+        .padding(.horizontal, 16)
         .padding(.vertical, 8)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Sileo.separator).frame(height: 1)
+        }
     }
 
     private func row(for key: String) -> some View {

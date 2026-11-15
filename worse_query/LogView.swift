@@ -17,8 +17,10 @@ struct LogView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
-                        // Room for the shell's floating pill tab bar.
-                        .padding(.bottom, sileo ? 100 : 0)
+                        // Room at the bottom when pushed inside
+                        // the settings sheet (no floating pill
+                        // there, so 24 — not the old 100).
+                        .padding(.bottom, sileo ? 24 : 0)
                         .id("log-bottom")
                 }
                 .background(sileo ? Sileo.background : Color(.systemGroupedBackground))

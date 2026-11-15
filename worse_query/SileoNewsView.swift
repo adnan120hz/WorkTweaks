@@ -1,0 +1,79 @@
+import SwiftUI
+
+// MARK: - News tab (version updates)
+//
+// Sileo's News tab, for WorkTweaks: the version changelog,
+// newest first — what changed in each release. The current
+// version carries a blue LATEST pill.
+
+struct SileoNewsView: View {
+    private struct Entry: Identifiable {
+        let id = UUID()
+        let version: String
+        let date: String
+        let notes: String
+    }
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+
+    private let entries: [Entry] = [
+        Entry(version: "v5.6", date: "15 Nov 2026", notes: "Sileo UI, faithful replica — Featured, News, Sources and Packages, release banners, tweak packages."),
+        Entry(version: "v5.5", date: "15 Nov 2026", notes: "Sileo UI restyles the whole app — the floating pill tab bar and every menu in the Sileo style."),
+        Entry(version: "v5.4", date: "15 Nov 2026", notes: "Third Tweaks UI: Sileo UI, styled after the Sileo Featured page, blue accent, WorkTweaks icon."),
+        Entry(version: "v5.3.2", date: "15 Nov 2026", notes: "The IPA is now ad-hoc signed with the App Group entitlements embedded, so SideStore and AltStore detect the group when re-signing."),
+        Entry(version: "v5.3.1", date: "15 Nov 2026", notes: "Siri AI Cache Patch now scans every byte offset, and the Log records the pattern diagnostics when it finds nothing."),
+        Entry(version: "v5.3", date: "15 Nov 2026", notes: "Custom Region Model — type the sales-region suffix, e.g. PA/A, shown in Settings > General > About."),
+        Entry(version: "v5.2.1", date: "14 Nov 2026", notes: "\"Fix Apple Intelligence Here!\" guide on the Apple Intelligence card."),
+        Entry(version: "v5.2", date: "14 Nov 2026", notes: "iPhone 17 Pro and 17 Pro Max subtypes, plus iPhone Duo spoofing (iPhone19,4)."),
+        Entry(version: "v5.1.1", date: "14 Nov 2026", notes: "Calmer tab-switch sound, and a tap sound on every toggle."),
+        Entry(version: "v5.1", date: "14 Nov 2026", notes: "\"Fix Status Bar!\" guide, iPhone 18 Pro and Duo subtypes, UI sounds, landscape mode."),
+        Entry(version: "v5.0", date: "14 Nov 2026", notes: "Deploy and the Package Builder rebuilt as one zip — import a zip, no location picking, then Apply."),
+        Entry(version: "v4.3.1", date: "14 Nov 2026", notes: "Siri AI anchor fix, Siri AI Method credit for Toto, PosterBoard fallback for iOS 27.3."),
+        Entry(version: "v4.3", date: "14 Nov 2026", notes: "Siri AI Cache Patch — the Filza line-104 edit, in-app — plus Guide C, Turn On New Siri AI."),
+        Entry(version: "v4.2", date: "12 Nov 2026", notes: "Tweaks UI choice (New UI / Old UI) and the PosterBoard wallpaper maker."),
+        Entry(version: "v4.1", date: "12 Nov 2026", notes: "PosterBoard wallpaper maker — build a wallpaper descriptor from a photo or video, on-device."),
+        Entry(version: "v4.0", date: "12 Nov 2026", notes: "Install without manual signing: the App Group is read from the signed app at runtime (csops), with a multi-group fallback."),
+        Entry(version: "v3.13", date: "11 Nov 2026", notes: "Cache Data Cleaner — empty Library/Caches and tmp, with sizes before and after."),
+    ]
+
+    var body: some View {
+        NavigationStack {
+            SileoPage {
+                ForEach(entries) { entry in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 8) {
+                            Text("WorkTweaks \(entry.version)")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(Sileo.primary)
+                            if entry.version == "v\(appVersion)" {
+                                Text("LATEST")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Sileo.accent, in: Capsule())
+                            }
+                            Spacer()
+                            Text(entry.date)
+                                .font(.system(size: 13))
+                                .foregroundStyle(Sileo.secondary)
+                        }
+                        Text(entry.notes)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Sileo.primary.opacity(0.85))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .overlay(alignment: .bottom) {
+                        Rectangle().fill(Sileo.separator).frame(height: 1)
+                    }
+                }
+            }
+            .navigationTitle("News")
+            .navigationBarTitleDisplayMode(.large)
+        }
+    }
+}

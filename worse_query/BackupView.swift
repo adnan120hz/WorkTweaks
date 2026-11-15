@@ -109,79 +109,68 @@ struct BackupView: View {
     /// The Backup tab in Sileo UI: big title, Back Up Now as a
     /// Sileo row, snapshots as Sileo package rows. Same restore
     /// flows — only the menu layout changes.
+    /// Sileo UI: flat rows on the dark page (no cards, no
+    /// in-content title — the nav bar carries "Backup" when
+    /// this page is pushed from the settings sheet). The
+    /// "Back Up Now" action is a full-width blue pill.
     private var sileoContent: some View {
-        SileoPage {
-            Text("Backup")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(Sileo.primary)
-
-            SileoCard(footer: "A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.") {
-                Button {
-                    manager.createManualSnapshot()
-                } label: {
-                    Text("Back Up Now")
-                        .foregroundStyle(Sileo.accent)
-                        .font(.headline.weight(.semibold))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 11)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .disabled(!manager.isValid)
+        SileoPage(bottomPadding: 24) {
+            Button {
+                manager.createManualSnapshot()
+            } label: {
+                Text("Back Up Now")
+                    .foregroundStyle(.white)
+                    .font(.headline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Sileo.accent, in: Capsule())
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
             }
+            .buttonStyle(.plain)
+            .disabled(!manager.isValid)
+
+            Text("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")
+                .font(.caption)
+                .foregroundStyle(Sileo.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 4)
 
             if let original = manager.originalSnapshot {
-                VStack(alignment: .leading, spacing: 12) {
-                    SileoSectionTitle(text: "Original")
-                    SileoCard {
-                        sileoSnapshotRow(original)
-                            .padding(.horizontal, 14)
-                    }
-                }
+                SileoSectionTitle(text: "Original")
+                sileoSnapshotRow(original)
             }
 
-            VStack(alignment: .leading, spacing: 12) {
-                SileoSectionTitle(text: "Apply Snapshots")
-                if manager.otherSnapshots.isEmpty {
-                    SileoCard {
-                        Text("No snapshots yet. Apply some tweaks or tap Back Up Now.")
-                            .font(.caption)
-                            .foregroundStyle(Sileo.secondary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                    }
-                } else {
-                    SileoCard {
-                        LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(Array(manager.otherSnapshots.enumerated()), id: \.element.id) { index, snapshot in
-                                if index > 0 {
-                                    Divider().background(Sileo.separator)
+            SileoSectionTitle(text: "Apply Snapshots")
+            if manager.otherSnapshots.isEmpty {
+                Text("No snapshots yet. Apply some tweaks or tap Back Up Now.")
+                    .font(.caption)
+                    .foregroundStyle(Sileo.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+            } else {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(manager.otherSnapshots.enumerated()), id: \.element.id) { index, snapshot in
+                        sileoSnapshotRow(snapshot)
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    manager.deleteSnapshot(snapshot)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
                                 }
-                                sileoSnapshotRow(snapshot)
-                                    .padding(.horizontal, 14)
-                                    .contextMenu {
-                                        Button(role: .destructive) {
-                                            manager.deleteSnapshot(snapshot)
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                    }
                             }
-                        }
-                        .padding(.vertical, 4)
                     }
                 }
             }
 
             if let error = manager.lastError {
-                SileoCard {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                }
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
             }
         }
     }
@@ -192,28 +181,35 @@ struct BackupView: View {
         NavigationLink {
             BackupDetailView(manager: manager, snapshot: snapshot)
         } label: {
-            HStack(spacing: 12) {
-                SileoIcon(systemImage: snapshot.kind == .original ? "lock.shield" : "clock.arrow.circlepath")
+            HStack(spacing: 16) {
+                SileoIcon(systemImage: snapshot.kind == .original ? "lock.shield" : "clock.arrow.circlepath", color: snapshot.kind == .original ? .blue : .gray, size: 60)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(snapshot.kind.label)
-                        .font(.subheadline.weight(.medium))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Sileo.primary)
+                        .lineLimit(1)
                     Text(snapshot.date, format: .dateTime.day().month().year().hour().minute())
-                        .font(.caption)
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Sileo.secondary)
+                        .lineLimit(1)
                     Text("\(snapshot.enabledTweakIDs.count) active tweaks · \(snapshot.cacheExtraCount) CacheExtra keys")
-                        .font(.caption)
+                        .font(.system(size: 11))
                         .foregroundStyle(Sileo.secondary)
+                        .lineLimit(1)
                 }
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.6))
             }
+            .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Sileo.separator).frame(height: 1)
+        }
     }
 
     private func snapshotRow(_ snapshot: BackupSnapshot) -> some View {

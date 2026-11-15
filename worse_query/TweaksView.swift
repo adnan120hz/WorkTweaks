@@ -169,8 +169,8 @@ struct TweaksView: View {
                     lockedView
                 }
             }
-            .navigationTitle(useSileoUI ? "Tweaks" : "WorkTweaks")
-            .navigationBarTitleDisplayMode(useSileoUI ? .inline : .large)
+            .navigationTitle(useSileoUI ? "Featured" : "WorkTweaks")
+            .navigationBarTitleDisplayMode(.large)
             .onAppear { migrateToSileoUI() }
             .toolbar {
                 // Search is a New UI feature — the Old UI (v1)
@@ -187,20 +187,26 @@ struct TweaksView: View {
                     }
                 }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button { manager.load() } label: { Image(systemName: "arrow.clockwise") }
-                        .disabled(manager.isLoading)
-                    NavigationLink {
-                        TutorialsView()
-                    } label: {
-                        Image(systemName: "book")
+                    // In Sileo mode the nav bar carries only the
+                    // avatar (it opens the settings sheet, which
+                    // holds Reload / Tutorials / License) — these
+                    // three buttons belong to the New/Old UIs.
+                    if !useSileoUI {
+                        Button { manager.load() } label: { Image(systemName: "arrow.clockwise") }
+                            .disabled(manager.isLoading)
+                        NavigationLink {
+                            TutorialsView()
+                        } label: {
+                            Image(systemName: "book")
+                        }
+                        .accessibilityLabel("Tutorials")
+                        NavigationLink {
+                            LicenseView()
+                        } label: {
+                            Image(systemName: "doc.text")
+                        }
+                        .accessibilityLabel("License & Credits")
                     }
-                    .accessibilityLabel("Tutorials")
-                    NavigationLink {
-                        LicenseView()
-                    } label: {
-                        Image(systemName: "doc.text")
-                    }
-                    .accessibilityLabel("License & Credits")
                 }
             }
             .fullScreenCover(isPresented: $searchActive) {
@@ -259,7 +265,9 @@ struct TweaksView: View {
             VStack(spacing: 8) {
                 Text("Tweaks are locked")
                     .font(.title3.weight(.bold))
-                Text("Go to the Sandbox tab and turn on Start Tweaks Feature to unlock the Tweaks tab.")
+                Text(useSileoUI
+                     ? "Tap the avatar at the top right and turn on Start Tweaks Feature to unlock the Featured tab."
+                     : "Go to the Sandbox tab and turn on Start Tweaks Feature to unlock the Tweaks tab.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -268,7 +276,8 @@ struct TweaksView: View {
             Button {
                 onOpenSandbox()
             } label: {
-                Label("Go to Sandbox Tab", systemImage: "shippingbox")
+                Label(useSileoUI ? "Open Settings" : "Go to Sandbox Tab",
+                      systemImage: useSileoUI ? "gearshape" : "shippingbox")
                     .font(.headline)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
