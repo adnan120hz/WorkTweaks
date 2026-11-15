@@ -27,7 +27,7 @@ struct SandboxView: View {
     /// New UI / Old UI choice for the Tweaks tab only
     /// ("new" = the current two-column layout, "old" = the v1
     /// list layout). Default is the current UI.
-    @AppStorage("wt.tweaksUIVersion") private var tweaksUIVersion = "new"
+    @AppStorage("wt.tweaksUIVersion") private var tweaksUIVersion = "sileo"
     /// UI sounds on/off (v5.1): soft tap on menus and
     /// features, soft swipe on tab switches. On by default.
     @AppStorage("wt.soundEffectsEnabled") private var soundEffectsEnabled = true
@@ -103,13 +103,16 @@ struct SandboxView: View {
                         Divider()
                             .padding(.vertical, 4)
 
-                        // Tweaks UI choice — New UI is the current
-                        // two-column layout, Old UI is the v1 list
-                        // layout. Applies to the Tweaks tab only.
+                        // Tweaks UI choice — Sileo UI is the
+                        // Sileo Featured-style layout (the
+                        // default), New UI is the two-column
+                        // layout, Old UI is the v1 list layout.
+                        // Applies to the Tweaks tab only.
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Tweaks UI")
                                 .font(.subheadline.weight(.semibold))
                             Picker("Tweaks UI", selection: $tweaksUIVersion) {
+                                Text("Sileo UI").tag("sileo")
                                 Text("New UI").tag("new")
                                 Text("Old UI").tag("old")
                             }

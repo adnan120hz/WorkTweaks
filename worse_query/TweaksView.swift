@@ -108,12 +108,13 @@ struct TweaksView: View {
     @AppStorage("atomic_write") private var atomicWrite = true
     /// Master switch for this tab, flipped in the Sandbox tab.
     @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
-    /// New UI / Old UI choice, picked in the Sandbox tab
-    /// (wt.tweaksUIVersion: "new" or "old"). Applies to this
-    /// tab only — every other tab is untouched.
-    @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "new"
+    /// New / Old / Sileo UI choice, picked in the Sandbox tab
+    /// (wt.tweaksUIVersion: "new", "old" or "sileo"). Applies
+    /// to this tab only — every other tab is untouched.
+    @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "sileo"
 
     private var useOldUI: Bool { uiVersionRaw == "old" }
+    private var useSileoUI: Bool { uiVersionRaw == "sileo" }
 
     @State private var infoTitle: String?
     @State private var infoMessage: String = ""
@@ -138,7 +139,18 @@ struct TweaksView: View {
         NavigationStack {
             Group {
                 if tweaksEnabled {
-                    if useOldUI {
+                    if useSileoUI {
+                        SileoTweaksView(
+                            console: console,
+                            manager: manager,
+                            onInfo: showInfo(for:),
+                            onRevert: { showRevertConfirm = true },
+                            onSpoofingInfo: {
+                                infoTitle = "Device Spoofing Info"
+                                infoMessage = "Only spoof your device model if you want to download Apple Intelligence. This may break Face ID. If you decide to unspoof and want to keep Apple Intelligence, do NOT re-enter the Apple Intelligence & Siri menu in Settings."
+                            }
+                        )
+                    } else if useOldUI {
                         OldTweaksView(
                             console: console,
                             manager: manager,
@@ -156,12 +168,14 @@ struct TweaksView: View {
                     lockedView
                 }
             }
-            .navigationTitle("WorkTweaks")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle(useSileoUI ? "Tweaks" : "WorkTweaks")
+            .navigationBarTitleDisplayMode(useSileoUI ? .inline : .large)
+            .onAppear { migrateToSileoUI() }
             .toolbar {
                 // Search is a New UI feature — the Old UI (v1)
-                // never had it.
-                if tweaksEnabled && !useOldUI {
+                // never had it, and the Sileo UI has its own
+                // floating search button.
+                if tweaksEnabled && !useOldUI && !useSileoUI {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
                             searchActive = true
@@ -942,6 +956,17 @@ struct TweaksView: View {
     private func showInfo(for tweak: GestaltTweak) {
         infoTitle = tweak.title
         infoMessage = tweak.infoMessage ?? ""
+    }
+
+    /// v5.4: the Sileo UI is the new default. Users who never
+    /// changed the old "new" default are moved to it once;
+    /// an explicit "old" choice is left alone.
+    private func migrateToSileoUI() {
+        guard !UserDefaults.standard.bool(forKey: "wt.tweaksUIMigratedV54") else { return }
+        if uiVersionRaw == "new" {
+            uiVersionRaw = "sileo"
+        }
+        UserDefaults.standard.set(true, forKey: "wt.tweaksUIMigratedV54")
     }
 }
 

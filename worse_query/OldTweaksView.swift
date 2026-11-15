@@ -3,10 +3,11 @@ import UIKit
 
 // MARK: - Old UI (v1 layout) for the Tweaks tab
 //
-// The Tweaks tab has two layouts, chosen in the Sandbox tab
+// The Tweaks tab has three layouts, chosen in the Sandbox tab
 // ("Tweaks UI" picker under Start Tweaks Feature,
-// wt.tweaksUIVersion): New UI is the current two-column card
-// layout, Old UI is the v1 layout — a plain native List with
+// wt.tweaksUIVersion): Sileo UI is the Sileo Featured-style
+// layout (the default), New UI is the two-column card layout,
+// Old UI is the v1 layout — a plain native List with
 // the original section order (Status, Actions, Device Artwork,
 // Software / Hardware / Eligibility / iPadOS / Internal,
 // Write Method). Only the layout differs: every toggle, picker
