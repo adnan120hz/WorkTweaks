@@ -26,10 +26,14 @@ final class SileoShellState: ObservableObject {
 enum SileoTab: String, CaseIterable {
     case featured, appData, posterBoard, cacheCleaner
 
-    /// Short labels, so the native tab bar stays narrow and
-    /// leaves room at the right for the search circle beside
-    /// it (level, not on top of a tab) — the menu is shrunk
-    /// on purpose, not the search.
+    /// Short labels, used only for accessibility — the tab
+    /// bar shows ICONS ONLY. The native pill sizes to its
+    /// content, so text labels made it almost full-width and
+    /// the search circle sat on top of the Cleaner tab. With
+    /// icons only the pill shrinks to about two-thirds of the
+    /// screen, leaving a clear gap at the right for the
+    /// search circle beside it, level — like Sileo. (That is
+    /// the "shrink the menu" the user ordered.)
     var title: String {
         switch self {
         case .featured: "Featured"
@@ -87,19 +91,31 @@ struct SileoShell: View {
                            onOpenSandbox: { shell.settingsActive = true },
                            onOpenExtra: { shell.settingsActive = true },
                            onOpenBackup: { shell.settingsActive = true })
-                    .tabItem { Label(SileoTab.featured.title, systemImage: SileoTab.featured.icon) }
+                    .tabItem {
+                        Image(systemName: SileoTab.featured.icon)
+                            .accessibilityLabel(SileoTab.featured.title)
+                    }
                     .tag(SileoTab.featured)
 
                 NavigationStack { AppDataView() }
-                    .tabItem { Label(SileoTab.appData.title, systemImage: SileoTab.appData.icon) }
+                    .tabItem {
+                        Image(systemName: SileoTab.appData.icon)
+                            .accessibilityLabel(SileoTab.appData.title)
+                    }
                     .tag(SileoTab.appData)
 
                 NavigationStack { PosterBoardView() }
-                    .tabItem { Label(SileoTab.posterBoard.title, systemImage: SileoTab.posterBoard.icon) }
+                    .tabItem {
+                        Image(systemName: SileoTab.posterBoard.icon)
+                            .accessibilityLabel(SileoTab.posterBoard.title)
+                    }
                     .tag(SileoTab.posterBoard)
 
                 NavigationStack { CacheCleanerView() }
-                    .tabItem { Label(SileoTab.cacheCleaner.title, systemImage: SileoTab.cacheCleaner.icon) }
+                    .tabItem {
+                        Image(systemName: SileoTab.cacheCleaner.icon)
+                            .accessibilityLabel(SileoTab.cacheCleaner.title)
+                    }
                     .tag(SileoTab.cacheCleaner)
             }
             .tint(Sileo.accent)
@@ -109,17 +125,24 @@ struct SileoShell: View {
             }
 
             // The search button sits at the bottom right,
-            // LEVEL with the native tab bar (its centre on
-            // the tab bar's centre, like the search circle
-            // beside Sileo's pill) — not floating above it.
-            // It is 48pt, smaller than the 64pt circle in
-            // v6.0.4: the native tab bar is full-width, so a
-            // 64pt circle sits on top of the Cache Cleaner
-            // tab; a 48pt circle fits beside the bar's right
-            // end without covering the tab's icon. It opens
-            // the tweaks search (the same cover the nav bar
-            // magnifier opened in v5.9.2 — that magnifier
-            // is gone, the circle is the only search button).
+            // LEVEL with the native tab bar — its centre on
+            // the tab bar pill's centre, like the search
+            // circle beside Sileo's pill. Measured on the
+            // user's v6.0.6 screenshot: the pill's centre is
+            // 67pt above the screen bottom, so a 48pt circle
+            // needs its bottom 43pt above the screen bottom.
+            // The frame ignores the safe area, so that 43pt
+            // is measured from the screen bottom, not from
+            // the safe-area edge — that is why v6.0.6's
+            // padding bottom 34 (safe-area-relative) left
+            // the circle ~50pt too high. The 48pt frame is
+            // on the Button itself, not the image: in v6.0.6
+            // the frame was on the image and the glass style
+            // inflated the button to ~81pt, which is why it
+            // covered the Cleaner tab. It opens the tweaks
+            // search (the same cover the nav bar magnifier
+            // opened in v5.9.2 — that magnifier is gone, the
+            // circle is the only search button).
             Button {
                 SoundEffects.playTap()
                 shell.selectedTab = .featured
@@ -127,14 +150,15 @@ struct SileoShell: View {
             } label: {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 20, weight: .semibold))
-                    .frame(width: 48, height: 48)
             }
             .buttonStyle(.glass)
             .buttonBorderShape(.circle)
+            .frame(width: 48, height: 48)
             .accessibilityLabel("Search tweaks")
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             .padding(.trailing, 10)
-            .padding(.bottom, 34)
+            .padding(.bottom, 43)
+            .ignoresSafeArea()
         }
         .sheet(isPresented: $shell.settingsActive) {
             SileoSettingsSheet(console: console, manager: manager)
