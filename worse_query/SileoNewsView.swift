@@ -22,6 +22,7 @@ struct SileoNewsContent: View {
     }
 
     private let entries: [Entry] = [
+        Entry(version: "v6.0.4", date: "16 Nov 2026", notes: "Back to the NEW build — native TabView (automatic Liquid Glass, no manual glassEffect, no old pill). Backup moved out of the tab bar to the top left only (opens as a sheet) and the search circle sits level with the tab bar."),
         Entry(version: "v6.0.3", date: "16 Nov 2026", notes: "The bottom bar is a floating pill with four tabs (Backup moved to the top left only) and the search circle beside it, level like real Sileo. Only the WorkTweaks version banner remains."),
         Entry(version: "v6.0.2", date: "15 Nov 2026", notes: "Back to the v6.0 native TabView — no self-coded pill. The search circle now sits level with the tab bar instead of floating above it."),
         Entry(version: "v6.0.1", date: "15 Nov 2026", notes: "The floating pill tab bar is back — the search circle sits beside it at the same height, like real Sileo, instead of floating above the native tab bar."),

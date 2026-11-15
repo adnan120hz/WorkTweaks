@@ -109,7 +109,7 @@ struct SileoTweaksView: View {
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 Button {
                     SoundEffects.playTap()
-                    shell.selectedTab = .backup
+                    shell.backupActive = true
                 } label: {
                     Label("Backup", systemImage: "externaldrive.fill")
                 }
