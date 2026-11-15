@@ -51,10 +51,13 @@ enum SileoTab: String, CaseIterable {
 /// glassEffect never looked like the system's glass (flat in
 /// v5.7, stiff in v5.8, frosted gray with a white tint in
 /// v5.9), so the pill is gone — the real Sileo app uses a
-/// native tab bar too. The avatar (top right of the Featured
+/// native tab bar too. The floating glass search circle is
+/// back at the bottom right, above the tab bar, like it was
+/// beside the pill. The avatar (top right of the Featured
 /// tab) opens the settings sheet, which holds the Sandbox
-/// controls and tools. The system (engine, backup, resolver,
-/// respring) is untouched.
+/// controls and tools; Backup sits at the top left of the
+/// Featured page, on the same row as the avatar. The system
+/// (engine, backup, resolver, respring) is untouched.
 ///
 /// One rule for glass in this shell: nothing manual. The
 /// system renders the tab bar, the toggles and the buttons;
@@ -101,6 +104,28 @@ struct SileoShell: View {
             .onChange(of: shell.selectedTab) { _, _ in
                 SoundEffects.playSwipe()
             }
+
+            // The search button is back at the bottom, like it
+            // was beside the pill: a floating glass circle at
+            // the bottom right, hovering above the tab bar. It
+            // opens the tweaks search (the same cover the nav
+            // bar magnifier opened in v5.9.2 — that magnifier
+            // is gone, the circle is the only search button).
+            Button {
+                SoundEffects.playTap()
+                shell.selectedTab = .featured
+                shell.searchActive = true
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 22, weight: .semibold))
+                    .frame(width: 64, height: 64)
+            }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .accessibilityLabel("Search tweaks")
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            .padding(.trailing, 16)
+            .padding(.bottom, 100)
         }
         .sheet(isPresented: $shell.settingsActive) {
             SileoSettingsSheet(console: console, manager: manager)

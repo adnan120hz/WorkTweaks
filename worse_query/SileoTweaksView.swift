@@ -36,9 +36,9 @@ struct SileoTweaksView: View {
     /// sheet has the same picker) — Sileo / New / Old.
     @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "sileo"
     /// The shell's shared state: the search cover is opened by
-    /// the magnifier in the nav bar, the banner opens the News
-    /// tab, and the avatar opens the settings sheet — all
-    /// through this environment object.
+    /// the floating search circle at the bottom right, the
+    /// banner opens the News tab, and the avatar opens the
+    /// settings sheet — all through this environment object.
     @EnvironmentObject private var shell: SileoShellState
     @State private var searchText = ""
     @FocusState private var searchFocused: Bool
@@ -88,7 +88,9 @@ struct SileoTweaksView: View {
     }
 
     var body: some View {
-        SileoPage {
+        // Extra bottom padding so the last rows clear the
+        // floating search circle above the tab bar.
+        SileoPage(bottomPadding: 175) {
             bannerCarousel
 
             if manager.isEmpty || !manager.isValid {
@@ -103,18 +105,17 @@ struct SileoTweaksView: View {
             footerCredit
         }
         .toolbar {
-            // Search lives in the nav bar now (a magnifier next
-            // to the avatar): the floating search circle went
-            // away with the custom pill in v5.9.2, and the nav
-            // bar is where the New UI puts its search too.
-            ToolbarItem(placement: .navigationBarTrailing) {
+            // Backup sits at the top left, on the same row as
+            // the profile avatar (top right) — it jumps straight
+            // to the Backup tab.
+            ToolbarItem(placement: .navigationBarLeading) {
                 Button {
                     SoundEffects.playTap()
-                    shell.searchActive = true
+                    shell.selectedTab = .backup
                 } label: {
-                    Image(systemName: "magnifyingglass")
+                    Label("Backup", systemImage: "externaldrive.fill")
                 }
-                .accessibilityLabel("Search tweaks")
+                .accessibilityLabel("Backup")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
