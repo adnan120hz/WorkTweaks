@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 /// Shared state of the Sileo shell: which tab the floating pill
 /// shows, and whether the tweaks search cover is open. Owned by
