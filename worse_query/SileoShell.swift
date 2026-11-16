@@ -70,13 +70,22 @@ enum SileoTab: String, CaseIterable {
 /// bar is custom. The system (engine, backup, resolver,
 /// respring) is untouched.
 ///
-/// No manual Liquid Glass anywhere in this shell (v6.0.11,
-/// user order): the pill and the search circle used to
-/// carry `.glassEffect(.regular)`; that hand-applied glass
-/// is removed and both use a plain system background now.
-/// The toolchain builds with Xcode 26+, so the system
-/// renders Liquid Glass on its own native components
-/// (toggles, buttons); nothing here adds glass by hand.
+/// No manual Liquid Glass anywhere in this shell EXCEPT
+/// the menu pill (v6.0.12, user order): the pill is a
+/// custom view, so the system cannot render glass on it
+/// automatically — the only way to give it the system's
+/// real Liquid Glass is the plain `.glassEffect(.regular)`
+/// (no tint, no customization), the official system API
+/// for a custom view. That is NOT a frosted/plastic
+/// material: v6.0.11 replaced it with a plain
+/// `secondarySystemBackground`, and the user rightly
+/// called that frosted/plastic, not glass. The search
+/// circle uses the system's own glass button style
+/// (`.buttonStyle(.glass)`), also real system glass.
+/// Everything else in the app already has automatic
+/// system glass from the Xcode 26+ build (CI
+/// log-verified: Xcode 26.6.0), so nothing else here
+/// adds glass by hand.
 struct SileoShell: View {
     @ObservedObject var console: Console
     @ObservedObject var manager: GestaltManager
@@ -159,15 +168,17 @@ struct SileoShell: View {
     /// search circle ~20% wide, the gap ~8pt, and the two
     /// are the SAME height. On a 390pt screen that is a
     /// 76pt circle, a 76pt-tall pill, 24pt side margins,
-    /// and an 8pt gap. The circle is a plain button on a
-    /// fixed 76pt circle — v6.0.9's `.buttonStyle(.glass)`
-    /// inflated the 64pt frame to ~97pt, which is what
-    /// made the circle too big and taller than the pill;
-    /// v6.0.10 fixed that with glass on the fixed circle,
-    /// and v6.0.11 removes the glass entirely (plain
-    /// system background). The pill's height is forced to
-    /// 76pt (not left to content + padding) so it can
-    /// never drift from the circle's height.
+    /// and an 8pt gap. The search circle is the system's
+    /// glass button (`.buttonStyle(.glass)`), and the
+    /// 76pt frame sits ON THE BUTTON — a frame on the
+    /// Image inflates it (v6.0.9: a 64pt image frame
+    /// rendered ~97pt), but a frame on the Button is the
+    /// true size (v6.0.7 proved it at 48pt). The pill
+    /// carries the plain system glass
+    /// (`.glassEffect(.regular)`, no tint) because it is
+    /// a custom view the system cannot glass on its own;
+    /// its height is forced to 76pt (not left to content
+    /// + padding) so it can never drift from the circle.
     private var bottomBar: some View {
         HStack(spacing: 8) {
             // The menu pill: the four tabs, icon + label.
@@ -199,16 +210,16 @@ struct SileoShell: View {
             .padding(.horizontal, 6)
             .frame(maxWidth: .infinity)
             .frame(height: 76)
-            .background(Color(.secondarySystemBackground), in: Capsule())
+            .glassEffect(.regular, in: Capsule())
 
             // The search circle: the SAME height as the
             // pill (76pt), level with it. It opens the
             // tweaks search (the same cover the nav bar
             // magnifier opened in v5.9.2 — that magnifier
             // is gone, the circle is the only search
-            // button). Plain button on a fixed 76pt circle
-            // with a plain system background, so it renders
-            // at exactly 76pt.
+            // button). The system's glass button: the
+            // 76pt frame is on the Button itself, so it
+            // renders at exactly 76pt.
             Button {
                 SoundEffects.playTap()
                 shell.selectedTab = .featured
@@ -217,11 +228,10 @@ struct SileoShell: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 26, weight: .semibold))
                     .foregroundStyle(Sileo.accent)
-                    .frame(width: 76, height: 76)
-                    .background(Color(.secondarySystemBackground), in: Circle())
-                    .contentShape(Circle())
             }
-            .buttonStyle(.plain)
+            .frame(width: 76, height: 76)
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
             .accessibilityLabel("Search tweaks")
         }
         .frame(maxWidth: .infinity)
