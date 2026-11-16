@@ -11,12 +11,15 @@ import SwiftUI
 // developer, a credits summary, compatibility, and buttons
 // into Tutorials and License & Credits.
 //
-// Since v5.8 the page is rebuilt in full Liquid Glass, in the
-// Sileo UI's language: a flat page that follows the system
-// appearance (Light or Dark Mode), glass cards with tinted
-// glass icon tiles, glass pill chips, and glass capsule
-// buttons — no grouped list, no solid buttons. The content
-// and the behavior are unchanged.
+// Since v5.8 the page is rebuilt in the Sileo UI's
+// language: a flat page that follows the system appearance
+// (Light or Dark Mode), plain cards with solid icon tiles,
+// pill chips, and capsule buttons — no grouped list, no
+// solid buttons. The manual Liquid Glass is removed
+// (v6.0.11, user order): no glassEffect, no glass button
+// styles — the toolchain builds with Xcode 26+, so the
+// system renders Liquid Glass on its own native components.
+// The content and the behavior are unchanged.
 
 struct WelcomeView: View {
     /// Called when the user taps "Get Started" — the parent marks
@@ -64,10 +67,11 @@ struct WelcomeView: View {
                     }
                     .buttonStyle(.plain)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    // The glass is the card itself, not the button:
-                    // glassEffect on a button's label broke taps
-                    // in v5.8 (Get Started would not press).
-                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    // The background is the card itself, not
+                    // the button: a background on a button's
+                    // label broke taps in v5.8 (Get Started
+                    // would not press).
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
 
                     Text(versionText)
                         .font(.caption)
@@ -80,13 +84,17 @@ struct WelcomeView: View {
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
-                // The buttons use the native glass button styles
-                // — glassProminent for Get Started, glass for
-                // Tutorials — instead of glassEffect on their
-                // labels: in v5.8 a glassEffect'd label would
-                // not press at all, and the glass bar behind
-                // them blurred the page weirdly. No bar
-                // background here anymore — the buttons float.
+                // The buttons use the native bordered button
+                // styles — borderedProminent for Get Started,
+                // bordered for Tutorials — instead of a
+                // background on their labels: in v5.8 a
+                // background'd label would not press at all,
+                // and the bar behind them blurred the page
+                // weirdly. No bar background here anymore —
+                // the buttons float. The manual glass button
+                // styles are removed (v6.0.11, user order);
+                // the system renders these native buttons
+                // with Liquid Glass from the Xcode 26+ build.
                 Button {
                     onStart()
                 } label: {
@@ -100,7 +108,7 @@ struct WelcomeView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
                 .tint(.blue)
 
@@ -112,7 +120,7 @@ struct WelcomeView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 13)
                 }
-                .buttonStyle(.glass)
+                .buttonStyle(.bordered)
                 .buttonBorderShape(.capsule)
             }
             .padding(.horizontal, 22)
@@ -141,10 +149,10 @@ struct WelcomeView: View {
         }
     }
 
-    // MARK: One glass card
+    // MARK: One plain card
 
-    /// A section as a Liquid Glass card: a tinted glass icon
-    /// tile + the section title on top, the content below.
+    /// A section as a plain card: a solid icon tile + the
+    /// section title on top, the content below.
     private func glassCard<Content: View>(icon: String, tint: Color, title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
@@ -157,7 +165,7 @@ struct WelcomeView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     // MARK: Header
@@ -203,7 +211,7 @@ struct WelcomeView: View {
             .foregroundStyle(Sileo.primary)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .glassEffect(.regular, in: Capsule())
+            .background(Color(.secondarySystemBackground), in: Capsule())
     }
 
     // MARK: Sections

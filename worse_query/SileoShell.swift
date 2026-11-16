@@ -67,18 +67,16 @@ enum SileoTab: String, CaseIterable {
 /// any circle overlaps the Cleaner tab. Sileo's pill is
 /// ~66% wide. The native TabView still drives the pages
 /// (its own tab bar is hidden); only the visible bottom
-/// bar is custom. The glass is `.glassEffect(.regular)`
-/// with no tint and no background — the same glass the
-/// user already approved on the search field — not the
-/// frosted manual glass of the old pill builds. The system
-/// (engine, backup, resolver, respring) is untouched.
+/// bar is custom. The system (engine, backup, resolver,
+/// respring) is untouched.
 ///
-/// One rule for glass in this shell: nothing manual. The
-/// system renders the toggles and the buttons; the only
-/// glassEffect left in the Sileo UI is on non-interactive
-/// surfaces (the search field, the Welcome cards) and on
-/// this bottom bar, and those stay because the user
-/// confirmed they already look right.
+/// No manual Liquid Glass anywhere in this shell (v6.0.11,
+/// user order): the pill and the search circle used to
+/// carry `.glassEffect(.regular)`; that hand-applied glass
+/// is removed and both use a plain system background now.
+/// The toolchain builds with Xcode 26+, so the system
+/// renders Liquid Glass on its own native components
+/// (toggles, buttons); nothing here adds glass by hand.
 struct SileoShell: View {
     @ObservedObject var console: Console
     @ObservedObject var manager: GestaltManager
@@ -161,13 +159,15 @@ struct SileoShell: View {
     /// search circle ~20% wide, the gap ~8pt, and the two
     /// are the SAME height. On a 390pt screen that is a
     /// 76pt circle, a 76pt-tall pill, 24pt side margins,
-    /// and an 8pt gap. The circle is built as a plain
-    /// button with the glass on a fixed 76pt circle —
-    /// `.buttonStyle(.glass)` inflated the 64pt frame to
-    /// ~97pt in v6.0.9, which is what made the circle too
-    /// big and taller than the pill. The pill's height is
-    /// forced to 76pt (not left to content + padding) so
-    /// it can never drift from the circle's height.
+    /// and an 8pt gap. The circle is a plain button on a
+    /// fixed 76pt circle — v6.0.9's `.buttonStyle(.glass)`
+    /// inflated the 64pt frame to ~97pt, which is what
+    /// made the circle too big and taller than the pill;
+    /// v6.0.10 fixed that with glass on the fixed circle,
+    /// and v6.0.11 removes the glass entirely (plain
+    /// system background). The pill's height is forced to
+    /// 76pt (not left to content + padding) so it can
+    /// never drift from the circle's height.
     private var bottomBar: some View {
         HStack(spacing: 8) {
             // The menu pill: the four tabs, icon + label.
@@ -199,15 +199,16 @@ struct SileoShell: View {
             .padding(.horizontal, 6)
             .frame(maxWidth: .infinity)
             .frame(height: 76)
-            .glassEffect(.regular, in: Capsule())
+            .background(Color(.secondarySystemBackground), in: Capsule())
 
             // The search circle: the SAME height as the
             // pill (76pt), level with it. It opens the
             // tweaks search (the same cover the nav bar
             // magnifier opened in v5.9.2 — that magnifier
             // is gone, the circle is the only search
-            // button). Plain button + glass on the fixed
-            // circle, so it renders at exactly 76pt.
+            // button). Plain button on a fixed 76pt circle
+            // with a plain system background, so it renders
+            // at exactly 76pt.
             Button {
                 SoundEffects.playTap()
                 shell.selectedTab = .featured
@@ -217,7 +218,7 @@ struct SileoShell: View {
                     .font(.system(size: 26, weight: .semibold))
                     .foregroundStyle(Sileo.accent)
                     .frame(width: 76, height: 76)
-                    .glassEffect(.regular, in: Circle())
+                    .background(Color(.secondarySystemBackground), in: Circle())
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)

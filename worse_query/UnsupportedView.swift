@@ -36,7 +36,7 @@ struct UnsupportedView: View {
                 .padding(.horizontal, 22)
                 .padding(.top, 10)
                 .padding(.bottom, 12)
-                .background(.ultraThinMaterial)
+                .background(Color(.systemBackground))
         }
         .sheet(isPresented: $showTutorials) {
             NavigationStack {

@@ -11,14 +11,16 @@ import SwiftUI
 // WTGlassPage / WTSectionCard / RowIcon; the system behind them
 // (engine, backup, resolver, respring) is untouched.
 //
-// Since v5.8 the whole Sileo UI is Liquid Glass, not just the
-// pill: the package icons are tinted glass tiles (the tweak's
-// color as a glass tint, white symbol — no more flat neon
-// squares), the toggles are glass switches, the search field
-// and its close button are glass, and the banners are colorful
-// info cards. And the page follows the system appearance —
-// dark background in Dark Mode, light background in Light
-// Mode — instead of forcing dark.
+// Since v5.8 the whole Sileo UI was Liquid Glass; v6.0.11
+// removes the manual glass (user order) — the package
+// icons are solid color tiles (the tweak's color, white
+// symbol), the toggles are the native switches, the search
+// field and its close button are plain, and the banners
+// are colorful info cards. The toolchain builds with
+// Xcode 26+, so the system renders Liquid Glass on its
+// own native components. And the page follows the system
+// appearance — dark background in Dark Mode, light
+// background in Light Mode — instead of forcing dark.
 //
 // Measurements come from the repo's own code:
 // - FeaturedPackageView: icon square, 16pt row spacing/margins,
@@ -77,12 +79,15 @@ struct SileoPage<Content: View>: View {
     }
 }
 
-/// The package icon Sileo puts on every row: a Liquid Glass
-/// tile tinted with the package's own color (here the tweak's
-/// tint) and a symbol in the matching color, corner radius
-/// width / 4 (PackageIconView). The glass tint replaces the
-/// flat neon squares of v5.6/v5.7 — the colors stay, but as
-/// translucent glass, so the whole app reads as Liquid Glass.
+/// The package icon Sileo puts on every row: a solid tile in
+/// the package's own color (here the tweak's tint) and a symbol
+/// in the matching color, corner radius width / 4
+/// (PackageIconView). The tile used to be a tinted Liquid
+/// Glass tile (`.glassEffect` with a color tint); the manual
+/// glass is removed (v6.0.11, user order) and the tile is a
+/// plain solid color now — the colors stay (blocks of 4), and
+/// the system renders Liquid Glass on its own components from
+/// the Xcode 26+ build.
 struct SileoIcon: View {
     let systemImage: String
     var color: Color = .blue
@@ -96,7 +101,7 @@ struct SileoIcon: View {
             .font(.system(size: size * 0.55, weight: .semibold))
             .foregroundStyle(symbolColor)
             .frame(width: size, height: size)
-            .glassEffect(.regular.tint(color.opacity(0.55)), in: RoundedRectangle(cornerRadius: size / 4, style: .continuous))
+            .background(color, in: RoundedRectangle(cornerRadius: size / 4, style: .continuous))
     }
 }
 

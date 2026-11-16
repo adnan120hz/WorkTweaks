@@ -128,14 +128,14 @@ struct SileoTweaksView: View {
         let title: String
         let headline: String
         let colors: [Color]
-        /// SF symbol in a glass circle; nil shows the WT icon.
+        /// SF symbol in a plain circle; nil shows the WT icon.
         let icon: String?
     }
 
     private var infoBanners: [InfoBanner] {
         [
             InfoBanner(id: "version", title: "WorkTweaks v\(appVersion)",
-                       headline: "Liquid Glass everywhere — glass toggles, glass search, light & dark",
+                       headline: "System Liquid Glass — native toggles, light & dark",
                        colors: [.blue, .indigo], icon: nil),
         ]
     }
@@ -696,20 +696,21 @@ struct SileoTweaksView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .glassEffect(.regular, in: Capsule())
+                .background(Color(.secondarySystemBackground), in: Capsule())
 
-                // Sileo's search closes with an X circle — glass,
-                // like the search circle on the pill — the
-                // native glass button, so it stays tappable.
+                // Sileo's search closes with an X circle — a
+                // plain button on a plain circle, so it stays
+                // tappable. (The manual glass button style is
+                // removed in v6.0.11, user order.)
                 Button {
                     closeSearch()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .semibold))
                         .frame(width: 40, height: 40)
+                        .background(Color(.secondarySystemBackground), in: Circle())
                 }
-                .buttonStyle(.glass)
-                .buttonBorderShape(.circle)
+                .buttonStyle(.plain)
                 .accessibilityLabel("Close search")
             }
             .padding(.horizontal, 16)

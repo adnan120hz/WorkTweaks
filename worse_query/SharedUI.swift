@@ -12,33 +12,34 @@ import SwiftUI
 /// through this view, so they all share one size, one weight, and
 /// one color. Tweaks keep their own unique symbol (see
 /// TweakCatalog.presentation) — only the rendering is uniform.
-// MARK: - Liquid Glass card surface
+// MARK: - Plain card surface
 //
-// Every card in the app renders on the iOS 26 Liquid Glass
-// surface — the same material as the floating tab bar — via
-// this one modifier, so the look stays identical everywhere.
-// The REGULAR glass variant only: no added transparency and
-// no tint, so cards stay essentially solid and text keeps its
-// full contrast. (The Log tab is excluded on purpose: it
-// keeps its plain console appearance.)
+// The app's cards used to render on the iOS 26 Liquid Glass
+// surface via a `.glassEffect` modifier (WTGlassCard). That
+// manual glass is removed (v6.0.11, user order): the toolchain
+// builds with Xcode 26+, so the system renders Liquid Glass
+// on its own native components, and the app's own cards use
+// a plain system background instead — no hand-applied glass,
+// no tint, no Material. (The Log tab is excluded on purpose:
+// it keeps its plain console appearance.)
 
-struct WTGlassCard: ViewModifier {
+struct WTCard: ViewModifier {
     var cornerRadius: CGFloat = 16
 
     func body(content: Content) -> some View {
-        content.glassEffect(
-            .regular,
+        content.background(
+            Color(.secondarySystemGroupedBackground),
             in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         )
     }
 }
 
 extension View {
-    /// Applies the shared Liquid Glass card surface with the
-    /// given corner radius (the app's cards use 14 or 16; a
-    /// radius of 999 renders a capsule).
-    func wtGlassCard(cornerRadius: CGFloat = 16) -> some View {
-        modifier(WTGlassCard(cornerRadius: cornerRadius))
+    /// Applies the shared plain card surface with the given
+    /// corner radius (the app's cards use 14 or 16; a radius
+    /// of 999 renders a capsule).
+    func wtCard(cornerRadius: CGFloat = 16) -> some View {
+        modifier(WTCard(cornerRadius: cornerRadius))
     }
 }
 
@@ -101,7 +102,7 @@ struct WTSectionCard<Content: View>: View {
             // still wins — the environment value only reaches
             // buttons that don't declare one.
             .buttonStyle(.plain)
-            .wtGlassCard(cornerRadius: 16)
+            .wtCard(cornerRadius: 16)
 
             if let footer {
                 Text(footer)
