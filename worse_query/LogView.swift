@@ -2,9 +2,6 @@ import SwiftUI
 
 struct LogView: View {
     @ObservedObject var console: Console
-    /// Sileo UI: dark page + white mono text. False = the classic
-    /// grouped background.
-    var sileo: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -12,20 +9,14 @@ struct LogView: View {
                 ScrollView {
                     Text(console.output)
                         .font(.system(.footnote, design: .monospaced))
-                        .foregroundStyle(sileo ? .white.opacity(0.85) : .primary)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
-                        // Room at the bottom when pushed inside
-                        // the settings sheet (no floating pill
-                        // there, so 24 — not the old 100).
-                        .padding(.bottom, sileo ? 24 : 0)
                         .id("log-bottom")
                 }
-                .background(sileo ? Sileo.background : Color(.systemGroupedBackground))
+                .background(Color(.systemGroupedBackground))
                 .navigationTitle("Log")
-                .navigationBarTitleDisplayMode(sileo ? .inline : .large)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button("Clear") {

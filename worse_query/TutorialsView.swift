@@ -7,12 +7,12 @@ import SwiftUI
 // signer app) plus the Siri AI guide (C). Reachable from the Welcome
 // screen, the unsupported screen, and the Tweaks tab toolbar.
 //
-// Since v3.8 the page renders as Liquid Glass cards (WTGlassPage),
+// Since v3.8 the page renders as plain cards (WTPage),
 // like every other page — the guides' text is unchanged.
 
 struct TutorialsView: View {
     var body: some View {
-        WTGlassPage {
+        WTPage {
             WTSectionCard {
                 Text("WorkTweaks only works when its App Group is part of the signing profile. Guides A and B make sure that happens — pick the one that fits you. Guide C turns on the new Siri AI.")
                     .font(.subheadline)

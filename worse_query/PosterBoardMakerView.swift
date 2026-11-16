@@ -17,7 +17,7 @@ import UniformTypeIdentifiers
 //     device-tested yet — the maker logs that when one is
 //     built, so a bad result is reported, not silently kept.
 //
-// The page renders as Liquid Glass cards (WTGlassPage /
+// The page renders as plain cards (WTPage /
 // WTSectionCard), like every other page since v3.8. All strings
 // are English, like the rest of the app.
 
@@ -46,7 +46,7 @@ struct PosterBoardMakerView: View {
     }
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             WTSectionCard(header: "Wallpaper", footer: "Videos use the first 12 seconds. Photos become a single still frame.") {
                 VStack(alignment: .leading, spacing: 0) {
                     TextField("Wallpaper name", text: $name)

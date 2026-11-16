@@ -14,24 +14,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode 26 or newer
+      - name: Select Xcode 26 or 27
         run: |
-          # Use Xcode 26 or newer: on iOS 26+ the system renders
+          # Use Xcode 26 or 27: on iOS 26+ the system renders
           # Liquid Glass automatically, so the toolchain only
-          # needs to be 26+. Pick the newest installed Xcode
-          # whose major version is 26 or higher (26.6 today;
-          # a future 27 counts too).
+          # needs to be 26 or 27 — no manual glass code is
+          # added anywhere in the app, iOS renders it. Pick
+          # the newest installed Xcode whose major version
+          # is 26 or 27 (26.6 today; a future 27 counts too).
           LATEST=$(for app in /Applications/Xcode_*.app; do
             ver=$(basename "$app" .app | sed 's/^Xcode_//')
             major=${ver%%.*}
-            if [ "$major" -ge 26 ]; then echo "$ver"; fi
+            if [ "$major" -eq 26 ] || [ "$major" -eq 27 ]; then echo "$ver"; fi
           done | sort -V | tail -1)
           if [ -z "$LATEST" ]; then
-            echo "No Xcode 26 or newer found" >&2
+            echo "No Xcode 26 or 27 found" >&2
+            ls /Applications/ | grep -i xcode || true
             exit 1
           fi
           echo "Selecting Xcode $LATEST"
-          sudo xcode-select -s "/Applications/Xcode_${LATEST}.app"
+          sudo xcode-select -s "/Applications/Xcode_${LATEST}.app/Contents/Developer"
           xcodebuild -version
 
       - name: Show toolchain

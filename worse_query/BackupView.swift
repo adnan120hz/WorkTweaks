@@ -10,23 +10,15 @@ import SwiftUI
 /// - a single tweak from a snapshot,
 /// - a single key from a snapshot.
 ///
-/// Since v3.8 the tab renders as Liquid Glass cards (WTGlassPage),
+/// Since v3.8 the tab renders as plain cards (WTPage),
 /// like every other page. The List's swipe-to-delete on snapshots
 /// becomes a long-press context menu — same delete, same rows.
 struct BackupView: View {
     @ObservedObject var manager: GestaltManager
-    /// Sileo UI: the whole app restyles (dark page, Sileo rows,
-    /// floating pill tab bar at the root). False = the classic
-    /// Liquid Glass layout.
-    var sileo: Bool = false
 
     var body: some View {
         NavigationStack {
-            Group {
-                if sileo {
-                    sileoContent
-                } else {
-                    WTGlassPage {
+            WTPage {
                 WTSectionCard(header: "Snapshots", footer: "A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.") {
                     Button {
                         manager.createManualSnapshot()
@@ -86,11 +78,9 @@ struct BackupView: View {
                             .padding(.vertical, 10)
                     }
                 }
-                    }
-                }
             }
             .navigationTitle("Backup")
-            .navigationBarTitleDisplayMode(sileo ? .inline : .large)
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -103,112 +93,6 @@ struct BackupView: View {
             .onAppear {
                 manager.refreshSnapshots()
             }
-        }
-    }
-
-    /// The Backup tab in Sileo UI: big title, Back Up Now as a
-    /// Sileo row, snapshots as Sileo package rows. Same restore
-    /// flows — only the menu layout changes.
-    /// Sileo UI: flat rows on the dark page (no cards, no
-    /// in-content title — the nav bar carries "Backup" when
-    /// this page is pushed from the settings sheet). The
-    /// "Back Up Now" action is a full-width blue pill.
-    private var sileoContent: some View {
-        SileoPage(bottomPadding: 24) {
-            Button {
-                manager.createManualSnapshot()
-            } label: {
-                Text("Back Up Now")
-                    .foregroundStyle(.white)
-                    .font(.headline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Sileo.accent, in: Capsule())
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-            }
-            .buttonStyle(.plain)
-            .disabled(!manager.isValid)
-
-            Text("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")
-                .font(.caption)
-                .foregroundStyle(Sileo.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 4)
-
-            if let original = manager.originalSnapshot {
-                SileoSectionTitle(text: "Original")
-                sileoSnapshotRow(original)
-            }
-
-            SileoSectionTitle(text: "Apply Snapshots")
-            if manager.otherSnapshots.isEmpty {
-                Text("No snapshots yet. Apply some tweaks or tap Back Up Now.")
-                    .font(.caption)
-                    .foregroundStyle(Sileo.secondary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-            } else {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(manager.otherSnapshots.enumerated()), id: \.element.id) { index, snapshot in
-                        sileoSnapshotRow(snapshot)
-                            .contextMenu {
-                                Button(role: .destructive) {
-                                    manager.deleteSnapshot(snapshot)
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
-                    }
-                }
-            }
-
-            if let error = manager.lastError {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-            }
-        }
-    }
-
-    /// One snapshot as a Sileo package row (same destination as
-    /// the classic row).
-    private func sileoSnapshotRow(_ snapshot: BackupSnapshot) -> some View {
-        NavigationLink {
-            BackupDetailView(manager: manager, snapshot: snapshot)
-        } label: {
-            HStack(spacing: 16) {
-                SileoIcon(systemImage: snapshot.kind == .original ? "lock.shield" : "clock.arrow.circlepath", color: snapshot.kind == .original ? .blue : .gray, size: 60)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(snapshot.kind.label)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Sileo.primary)
-                        .lineLimit(1)
-                    Text(snapshot.date, format: .dateTime.day().month().year().hour().minute())
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Sileo.secondary)
-                        .lineLimit(1)
-                    Text("\(snapshot.enabledTweakIDs.count) active tweaks · \(snapshot.cacheExtraCount) CacheExtra keys")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Sileo.secondary)
-                        .lineLimit(1)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.6))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Sileo.separator).frame(height: 1)
         }
     }
 
@@ -252,7 +136,7 @@ struct BackupDetailView: View {
     @State private var showRestoreAllConfirm = false
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             WTSectionCard {
                 VStack(alignment: .leading, spacing: 0) {
                     LabeledContent("Type", value: snapshot.kind.label)

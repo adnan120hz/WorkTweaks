@@ -19,8 +19,8 @@ import UniformTypeIdentifiers
 // manifest / files / target / result preview every loaded
 // package lands in, however it was loaded).
 //
-// Since v3.8 the page renders as Liquid Glass cards
-// (WTGlassPage/WTSectionCard), like every other page —
+// Since v3.8 the page renders as plain cards
+// (WTPage/WTSectionCard), like every other page —
 // presentation only; the deploy flow is unchanged.
 
 /// The content types every Deploy package picker accepts:
@@ -43,7 +43,7 @@ struct DeployView: View {
     @State private var resolveRequest = UUID()
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             DeployStoreSection(
                 appDataManager: appDataManager,
                 onDeploy: { presentLoadedPackage($0) },
@@ -597,7 +597,7 @@ struct DeployHistoryView: View {
     @State private var restoringID: String?
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             if let result = deployManager.restoreResult {
                 WTSectionCard(header: "Restore Result — \(result.succeeded) succeeded, \(result.failed) failed") {
                     VStack(alignment: .leading, spacing: 0) {

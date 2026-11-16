@@ -13,7 +13,7 @@ import UniformTypeIdentifiers
 // app's standard respring prompt, because SpringBoard only
 // reloads the wallpaper store when it (re)starts.
 //
-// The page renders as Liquid Glass cards (WTGlassPage /
+// The page renders as plain cards (WTPage /
 // WTSectionCard), like every other page since v3.8.
 
 struct PosterBoardView: View {
@@ -36,7 +36,7 @@ struct PosterBoardView: View {
     }
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             statusCard
 
             if let result = manager.lastResult {
@@ -122,7 +122,7 @@ struct PosterBoardView: View {
             }
         }
         .navigationTitle("PosterBoard")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             manager.loadReceipts()
             kickResolution()

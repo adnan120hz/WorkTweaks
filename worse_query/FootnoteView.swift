@@ -9,8 +9,8 @@ import SwiftUI
 // directory grant or the read fails, the page shows an honest
 // blocked state and nothing can be written from here.
 //
-// Since v3.8 the page renders as Liquid Glass cards
-// (WTGlassPage/WTSectionCard), like every other page —
+// Since v3.8 the page renders as plain cards
+// (WTPage/WTSectionCard), like every other page —
 // presentation only; the editor behaves exactly as before.
 
 struct FootnoteView: View {
@@ -21,7 +21,7 @@ struct FootnoteView: View {
     @State private var writeFailed = false
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             if case .blocked(let reason) = manager.state {
                 WTSectionCard(footer: "Nothing was written.") {
                     VStack(alignment: .leading, spacing: 3) {

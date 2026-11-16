@@ -10,14 +10,14 @@ import SwiftUI
 // CacheCleanerManager (one short grant per operation, sizes
 // measured before and after, failures counted honestly).
 //
-// The pages render as Liquid Glass cards (WTGlassPage /
+// The pages render as plain cards (WTPage /
 // WTSectionCard), like every other page since v3.8.
 
 struct CacheCleanerView: View {
     @ObservedObject private var appData = AppDataManager.shared
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             WTSectionCard(header: "Cache Data Cleaner", footer: "Cache lives in two places inside an app's data container: Library/Caches and tmp. Only the contents of those two folders are deleted — the folders themselves stay, and Documents and the rest of Library are never touched.") {
                 Group {
                     if appData.isScanning {
@@ -92,8 +92,8 @@ struct CacheCleanerView: View {
                 }
             }
         }
-        .navigationTitle("Cache Cleaner")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("Cache Data Cleaner")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Rescan") {
@@ -118,7 +118,7 @@ struct CacheCleanerDetailView: View {
     @State private var pendingLocations: [CacheLocation]?
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             WTSectionCard(header: "App") {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(container.bundleID)

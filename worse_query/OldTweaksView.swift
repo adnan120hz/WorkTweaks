@@ -3,16 +3,15 @@ import UIKit
 
 // MARK: - Old UI (v1 layout) for the Tweaks tab
 //
-// The Tweaks tab has three layouts, chosen in the Sandbox tab
+// The Tweaks tab has two layouts, chosen in the Sandbox tab
 // ("Tweaks UI" picker under Start Tweaks Feature,
-// wt.tweaksUIVersion): Sileo UI is the whole-app Sileo
-// Featured-style restyle (the default), New UI is the
-// two-column card layout, Old UI is the v1 layout — a plain
-// native List with
+// wt.tweaksUIVersion): New UI is the two-column card layout
+// (the default), Old UI is the v1 layout — a plain native List with
 // the original section order (Status, Actions, Device Artwork,
 // Software / Hardware / Eligibility / iPadOS / Internal,
-// Write Method). Only the layout differs: every toggle, picker
-// and action reads the same GestaltManager state and runs the
+// Write Method). The Sileo UI was deleted in v6.0 (user order).
+// Only the layout differs: every toggle, picker and action reads
+// the same GestaltManager state and runs the
 // same apply/revert/respring code as the New UI, and the
 // post-v1 Lock Screen Footnote gets its own small section so
 // it stays reachable in the Old UI too. Nothing else in the

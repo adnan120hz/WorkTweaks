@@ -8,7 +8,7 @@ import SwiftUI
 // in-memory dictionary the tweak toggles use; "Apply Tweaks" in the
 // Tweaks tab writes them to disk (with the Respring / Restart choice).
 //
-// Since v3.8 the tab renders as Liquid Glass cards (WTGlassPage),
+// Since v3.8 the tab renders as plain cards (WTPage),
 // like every other page. The List's swipe-to-delete becomes a
 // long-press context menu on each key row — same immediate delete,
 // same editor, same add flow.
@@ -41,10 +41,6 @@ private struct KeyRef: Identifiable {
 
 struct CacheExtraView: View {
     @ObservedObject var manager: GestaltManager
-    /// Sileo UI: the whole app restyles (dark page, Sileo rows,
-    /// floating pill tab bar at the root). False = the classic
-    /// Liquid Glass layout.
-    var sileo: Bool = false
 
     @State private var search = ""
     @State private var editing: KeyRef?
@@ -54,11 +50,7 @@ struct CacheExtraView: View {
     var body: some View {
         let _ = manager.dictVersion // re-render when the dict changes
         NavigationStack {
-            Group {
-                if sileo {
-                    sileoContent
-                } else {
-                    WTGlassPage {
+            WTPage {
                 WTSectionCard {
                     Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press **Apply Tweaks** in the Tweaks tab to write them (you'll get the Respring / Restart choice).")
                         .font(.caption).foregroundStyle(.secondary)
@@ -113,11 +105,8 @@ struct CacheExtraView: View {
                         }
                     }
                 }
-                    }
-                }
             }
             .navigationTitle("Cache Extra")
-            .navigationBarTitleDisplayMode(sileo ? .inline : .large)
             .searchable(text: $search, prompt: "Search keys")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -145,101 +134,6 @@ struct CacheExtraView: View {
         let keys = extra.allKeys.compactMap { $0 as? String }.sorted()
         guard !search.isEmpty else { return keys }
         return keys.filter { $0.localizedCaseInsensitiveContains(search) }
-    }
-
-    /// The Extra tab in Sileo UI: big title, dark cards, and the
-    /// keys as Sileo rows. Same editor, add flow and reset — only
-    /// the menu layout changes.
-    /// Sileo UI: flat rows on the dark page (no cards, no
-    /// in-content title — the nav bar carries "Cache Extra"
-    /// when this page is pushed from the settings sheet).
-    /// Bottom padding is 24: there is no floating pill in the
-    /// sheet.
-    private var sileoContent: some View {
-        SileoPage(bottomPadding: 24) {
-            Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press Apply Tweaks in the Featured tab to write them (you'll get the Respring / Restart choice).")
-                .font(.caption)
-                .foregroundStyle(Sileo.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-
-            if !manager.isValid {
-                Label("MobileGestalt is not loaded yet — keys are unavailable.", systemImage: "exclamationmark.triangle")
-                    .font(.subheadline)
-                    .foregroundStyle(Sileo.primary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-            } else {
-                SileoSectionTitle(text: "CacheExtra Keys (\(filteredKeys.count))")
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(filteredKeys.enumerated()), id: \.element) { index, key in
-                        Button { editing = KeyRef(key: key) } label: {
-                            sileoRow(for: key)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                manager.removeExtraKey(key)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                    }
-                }
-            }
-
-            if manager.isValid {
-                Button(role: .destructive) {
-                    showResetConfirm = true
-                } label: {
-                    Label("Reset Extra", systemImage: "arrow.counterclockwise")
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                Text("Undoes everything changed or added in this tab: edited and deleted keys return to the values they had when MobileGestalt was loaded, and added keys disappear. Tweak states are not affected, and — like the edits — the reset is only written when you press Apply Tweaks.")
-                    .font(.caption)
-                    .foregroundStyle(Sileo.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 4)
-            }
-        }
-    }
-
-    /// One CacheExtra key as a Sileo row (same content as the
-    /// classic row, dark colors).
-    private func sileoRow(for key: String) -> some View {
-        let value = manager.cacheExtra?[key] ?? "—"
-        return HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(key)
-                    .font(.system(.footnote, design: .monospaced).weight(.medium))
-                    .foregroundStyle(Sileo.primary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                Text(PlistValue.describe(value as Any))
-                    .font(.caption).foregroundStyle(Sileo.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
-            Spacer()
-            Text(ExtraValueKind.of(value)?.rawValue ?? "Complex")
-                .font(.caption)
-                .foregroundStyle(Sileo.secondary)
-            Image(systemName: "chevron.right")
-                .font(.caption2).foregroundStyle(.white.opacity(0.6))
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Sileo.separator).frame(height: 1)
-        }
     }
 
     private func row(for key: String) -> some View {
@@ -284,7 +178,7 @@ struct ExtraKeyEditor: View {
 
     var body: some View {
         NavigationStack {
-            WTGlassPage {
+            WTPage {
                 WTSectionCard(header: "Key") {
                     if let existingKey {
                         Text(existingKey)

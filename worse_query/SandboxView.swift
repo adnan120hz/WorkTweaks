@@ -10,7 +10,7 @@ import SwiftUI
 // home, below the menu rows.
 //
 // Since v3.8 the pages render as free-standing Liquid Glass
-// cards over the grouped background (WTGlassPage/WTSectionCard),
+// cards over the grouped background (WTPage/WTSectionCard),
 // the same construction as the Tweaks tab — presentation only;
 // every control behaves exactly as before.
 
@@ -27,7 +27,7 @@ struct SandboxView: View {
     /// New UI / Old UI choice for the Tweaks tab only
     /// ("new" = the current two-column layout, "old" = the v1
     /// list layout). Default is the current UI.
-    @AppStorage("wt.tweaksUIVersion") private var tweaksUIVersion = "sileo"
+    @AppStorage("wt.tweaksUIVersion") private var tweaksUIVersion = "new"
     /// UI sounds on/off (v5.1): soft tap on menus and
     /// features, soft swipe on tab switches. On by default.
     @AppStorage("wt.soundEffectsEnabled") private var soundEffectsEnabled = true
@@ -41,7 +41,7 @@ struct SandboxView: View {
 
     var body: some View {
         NavigationStack {
-            WTGlassPage {
+            WTPage {
                 // Front door identity: app icon, name, and this
                 // device's support status.
                 WTSectionCard {
@@ -103,21 +103,20 @@ struct SandboxView: View {
                         Divider()
                             .padding(.vertical, 4)
 
-                        // Tweaks UI choice — Sileo UI restyles
-                        // the WHOLE app (every menu + the tab bar),
-                        // New UI is the two-column Tweaks layout,
-                        // Old UI is the v1 list layout. Sileo UI
-                        // is the default.
+                        // Tweaks UI choice — New UI is the
+                        // two-column layout (the default), Old UI
+                        // is the v1 list layout. The Sileo UI was
+                        // deleted in v6.0 (user order). Applies
+                        // to the Tweaks tab only.
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Tweaks UI")
                                 .font(.subheadline.weight(.semibold))
                             Picker("Tweaks UI", selection: $tweaksUIVersion) {
-                                Text("Sileo UI").tag("sileo")
                                 Text("New UI").tag("new")
                                 Text("Old UI").tag("old")
                             }
                             .pickerStyle(.segmented)
-                            Text("Sileo UI restyles the whole app. New UI and Old UI change the Tweaks tab only.")
+                            Text("Applies to the Tweaks tab only.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -206,9 +205,8 @@ struct SandboxView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                    }
+            }
             .navigationTitle("Sandbox")
-            .navigationBarTitleDisplayMode(.large)
         }
     }
 
@@ -261,7 +259,7 @@ struct SandboxEscapePage: View {
     }
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             WTSectionCard(header: "Target Path") {
                 TextField("Target", text: $path)
                     .disabled(isConsumed)
@@ -327,7 +325,7 @@ struct PathEnumerationPage: View {
     let path: String
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             WTSectionCard(header: "Enumeration") {
                 VStack(alignment: .leading, spacing: 0) {
                     // Reliable, but insanely slow
@@ -373,7 +371,7 @@ struct AppGroupPage: View {
     @Binding var groupText: String
 
     var body: some View {
-        WTGlassPage {
+        WTPage {
             WTSectionCard(header: "App Group", footer: "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.") {
                 VStack(alignment: .leading, spacing: 0) {
                     TextField("App Group ID", text: $groupText)
