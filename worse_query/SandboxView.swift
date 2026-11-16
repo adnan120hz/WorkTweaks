@@ -10,7 +10,7 @@ import SwiftUI
 // home, below the menu rows.
 //
 // Since v3.8 the pages render as free-standing Liquid Glass
-// cards over the grouped background (WTPage/WTSectionCard),
+// cards over the grouped background (WTGlassPage/WTSectionCard),
 // the same construction as the Tweaks tab — presentation only;
 // every control behaves exactly as before.
 
@@ -41,7 +41,7 @@ struct SandboxView: View {
 
     var body: some View {
         NavigationStack {
-            WTPage {
+            WTGlassPage {
                 // Front door identity: app icon, name, and this
                 // device's support status.
                 WTSectionCard {
@@ -95,7 +95,6 @@ struct SandboxView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Toggle("Start Tweaks Feature", isOn: $tweaksEnabled)
                             .font(.subheadline.weight(.semibold))
-                            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                         Text("Unlocks the Tweaks tab. Turn this on to start using tweaks.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -103,11 +102,9 @@ struct SandboxView: View {
                         Divider()
                             .padding(.vertical, 4)
 
-                        // Tweaks UI choice — New UI is the
-                        // two-column layout (the default), Old UI
-                        // is the v1 list layout. The Sileo UI was
-                        // deleted in v6.0 (user order). Applies
-                        // to the Tweaks tab only.
+                        // Tweaks UI choice — New UI is the current
+                        // two-column layout, Old UI is the v1 list
+                        // layout. Applies to the Tweaks tab only.
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Tweaks UI")
                                 .font(.subheadline.weight(.semibold))
@@ -129,7 +126,6 @@ struct SandboxView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Toggle("Sound Effects", isOn: $soundEffectsEnabled)
                                 .font(.subheadline.weight(.semibold))
-                                .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                             Text("Plays a soft sound when you tap menus and features. Respects the silent switch.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -259,7 +255,7 @@ struct SandboxEscapePage: View {
     }
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             WTSectionCard(header: "Target Path") {
                 TextField("Target", text: $path)
                     .disabled(isConsumed)
@@ -325,7 +321,7 @@ struct PathEnumerationPage: View {
     let path: String
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             WTSectionCard(header: "Enumeration") {
                 VStack(alignment: .leading, spacing: 0) {
                     // Reliable, but insanely slow
@@ -371,7 +367,7 @@ struct AppGroupPage: View {
     @Binding var groupText: String
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             WTSectionCard(header: "App Group", footer: "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.") {
                 VStack(alignment: .leading, spacing: 0) {
                     TextField("App Group ID", text: $groupText)

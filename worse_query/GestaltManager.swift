@@ -371,23 +371,17 @@ enum SiriAICachePatch {
             print("(siri-ai) cache patch slot at byte \(guideOffset) (guide line 104)")
             return (guideOffset, nil)
         }
-        // 2. Scan every byte offset for the pattern, not just
-        // 51-byte-aligned chunks: on newer iOS the same 51-byte
-        // shape can sit at a shifted offset when CacheData grows.
-        // The shape itself is unchanged (byte 13 = 0x01, flip
-        // byte 21 = 0x00/0x02, rest 0x00) and exactly one match
-        // is required, so no offset is ever guessed.
+        // 2. Scan every 51-byte-aligned chunk for the pattern.
         var matches: [Int] = []
         var offset = 0
         while offset + lineLength <= cacheData.length {
             if lineMatches(bytes, at: offset, flip: 0x00) || lineMatches(bytes, at: offset, flip: 0x02) {
                 matches.append(offset)
             }
-            offset += 1
+            offset += lineLength
         }
         guard matches.count == 1 else {
             if matches.isEmpty {
-                logPatternDiagnostics(bytes: bytes, length: cacheData.length)
                 return (nil, "Siri AI cache pattern not found in CacheData.")
             }
             return (nil, "Siri AI cache pattern is ambiguous (\(matches.count) matches) — edit line 104 in Filza instead.")
@@ -395,31 +389,6 @@ enum SiriAICachePatch {
         cachedOffset = matches[0]
         print("(siri-ai) cache patch slot at byte \(matches[0]) (pattern scan)")
         return (matches[0], nil)
-    }
-
-    /// Logs the bytes a future iOS version needs to add support:
-    /// CacheData length, the guide chunk, and every 51-byte-aligned
-    /// chunk with only a few nonzero bytes. The user can paste the
-    /// Log and the pattern for their iOS version can be added.
-    private static func logPatternDiagnostics(bytes: UnsafePointer<UInt8>, length: Int) {
-        print("(siri-ai) no pattern: CacheData \(length) bytes")
-        func hex(_ offset: Int) -> String {
-            (0..<lineLength).map { String(format: "%02x", bytes[offset + $0]) }.joined()
-        }
-        let guideOffset = guideLineChunk * lineLength
-        if guideOffset + lineLength <= length {
-            print("(siri-ai) guide chunk 97 (byte \(guideOffset)): \(hex(guideOffset))")
-        }
-        var shown = 0
-        var offset = 0
-        while offset + lineLength <= length, shown < 20 {
-            let nonzero = (0..<lineLength).filter { bytes[offset + $0] != 0 }.count
-            if nonzero > 0, nonzero <= 4 {
-                print("(siri-ai) sparse chunk at byte \(offset): \(hex(offset))")
-                shown += 1
-            }
-            offset += lineLength
-        }
     }
 
     static func isOn(in cacheData: NSData) -> Bool {
@@ -946,8 +915,6 @@ final class GestaltManager: ObservableObject {
     @Published var ogST: Int = 0
     @Published var enableDeviceName: Bool = false
     @Published var deviceName: String = ""
-    @Published var enableCustomRegion: Bool = false
-    @Published var customRegionSuffix: String = ""
     @Published var productType: String = ""
 
     @Published var snapshots: [BackupSnapshot] = []
@@ -962,12 +929,10 @@ final class GestaltManager: ObservableObject {
         return Self.stValue(for: selectedST)
     }
 
-    /// ArtworkDeviceSubType value for a subtype tag. iPhone 17
-    /// Pro shares iPhone 16 Pro's value (2622) and iPhone 17
-    /// Pro Max shares iPhone 16 Pro Max's (2868) — the subtype
-    /// is the display's vertical pixel count, and both pairs
-    /// share a screen (2622x1206 / 2868x1320). Same for
-    /// iPhone 18 Pro / 18 Pro Max; iPhone Duo is 2034.
+    /// ArtworkDeviceSubType value for a subtype tag. iPhone 18
+    /// Pro shares iPhone 16 Pro's value (2622) and iPhone 18
+    /// Pro Max shares iPhone 16 Pro Max's (2868); iPhone Duo
+    /// is 2034.
     static func stValue(for tag: String) -> Int {
         switch tag {
         case "no_dynamic_island": return 0
@@ -975,10 +940,8 @@ final class GestaltManager: ObservableObject {
         case "14pm": return 2796
         case "15pm": return 2976
         case "16p": return 2622
-        case "17p": return 2622
         case "18p": return 2622
         case "18pm": return 2868
-        case "17pm": return 2868
         case "16pm": return 2868
         case "duo": return 2034
         case "air": return 2736
@@ -1107,8 +1070,6 @@ final class GestaltManager: ObservableObject {
                 let newSelected = GestaltManager.rememberedSubtypeTag(forDeviceValue: deviceSubtype)
                     ?? GestaltManager.stToSelMap[deviceSubtype] ?? "og"
                 let newDeviceName = artwork["ArtworkDeviceProductDescription"] as? String ?? ogDeviceName
-                let ogRegionSuffix = ogExtra["zHeENZu+wbg7PUprwNwBWg"] as? String ?? ""
-                let newRegionSuffix = extra["zHeENZu+wbg7PUprwNwBWg"] as? String ?? ogRegionSuffix
                 let newProductType: String
                 if let pt = extra["h9jDsbgj7xIVeIQ8S3/X3Q"] as? String, !pt.isEmpty {
                     newProductType = pt
@@ -1134,8 +1095,6 @@ final class GestaltManager: ObservableObject {
                     self.selectedST = newSelected
                     self.deviceName = newDeviceName
                     self.enableDeviceName = newDeviceName != ogDeviceName
-                    self.customRegionSuffix = newRegionSuffix
-                    self.enableCustomRegion = !newRegionSuffix.isEmpty && newRegionSuffix != ogRegionSuffix
                     self.productType = newProductType
                     self.isValid = true
                     self.isEmpty = fileSize == 0
@@ -1178,34 +1137,9 @@ final class GestaltManager: ObservableObject {
         if let name = artwork["ArtworkDeviceProductDescription"] as? String {
             deviceName = name
         }
-        if let region = extra["zHeENZu+wbg7PUprwNwBWg"] as? String {
-            customRegionSuffix = region
-        }
         if let pt = extra["h9jDsbgj7xIVeIQ8S3/X3Q"] as? String, !pt.isEmpty {
             productType = pt
         }
-    }
-
-    // MARK: Custom Region Model (GestaltX: RegionCode / RegionInfo)
-
-    /// MobileGestalt keys for the sales region. RegionCode is the
-    /// bare code ("PA"); RegionInfo (and legacyRegionInfo, when
-    /// present) is the sales suffix shown in Settings > General >
-    /// About ("PA/A"). GestaltX documents both: the suffix
-    /// follows the RegionInfo key, the code follows RegionCode.
-    static let regionCodeKey = "h63QSdBCiT/z0WU6rdQv6Q"
-    static let regionInfoKey = "zHeENZu+wbg7PUprwNwBWg"
-    static let legacyRegionInfoKey = "yK+xavymRGZ3xWc1tb8XDg"
-
-    /// Normalizes a typed region suffix ("PA/A", "pa", "PA") into
-    /// the (code, suffix) pair. Every documented suffix ends in
-    /// "/A" (LL/A, PA/A, ZA/A, J/A, CH/A, TA/A, B/A, C/A).
-    /// Returns nil when the code is not 1–2 letters.
-    static func normalizedRegion(from input: String) -> (code: String, suffix: String)? {
-        let cleaned = input.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        let code = cleaned.split(separator: "/").first.map(String.init) ?? ""
-        guard (1...2).contains(code.count), code.allSatisfy({ $0.isLetter }) else { return nil }
-        return (code, "\(code)/A")
     }
 
     // MARK: Toggles (mond: mg_tweak_binding)
@@ -1347,24 +1281,11 @@ final class GestaltManager: ObservableObject {
                 artwork["ArtworkDeviceProductDescription"] = deviceName
             }
 
-            // Custom Region Model: the typed sales suffix
-            // (e.g. "PA/A") writes RegionCode ("PA") plus the
-            // suffix to the RegionInfo keys that already exist,
-            // else RegionInfo alone (GestaltX's applyRegion).
-            if enableCustomRegion, let region = Self.normalizedRegion(from: customRegionSuffix) {
-                extra[Self.regionCodeKey] = region.code
-                let present = [Self.regionInfoKey, Self.legacyRegionInfoKey].filter { extra[$0] != nil }
-                for key in present.isEmpty ? [Self.regionInfoKey] : present {
-                    extra[key] = region.suffix
-                }
-            }
-
             // mond serializes as XML.
             let data = try PropertyListSerialization.data(fromPropertyList: dictNow, format: .xml, options: 0)
             try mgWrite(data)
             reloadFromDisk()
             enableDeviceName = false
-            enableCustomRegion = false
 
             // WorkTweaks add-on: automatic backup of the state this
             // Apply just produced — the "After Apply Tweaks" snapshot.

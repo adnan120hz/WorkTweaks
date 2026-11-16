@@ -10,7 +10,7 @@ import SwiftUI
 // install-method requirement, the developer, a credits summary,
 // compatibility, and buttons into Tutorials and License & Credits.
 //
-// Since v3.8 the page renders as plain cards (WTPage),
+// Since v3.8 the page renders as Liquid Glass cards (WTGlassPage),
 // like every other page — the content and buttons are unchanged.
 
 struct WelcomeView: View {
@@ -27,7 +27,7 @@ struct WelcomeView: View {
     }
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             header
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -85,7 +85,7 @@ struct WelcomeView: View {
             .padding(.horizontal, 22)
             .padding(.top, 10)
             .padding(.bottom, 12)
-            .background(Color(.systemBackground))
+            .background(.ultraThinMaterial)
         }
         .sheet(isPresented: $showTutorials) {
             NavigationStack {
@@ -150,7 +150,7 @@ struct WelcomeView: View {
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .wtCard(cornerRadius: 999)
+            .wtGlassCard(cornerRadius: 999)
     }
 
     // MARK: Sections

@@ -35,7 +35,6 @@ enum SupportInfo {
         SupportedRelease(version: "iOS 27.2 Beta 4", build: "24B5110a", notes: "Developer Beta", releaseDate: "October 13, 2026"),
         SupportedRelease(version: "iOS 27.2 RC", build: "24B115", notes: "Release Candidate", releaseDate: "October 19, 2026"),
         SupportedRelease(version: "iOS 27.2", build: "24B119", notes: "Final Release", releaseDate: "October 26, 2026"),
-        SupportedRelease(version: "iOS 27.2.1", build: "24B156", notes: "Bug Fix Patch", releaseDate: "November 9, 2026"),
         SupportedRelease(version: "iOS 27.3 Beta 1", build: "24C5037i", notes: "Developer + Public Beta", releaseDate: "November 3, 2026"),
     ]
 

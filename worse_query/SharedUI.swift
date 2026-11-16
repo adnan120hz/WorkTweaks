@@ -12,46 +12,41 @@ import SwiftUI
 /// through this view, so they all share one size, one weight, and
 /// one color. Tweaks keep their own unique symbol (see
 /// TweakCatalog.presentation) — only the rendering is uniform.
-// MARK: - Plain card surface (v6.0, user order)
+// MARK: - Liquid Glass card surface
 //
-// NO manual Liquid Glass anywhere in this app: no
-// `.glassEffect`, no `.glass` button style, no Material.
-// The Liquid Glass the user sees is rendered by iOS
-// itself, automatically, on its own native components
-// (the TabView tab bar, the navigation bar, native
-// toggles and buttons) — because the app is built with
-// Xcode 26/27 in GitHub Actions (the workflow selects
-// the newest installed Xcode 26 or 27). Every card in
-// the app is therefore a PLAIN system background, so
-// the look stays identical everywhere and text keeps
-// its full contrast. (The Log tab is excluded on
-// purpose: it keeps its plain console appearance.)
+// Every card in the app renders on the iOS 26 Liquid Glass
+// surface — the same material as the floating tab bar — via
+// this one modifier, so the look stays identical everywhere.
+// The REGULAR glass variant only: no added transparency and
+// no tint, so cards stay essentially solid and text keeps its
+// full contrast. (The Log tab is excluded on purpose: it
+// keeps its plain console appearance.)
 
-struct WTCard: ViewModifier {
+struct WTGlassCard: ViewModifier {
     var cornerRadius: CGFloat = 16
 
     func body(content: Content) -> some View {
-        content.background(
-            Color(.secondarySystemGroupedBackground),
+        content.glassEffect(
+            .regular,
             in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         )
     }
 }
 
 extension View {
-    /// Applies the shared plain card surface with the
+    /// Applies the shared Liquid Glass card surface with the
     /// given corner radius (the app's cards use 14 or 16; a
     /// radius of 999 renders a capsule).
-    func wtCard(cornerRadius: CGFloat = 16) -> some View {
-        modifier(WTCard(cornerRadius: cornerRadius))
+    func wtGlassCard(cornerRadius: CGFloat = 16) -> some View {
+        modifier(WTGlassCard(cornerRadius: cornerRadius))
     }
 }
 
-// MARK: - Page scaffolding
+// MARK: - Glass page scaffolding
 //
 // Since v3.8 every page shares the Tweaks page's construction:
-// a ScrollView holding a vertical stack of free-standing cards
-// over the grouped background, instead of List/Form
+// a ScrollView holding a vertical stack of free-standing glass
+// cards over the grouped background, instead of List/Form
 // section containers. A former List/Form section maps to one
 // WTSectionCard: the section header becomes a small caption
 // above the card (the "Sections" / "Menus" label style), the
@@ -60,7 +55,7 @@ extension View {
 
 /// The scrolling page shell: a stack of section cards over the
 /// system grouped background, with the Tweaks page's margins.
-struct WTPage<Content: View>: View {
+struct WTGlassPage<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -75,7 +70,7 @@ struct WTPage<Content: View>: View {
     }
 }
 
-/// One page section as a plain card, with the section's header
+/// One page section as a glass card, with the section's header
 /// as a caption above it and its footer as a caption below it.
 /// Rows are padded inside the card; multi-row cards separate
 /// their rows with Divider(), like the lists they replace.
@@ -99,14 +94,14 @@ struct WTSectionCard<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             // Every button inside a section card inherits the
             // plain style: a default-style Button or Link on
-            // the plain card surface renders as a filled blue
+            // the glass surface renders as a filled blue
             // capsule on iOS 26, which reads as decoration,
             // not as a row. A button that sets its own style
             // (.bordered, .borderedProminent) closer to itself
             // still wins — the environment value only reaches
             // buttons that don't declare one.
             .buttonStyle(.plain)
-            .wtCard(cornerRadius: 16)
+            .wtGlassCard(cornerRadius: 16)
 
             if let footer {
                 Text(footer)

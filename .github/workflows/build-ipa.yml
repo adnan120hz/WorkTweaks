@@ -7,34 +7,12 @@ on:
 
 jobs:
   build:
-    name: Build IPA
+    name: Build unsigned IPA
     runs-on: macos-26
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Select Xcode 26 or 27
-        run: |
-          # Use Xcode 26 or 27: on iOS 26+ the system renders
-          # Liquid Glass automatically, so the toolchain only
-          # needs to be 26 or 27 — no manual glass code is
-          # added anywhere in the app, iOS renders it. Pick
-          # the newest installed Xcode whose major version
-          # is 26 or 27 (26.6 today; a future 27 counts too).
-          LATEST=$(for app in /Applications/Xcode_*.app; do
-            ver=$(basename "$app" .app | sed 's/^Xcode_//')
-            major=${ver%%.*}
-            if [ "$major" -eq 26 ] || [ "$major" -eq 27 ]; then echo "$ver"; fi
-          done | sort -V | tail -1)
-          if [ -z "$LATEST" ]; then
-            echo "No Xcode 26 or 27 found" >&2
-            ls /Applications/ | grep -i xcode || true
-            exit 1
-          fi
-          echo "Selecting Xcode $LATEST"
-          sudo xcode-select -s "/Applications/Xcode_${LATEST}.app/Contents/Developer"
-          xcodebuild -version
 
       - name: Show toolchain
         run: |
@@ -55,30 +33,6 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build
-
-      - name: Ad-hoc sign with entitlements
-        run: |
-          set -euo pipefail
-          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
-          if [ -z "$APP_PATH" ]; then
-            echo "No .app found in build products" >&2
-            exit 1
-          fi
-          # Ad-hoc sign the app with its App Group entitlements embedded,
-          # like GestaltX does: re-signing tools (AltStore/SideStore) read
-          # the entitlements from the existing signature to decide which
-          # App Groups to register, so a fully unsigned IPA ends up
-          # without an App Group. The signature stays ad-hoc with no
-          # developer Team ID; installers replace it when they re-sign.
-          echo "Ad-hoc signing $APP_PATH"
-          codesign -f -s - --entitlements worse_query/worse_query.entitlements "$APP_PATH"
-          codesign --verify --strict "$APP_PATH"
-          codesign -d --entitlements - "$APP_PATH"
-          codesign -dvv "$APP_PATH" 2>&1 | tee /tmp/codesign-info.txt
-          grep -q "Signature=adhoc" /tmp/codesign-info.txt
-          grep -q "TeamIdentifier=not set" /tmp/codesign-info.txt
-          codesign -d --entitlements - --xml "$APP_PATH" | grep -q "group.cc.forcequit.worse-query"
-          echo "Ad-hoc signature verified: App Group entitlements embedded, no Team ID"
 
       - name: Package IPA
         run: |

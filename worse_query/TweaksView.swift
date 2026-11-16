@@ -108,11 +108,9 @@ struct TweaksView: View {
     @AppStorage("atomic_write") private var atomicWrite = true
     /// Master switch for this tab, flipped in the Sandbox tab.
     @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
-    /// New / Old UI choice, picked in the Sandbox tab
-    /// (wt.tweaksUIVersion: "new" or "old"). The Sileo UI
-    /// was deleted in v6.0 (user order) — the two-column
-    /// menu is the only Tweaks UI now. Applies to this tab
-    /// only — every other tab is untouched.
+    /// New UI / Old UI choice, picked in the Sandbox tab
+    /// (wt.tweaksUIVersion: "new" or "old"). Applies to this
+    /// tab only — every other tab is untouched.
     @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "new"
 
     private var useOldUI: Bool { uiVersionRaw == "old" }
@@ -353,7 +351,7 @@ struct TweaksView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .wtCard(cornerRadius: 999)
+                .wtGlassCard(cornerRadius: 999)
 
                 Button("Cancel") {
                     closeSearch()
@@ -466,7 +464,7 @@ struct TweaksView: View {
             }
         }
         .padding(10)
-        .wtCard(cornerRadius: 16)
+        .wtGlassCard(cornerRadius: 16)
     }
 
     // MARK: Right-column companion cards (identity + menus)
@@ -496,7 +494,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 16)
+        .wtGlassCard(cornerRadius: 16)
     }
 
     // Menus quick-access card at the bottom of the right column:
@@ -516,7 +514,7 @@ struct TweaksView: View {
             menuRow(title: "Backup", systemImage: "externaldrive.badge.timemachine") { onOpenBackup() }
         }
         .padding(10)
-        .wtCard(cornerRadius: 16)
+        .wtGlassCard(cornerRadius: 16)
     }
 
     private func menuRow(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
@@ -560,7 +558,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 14)
+        .wtGlassCard(cornerRadius: 14)
     }
 
     private var statusIcon: String {
@@ -603,7 +601,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 14)
+        .wtGlassCard(cornerRadius: 14)
     }
 
     // MARK: Section cards (left column)
@@ -644,7 +642,6 @@ struct TweaksView: View {
 
         if selectedSection == .tweaks || selectedSection == .all {
             deviceNameCard
-            regionModelCard
             persistCard
         }
 
@@ -677,7 +674,7 @@ struct TweaksView: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .wtCard(cornerRadius: 14)
+            .wtGlassCard(cornerRadius: 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -714,8 +711,6 @@ struct TweaksView: View {
                 if doubleSystemVersion() >= 18.0 {
                     Text("iPhone 16 Pro").tag("16p")
                     Text("iPhone 16 Pro Max").tag("16pm")
-                    Text("iPhone 17 Pro").tag("17p")
-                    Text("iPhone 17 Pro Max").tag("17pm")
                     Text("iPhone 18 Pro (iOS 27.0.1+)").tag("18p")
                     Text("iPhone 18 Pro Max (iOS 27.0.1+)").tag("18pm")
                     Text("iPhone Duo (iOS 27.3+)").tag("duo")
@@ -734,7 +729,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 14)
+        .wtGlassCard(cornerRadius: 14)
     }
 
     /// Device Artwork: Custom Device Name toggle + field.
@@ -747,7 +742,6 @@ struct TweaksView: View {
                         .font(.subheadline.weight(.semibold))
                 }
             }
-            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
@@ -756,35 +750,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 14)
-    }
-
-    /// Device Artwork: Custom Region Model toggle + field.
-    /// The typed suffix (e.g. PA/A) is the sales region shown
-    /// in Settings > General > About as the Model Number
-    /// suffix; it is written on Apply, like Custom Device Name.
-    private var regionModelCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Toggle(isOn: $manager.enableCustomRegion) {
-                HStack(spacing: 8) {
-                    RowIcon(systemImage: "globe")
-                    Text("Custom Region Model")
-                        .font(.subheadline.weight(.semibold))
-                }
-            }
-            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-            if manager.enableCustomRegion {
-                TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.characters)
-                    .textFieldStyle(.roundedBorder)
-                Text("Type the region suffix as shown in Settings > General > About, e.g. PA/A or LL/A. It changes the Model Number suffix after Apply.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 14)
+        .wtGlassCard(cornerRadius: 14)
     }
 
     /// Eligibility: the device-model spoofing picker.
@@ -826,7 +792,6 @@ struct TweaksView: View {
                         Text("iPhone 17 Pro").tag("iPhone18,1")
                         Text("iPhone 17 Pro Max").tag("iPhone18,2")
                         Text("iPhone Air").tag("iPhone18,4")
-                        Text("iPhone Duo (iOS 27.3+)").tag("iPhone19,4")
                     }
                 }
             }
@@ -835,7 +800,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 14)
+        .wtGlassCard(cornerRadius: 14)
     }
 
     /// Write Method: "Persist after reboot" (atomic_write).
@@ -848,14 +813,13 @@ struct TweaksView: View {
                         .font(.subheadline.weight(.semibold))
                 }
             }
-            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
             Text("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 14)
+        .wtGlassCard(cornerRadius: 14)
     }
 
     // MARK: Actions (Apply / Respring / Revert)
@@ -894,7 +858,7 @@ struct TweaksView: View {
             .foregroundStyle(destructive ? Color.red : Color.accentColor)
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .wtCard(cornerRadius: 14)
+            .wtGlassCard(cornerRadius: 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -937,7 +901,7 @@ struct TweaksView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 14)
+        .wtGlassCard(cornerRadius: 14)
         .contentShape(Rectangle())
     }
 
@@ -962,7 +926,6 @@ struct TweakCard: View {
     let onInfo: (GestaltTweak) -> Void
 
     @State private var showFixStatusBarGuide = false
-    @State private var showFixAppleIntelligenceGuide = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -999,31 +962,15 @@ struct TweakCard: View {
                     .foregroundStyle(Color.accentColor)
                     .buttonStyle(.plain)
                 }
-                // The Apple Intelligence fix guide lives next to
-                // the "On" line of the Apple Intelligence card only.
-                if tweak.id == "apple_intelligence", tweak.isOn(in: manager.dictNow) {
-                    Button("Fix Apple Intelligence Here!") {
-                        SoundEffects.playTap()
-                        showFixAppleIntelligenceGuide = true
-                    }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.accentColor)
-                    .buttonStyle(.plain)
-                }
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtCard(cornerRadius: 14)
+        .wtGlassCard(cornerRadius: 14)
         .alert("Fix Status Bar", isPresented: $showFixStatusBarGuide) {
             Button("OK") { }
         } message: {
             Text("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional).")
-        }
-        .alert("Fix Apple Intelligence", isPresented: $showFixAppleIntelligenceGuide) {
-            Button("OK") { }
-        } message: {
-            Text("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading.")
         }
     }
 

@@ -5,13 +5,12 @@ import UIKit
 //
 // The Tweaks tab has two layouts, chosen in the Sandbox tab
 // ("Tweaks UI" picker under Start Tweaks Feature,
-// wt.tweaksUIVersion): New UI is the two-column card layout
-// (the default), Old UI is the v1 layout — a plain native List with
+// wt.tweaksUIVersion): New UI is the current two-column card
+// layout, Old UI is the v1 layout — a plain native List with
 // the original section order (Status, Actions, Device Artwork,
 // Software / Hardware / Eligibility / iPadOS / Internal,
-// Write Method). The Sileo UI was deleted in v6.0 (user order).
-// Only the layout differs: every toggle, picker and action reads
-// the same GestaltManager state and runs the
+// Write Method). Only the layout differs: every toggle, picker
+// and action reads the same GestaltManager state and runs the
 // same apply/revert/respring code as the New UI, and the
 // post-v1 Lock Screen Footnote gets its own small section so
 // it stays reachable in the Old UI too. Nothing else in the
@@ -29,7 +28,6 @@ struct OldTweaksView: View {
 
     @AppStorage("atomic_write") private var atomicWrite = true
     @State private var showFixStatusBarGuide = false
-    @State private var showFixAppleIntelligenceGuide = false
 
     var body: some View {
         List {
@@ -54,11 +52,6 @@ struct OldTweaksView: View {
             Button("OK") { }
         } message: {
             Text("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional).")
-        }
-        .alert("Fix Apple Intelligence", isPresented: $showFixAppleIntelligenceGuide) {
-            Button("OK") { }
-        } message: {
-            Text("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading.")
         }
     }
 
@@ -172,8 +165,6 @@ struct OldTweaksView: View {
                 if doubleSystemVersion() >= 18.0 {
                     Text("iPhone 16 Pro").tag("16p")
                     Text("iPhone 16 Pro Max").tag("16pm")
-                    Text("iPhone 17 Pro").tag("17p")
-                    Text("iPhone 17 Pro Max").tag("17pm")
                     Text("iPhone 18 Pro (iOS 27.0.1+)").tag("18p")
                     Text("iPhone 18 Pro Max (iOS 27.0.1+)").tag("18pm")
                     Text("iPhone Duo (iOS 27.3+)").tag("duo")
@@ -191,20 +182,10 @@ struct OldTweaksView: View {
             }
 
             Toggle("Custom Device Name", isOn: $manager.enableDeviceName)
-                .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
 
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
-            }
-
-            Toggle("Custom Region Model", isOn: $manager.enableCustomRegion)
-                .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-
-            if manager.enableCustomRegion {
-                TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.characters)
             }
         } header: {
             Label("Device Artwork", systemImage: "paintbrush.pointed")
@@ -245,12 +226,6 @@ struct OldTweaksView: View {
         TweakCatalog.all.first(where: { $0.id == "enable_dynamic_island_capability" })?.isOn(in: manager.dictNow) ?? false
     }
 
-    /// Whether the Apple Intelligence tweak is on —
-    /// the Fix Apple Intelligence guide only shows while it is.
-    private var isAppleIntelligenceOn: Bool {
-        TweakCatalog.all.first(where: { $0.id == "apple_intelligence" })?.isOn(in: manager.dictNow) ?? false
-    }
-
     private var hardwareSection: some View {
         Section {
             OldTweakToggle(manager: manager, title: "iPhone 16 Camera Control Settings", onInfo: onInfo)
@@ -270,18 +245,6 @@ struct OldTweaksView: View {
             OldTweakToggle(manager: manager, title: "Security Research Device Mode", onInfo: onInfo)
             OldTweakToggle(manager: manager, title: "Disable Region Restrictions", onInfo: onInfo)
             OldTweakToggle(manager: manager, title: "Apple Intelligence", onInfo: onInfo)
-            // The Apple Intelligence fix guide, next to the
-            // Apple Intelligence toggle while it is on (same
-            // guide as the New UI card's
-            // "Fix Apple Intelligence Here!" button).
-            if isAppleIntelligenceOn {
-                Button("Fix Apple Intelligence Here!") {
-                    SoundEffects.playTap()
-                    showFixAppleIntelligenceGuide = true
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.accentColor)
-            }
             OldTweakToggle(manager: manager, title: "Siri AI Cache Patch", onInfo: onInfo)
 
             HStack(spacing: 10) {
@@ -308,7 +271,6 @@ struct OldTweaksView: View {
                             Text("iPhone 17 Pro").tag("iPhone18,1")
                             Text("iPhone 17 Pro Max").tag("iPhone18,2")
                             Text("iPhone Air").tag("iPhone18,4")
-                            Text("iPhone Duo (iOS 27.3+)").tag("iPhone19,4")
                         }
                     }
                 }
@@ -378,7 +340,6 @@ struct OldTweaksView: View {
     private var writeSettingsSection: some View {
         Section {
             Toggle("Persist after reboot", isOn: $atomicWrite)
-                .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
         } header: {
             Label("Write Method", systemImage: "pencil.and.outline")
         } footer: {

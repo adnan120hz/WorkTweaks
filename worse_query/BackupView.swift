@@ -10,7 +10,7 @@ import SwiftUI
 /// - a single tweak from a snapshot,
 /// - a single key from a snapshot.
 ///
-/// Since v3.8 the tab renders as plain cards (WTPage),
+/// Since v3.8 the tab renders as Liquid Glass cards (WTGlassPage),
 /// like every other page. The List's swipe-to-delete on snapshots
 /// becomes a long-press context menu — same delete, same rows.
 struct BackupView: View {
@@ -18,7 +18,7 @@ struct BackupView: View {
 
     var body: some View {
         NavigationStack {
-            WTPage {
+            WTGlassPage {
                 WTSectionCard(header: "Snapshots", footer: "A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.") {
                     Button {
                         manager.createManualSnapshot()
@@ -136,7 +136,7 @@ struct BackupDetailView: View {
     @State private var showRestoreAllConfirm = false
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             WTSectionCard {
                 VStack(alignment: .leading, spacing: 0) {
                     LabeledContent("Type", value: snapshot.kind.label)

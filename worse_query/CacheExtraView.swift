@@ -8,7 +8,7 @@ import SwiftUI
 // in-memory dictionary the tweak toggles use; "Apply Tweaks" in the
 // Tweaks tab writes them to disk (with the Respring / Restart choice).
 //
-// Since v3.8 the tab renders as plain cards (WTPage),
+// Since v3.8 the tab renders as Liquid Glass cards (WTGlassPage),
 // like every other page. The List's swipe-to-delete becomes a
 // long-press context menu on each key row — same immediate delete,
 // same editor, same add flow.
@@ -50,7 +50,7 @@ struct CacheExtraView: View {
     var body: some View {
         let _ = manager.dictVersion // re-render when the dict changes
         NavigationStack {
-            WTPage {
+            WTGlassPage {
                 WTSectionCard {
                     Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press **Apply Tweaks** in the Tweaks tab to write them (you'll get the Respring / Restart choice).")
                         .font(.caption).foregroundStyle(.secondary)
@@ -178,7 +178,7 @@ struct ExtraKeyEditor: View {
 
     var body: some View {
         NavigationStack {
-            WTPage {
+            WTGlassPage {
                 WTSectionCard(header: "Key") {
                     if let existingKey {
                         Text(existingKey)
@@ -240,7 +240,6 @@ struct ExtraKeyEditor: View {
                                 Toggle("Value", isOn: $boolValue)
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
-                                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                             }
                         }
                     }

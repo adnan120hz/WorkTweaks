@@ -10,8 +10,8 @@ import SwiftUI
 // is a pathleak scan, and each opened container is browsed
 // under a single consumeExtension grant on its directory.
 //
-// Since v3.8 the pages render as plain cards
-// (WTPage/WTSectionCard), like every other page —
+// Since v3.8 the pages render as Liquid Glass cards
+// (WTGlassPage/WTSectionCard), like every other page —
 // presentation only; browsing and editing behave as before.
 
 struct AppDataView: View {
@@ -22,7 +22,7 @@ struct AppDataView: View {
     @ObservedObject private var manager = AppDataManager.shared
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             WTSectionCard(header: "Containers", footer: "Containers are enumerated with the fork's pathleak scan — the kernel refuses a grant on the container root itself, so there is no faster way to list them.") {
                 Group {
                     if manager.isScanning {
@@ -166,7 +166,7 @@ struct AppDataDirectoryView: View {
     @State private var newFilePath: String?
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             if grantFailed {
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 3) {
@@ -351,7 +351,7 @@ struct AppDataFileView: View {
     @State private var restoreFailed = false
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             if !loaded {
                 WTSectionCard {
                     HStack(spacing: 10) {
@@ -587,7 +587,7 @@ struct AppDataHexEditorView: View {
     private var rowCount: Int { (bytes.count + 15) / 16 }
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             if !loaded {
                 WTSectionCard {
                     HStack(spacing: 10) {

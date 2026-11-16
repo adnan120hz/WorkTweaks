@@ -99,7 +99,7 @@ struct DeployBuilderView: View {
 
     var body: some View {
         NavigationStack {
-            WTPage {
+            WTGlassPage {
                 WTSectionCard(header: "Package") {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 8) {
@@ -422,7 +422,7 @@ struct DeployContainerPickerView: View {
 
     var body: some View {
         NavigationStack {
-            WTPage {
+            WTGlassPage {
                 if appDataManager.isScanning {
                     WTSectionCard {
                         HStack(spacing: 10) {
@@ -511,7 +511,7 @@ struct PackageBuilderView: View {
     @State private var resolveRequest = UUID()
 
     var body: some View {
-        WTPage {
+        WTGlassPage {
             DeployStoreSection(
                 appDataManager: appDataManager,
                 onDeploy: { presentLoadedPackage($0) },

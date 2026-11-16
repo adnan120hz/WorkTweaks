@@ -5,14 +5,14 @@ import SwiftUI
 // WorkTweaks is built on open-source work. This page credits every
 // upstream project and person whose code or technique ships in the app.
 //
-// Since v3.8 the page renders as plain cards (WTPage),
+// Since v3.8 the page renders as Liquid Glass cards (WTGlassPage),
 // like every other page — presentation only; the credits and
 // license texts are unchanged, apart from the 3105 reference the
 // user asked to add below.
 
 struct LicenseView: View {
     var body: some View {
-        WTPage {
+        WTGlassPage {
             WTSectionCard {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("WorkTweaks")
