@@ -136,6 +136,30 @@ struct LicenseView: View {
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 7)
+                    Divider()
+                        .padding(.leading, 14)
+                    // Status Bar & SpringBoard is credited without a
+                    // link: the user named the method only.
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Status Bar & SpringBoard")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Text("Reference — StatusBarOverrides.archive + SpringBoard plist keys (iOS 26 partial restore path)")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                }
+                .padding(.vertical, 4)
+            }
+
+            WTSectionCard(header: "Get Pairing + VPN Tunnel") {
+                VStack(alignment: .leading, spacing: 0) {
+                    creditRow(
+                        title: "Aircard",
+                        detail: "Get Pairing File + Local Dev VPN tunnel — the on-device pairing used by the partial restore.",
+                        url: "https://github.com/adnan120hz/aircard-ios"
+                    )
                 }
                 .padding(.vertical, 4)
             }
