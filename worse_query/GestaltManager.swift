@@ -929,10 +929,12 @@ final class GestaltManager: ObservableObject {
         return Self.stValue(for: selectedST)
     }
 
-    /// ArtworkDeviceSubType value for a subtype tag. iPhone 18
-    /// Pro shares iPhone 16 Pro's value (2622) and iPhone 18
-    /// Pro Max shares iPhone 16 Pro Max's (2868); iPhone Duo
-    /// is 2034.
+    /// ArtworkDeviceSubType value for a subtype tag. iPhone 17
+    /// Pro shares iPhone 16 Pro's value (2622) and iPhone 17
+    /// Pro Max shares iPhone 16 Pro Max's (2868) — the subtype
+    /// is the display's vertical pixel count, and both pairs
+    /// share a screen (2622x1206 / 2868x1320). Same for
+    /// iPhone 18 Pro / 18 Pro Max; iPhone Duo is 2034.
     static func stValue(for tag: String) -> Int {
         switch tag {
         case "no_dynamic_island": return 0
@@ -940,8 +942,10 @@ final class GestaltManager: ObservableObject {
         case "14pm": return 2796
         case "15pm": return 2976
         case "16p": return 2622
+        case "17p": return 2622
         case "18p": return 2622
         case "18pm": return 2868
+        case "17pm": return 2868
         case "16pm": return 2868
         case "duo": return 2034
         case "air": return 2736

@@ -24,10 +24,11 @@ struct SandboxView: View {
     /// stays locked until this is turned on. Shared with the
     /// Tweaks tab gate via the same AppStorage key.
     @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
-    /// New UI / Old UI choice for the Tweaks tab only
-    /// ("new" = the current two-column layout, "old" = the v1
-    /// list layout). Default is the current UI.
-    @AppStorage("wt.tweaksUIVersion") private var tweaksUIVersion = "new"
+    /// New UI / Old UI / Library UI choice for the Tweaks tab
+    /// only ("new" = the two-column layout, "old" = the v1
+    /// list layout, "library" = the v6.0 Library UI).
+    /// Default is the Library UI.
+    @AppStorage("wt.tweaksUIVersion") private var tweaksUIVersion = "library"
     /// UI sounds on/off (v5.1): soft tap on menus and
     /// features, soft swipe on tab switches. On by default.
     @AppStorage("wt.soundEffectsEnabled") private var soundEffectsEnabled = true
@@ -95,6 +96,7 @@ struct SandboxView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Toggle("Start Tweaks Feature", isOn: $tweaksEnabled)
                             .font(.subheadline.weight(.semibold))
+                            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                         Text("Unlocks the Tweaks tab. Turn this on to start using tweaks.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -102,13 +104,15 @@ struct SandboxView: View {
                         Divider()
                             .padding(.vertical, 4)
 
-                        // Tweaks UI choice — New UI is the current
-                        // two-column layout, Old UI is the v1 list
-                        // layout. Applies to the Tweaks tab only.
+                        // Tweaks UI choice — Library UI is the
+                        // v6.0 layout, New UI is the two-column
+                        // layout, Old UI is the v1 list layout.
+                        // Applies to the Tweaks tab only.
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Tweaks UI")
                                 .font(.subheadline.weight(.semibold))
                             Picker("Tweaks UI", selection: $tweaksUIVersion) {
+                                Text("Library UI").tag("library")
                                 Text("New UI").tag("new")
                                 Text("Old UI").tag("old")
                             }
@@ -126,6 +130,7 @@ struct SandboxView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Toggle("Sound Effects", isOn: $soundEffectsEnabled)
                                 .font(.subheadline.weight(.semibold))
+                                .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                             Text("Plays a soft sound when you tap menus and features. Respects the silent switch.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)

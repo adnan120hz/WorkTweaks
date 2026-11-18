@@ -108,12 +108,15 @@ struct TweaksView: View {
     @AppStorage("atomic_write") private var atomicWrite = true
     /// Master switch for this tab, flipped in the Sandbox tab.
     @AppStorage("wt.tweaksFeatureEnabled") private var tweaksEnabled = false
-    /// New UI / Old UI choice, picked in the Sandbox tab
-    /// (wt.tweaksUIVersion: "new" or "old"). Applies to this
-    /// tab only — every other tab is untouched.
-    @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "new"
+    /// New UI / Old UI / Library UI choice, picked in the
+    /// Sandbox tab (wt.tweaksUIVersion: "new", "old" or
+    /// "library"). Applies to this tab only — every other
+    /// tab is untouched. "library" (the v6.0 Library UI) is
+    /// the default.
+    @AppStorage("wt.tweaksUIVersion") private var uiVersionRaw = "library"
 
     private var useOldUI: Bool { uiVersionRaw == "old" }
+    private var useLibraryUI: Bool { uiVersionRaw == "library" }
 
     @State private var infoTitle: String?
     @State private var infoMessage: String = ""
@@ -138,7 +141,18 @@ struct TweaksView: View {
         NavigationStack {
             Group {
                 if tweaksEnabled {
-                    if useOldUI {
+                    if useLibraryUI {
+                        LibraryTweaksView(
+                            console: console,
+                            manager: manager,
+                            onInfo: showInfo(for:),
+                            onRevert: { showRevertConfirm = true },
+                            onSpoofingInfo: {
+                                infoTitle = "Device Spoofing Info"
+                                infoMessage = "Only spoof your device model if you want to download Apple Intelligence. This may break Face ID. If you decide to unspoof and want to keep Apple Intelligence, do NOT re-enter the Apple Intelligence & Siri menu in Settings."
+                            }
+                        )
+                    } else if useOldUI {
                         OldTweaksView(
                             console: console,
                             manager: manager,
@@ -160,8 +174,9 @@ struct TweaksView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 // Search is a New UI feature — the Old UI (v1)
-                // never had it.
-                if tweaksEnabled && !useOldUI {
+                // never had it, and the Library UI has its own
+                // search bar.
+                if tweaksEnabled && !useOldUI && !useLibraryUI {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
                             searchActive = true
@@ -711,6 +726,8 @@ struct TweaksView: View {
                 if doubleSystemVersion() >= 18.0 {
                     Text("iPhone 16 Pro").tag("16p")
                     Text("iPhone 16 Pro Max").tag("16pm")
+                    Text("iPhone 17 Pro").tag("17p")
+                    Text("iPhone 17 Pro Max").tag("17pm")
                     Text("iPhone 18 Pro (iOS 27.0.1+)").tag("18p")
                     Text("iPhone 18 Pro Max (iOS 27.0.1+)").tag("18pm")
                     Text("iPhone Duo (iOS 27.3+)").tag("duo")
@@ -742,6 +759,7 @@ struct TweaksView: View {
                         .font(.subheadline.weight(.semibold))
                 }
             }
+            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
             if manager.enableDeviceName {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
@@ -792,6 +810,7 @@ struct TweaksView: View {
                         Text("iPhone 17 Pro").tag("iPhone18,1")
                         Text("iPhone 17 Pro Max").tag("iPhone18,2")
                         Text("iPhone Air").tag("iPhone18,4")
+                        Text("iPhone Duo (iOS 27.3+)").tag("iPhone19,4")
                     }
                 }
             }
@@ -813,6 +832,7 @@ struct TweaksView: View {
                         .font(.subheadline.weight(.semibold))
                 }
             }
+            .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
             Text("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -926,6 +946,7 @@ struct TweakCard: View {
     let onInfo: (GestaltTweak) -> Void
 
     @State private var showFixStatusBarGuide = false
+    @State private var showFixAppleIntelligenceGuide = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -962,6 +983,17 @@ struct TweakCard: View {
                     .foregroundStyle(Color.accentColor)
                     .buttonStyle(.plain)
                 }
+                // The Apple Intelligence fix guide lives next to
+                // the "On" line of the Apple Intelligence card only.
+                if tweak.id == "apple_intelligence", tweak.isOn(in: manager.dictNow) {
+                    Button("Fix Apple Intelligence Here!") {
+                        SoundEffects.playTap()
+                        showFixAppleIntelligenceGuide = true
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+                    .buttonStyle(.plain)
+                }
             }
         }
         .padding(12)
@@ -971,6 +1003,11 @@ struct TweakCard: View {
             Button("OK") { }
         } message: {
             Text("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional).")
+        }
+        .alert("Fix Apple Intelligence", isPresented: $showFixAppleIntelligenceGuide) {
+            Button("OK") { }
+        } message: {
+            Text("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading.")
         }
     }
 

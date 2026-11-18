@@ -240,6 +240,7 @@ struct ExtraKeyEditor: View {
                                 Toggle("Value", isOn: $boolValue)
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
+                                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                             }
                         }
                     }

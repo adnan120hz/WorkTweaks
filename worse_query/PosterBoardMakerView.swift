@@ -108,6 +108,7 @@ struct PosterBoardMakerView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 11)
                         .disabled(isBuilding)
+                        .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 }
             }
 
