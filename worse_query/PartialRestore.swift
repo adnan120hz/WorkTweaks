@@ -24,6 +24,8 @@ final class PartialRestoreEngine {
     static let riskText = """
     Use at your own risk. Not all iPhones can be unlocked this way. Do not use on an MDM-managed device or a bypassed device.
 
+    LiveContainer is not recommended for SpringBoard / Status Bar — use a direct install (Signed Apps) instead.
+
     A partial restore can affect your photos and videos, and can log you out of iCloud. Back up your photos and videos first (Backup Your Photos & Videos Here!) — optional, you can skip it.
     """
 

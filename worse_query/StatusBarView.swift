@@ -32,25 +32,25 @@ struct StatusBarView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    introCard
-                    carrierCard
-                    networkCard
-                    signalCard
-                    hideIconsCard
-                    photoBackupCard
-                    applyCard
-                    if let applyMessage {
-                        Text(applyMessage)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+            WTGlassPage {
+                introCard
+                carrierCard
+                networkCard
+                signalCard
+                hideIconsCard
+                photoBackupCard
+                applyCard
+                if let applyMessage {
+                    Text(applyMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 10)
                 }
-                .padding(16)
+                // Clear the floating tab bar so the last card
+                // is not hidden behind it.
+                Color.clear.frame(height: 60)
             }
-            .scrollIndicators(.hidden)
             .navigationTitle("Status Bar")
             .navigationBarTitleDisplayMode(.large)
             .alert("Apply — read this first", isPresented: $showRisk) {
@@ -77,11 +77,13 @@ struct StatusBarView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Status Bar")
                     .font(.headline)
-                Text("Change the carrier name, network label and signal bars shown in the status bar. iOS 27 only. Applied by the iOS 26 partial restore — a separate system from the Tweaks tab.")
+                Text("Change the carrier name, network label and signal bars. iOS 27 only. Applied by the iOS 26 partial restore — a separate system from the Tweaks tab. LiveContainer is not recommended for this — use a direct install (Signed Apps) instead.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
     }
 
@@ -90,13 +92,13 @@ struct StatusBarView: View {
     private var carrierCard: some View {
         WTSectionCard(header: "Custom Carrier Name") {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Custom carrier name (Primary)", isOn: $overrides.carrierName.set)
+                Toggle("Carrier name (Primary)", isOn: $overrides.carrierName.set)
                 if overrides.carrierName.set {
                     TextField("Carrier name (max 64)", text: $overrides.carrierName.text)
                         .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled()
                 }
-                Toggle("Custom carrier name (Secondary)", isOn: $overrides.secondaryCarrierName.set)
+                Toggle("Carrier name (Secondary)", isOn: $overrides.secondaryCarrierName.set)
                 if overrides.secondaryCarrierName.set {
                     TextField("Secondary carrier name (max 64)", text: $overrides.secondaryCarrierName.text)
                         .textFieldStyle(.roundedBorder)
@@ -105,7 +107,10 @@ struct StatusBarView: View {
                 Text("Dual SIM: primary is the line used for data, secondary is the other line.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
     }
 
@@ -114,7 +119,7 @@ struct StatusBarView: View {
     private var networkCard: some View {
         WTSectionCard(header: "Network Type Label") {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Network type label (Primary)", isOn: $overrides.dataNetworkType.set)
+                Toggle("Network label (Primary)", isOn: $overrides.dataNetworkType.set)
                 if overrides.dataNetworkType.set {
                     Picker("Network type", selection: $overrides.dataNetworkType.value) {
                         ForEach(StatusBarNetworkType.options, id: \.value) { option in
@@ -123,7 +128,7 @@ struct StatusBarView: View {
                     }
                     .pickerStyle(.menu)
                 }
-                Toggle("Network type label (Secondary)", isOn: $overrides.secondaryDataNetworkType.set)
+                Toggle("Network label (Secondary)", isOn: $overrides.secondaryDataNetworkType.set)
                 if overrides.secondaryDataNetworkType.set {
                     Picker("Secondary network type", selection: $overrides.secondaryDataNetworkType.value) {
                         ForEach(StatusBarNetworkType.options, id: \.value) { option in
@@ -135,7 +140,10 @@ struct StatusBarView: View {
                 Text("Forces the label shown (5G, 5G+, 5G UC, LTE, …). Limited — the label is display-only.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
     }
 
@@ -155,7 +163,10 @@ struct StatusBarView: View {
                 Text("Sets how many bars are drawn. Static — it does not follow the real signal.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
     }
 
@@ -170,29 +181,64 @@ struct StatusBarView: View {
                 Text("Partial — some icons may still show. Hidden through the archive's suppressed identifiers.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
     }
 
-    // MARK: Photo backup (safeguard before a restore)
+    // MARK: Photo backup & restore (its own menu)
 
     private var photoBackupCard: some View {
         WTSectionCard(header: "Photos & Videos") {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("A partial restore can affect photos and videos. Back them up first — optional, you can skip it.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Backup Your Photos & Videos Here!") {
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                Divider()
+                    .padding(.leading, 14)
+                Button {
                     SoundEffects.playTap()
                     showPhotoBackup = true
+                } label: {
+                    HStack {
+                        Image(systemName: "photo.badge.plus")
+                            .foregroundStyle(.secondary)
+                        Text("Backup Your Photos & Videos Here!")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.borderedProminent)
-                Button("Your All BackUP Files Here!") {
+                .buttonStyle(.plain)
+                Divider()
+                    .padding(.leading, 14)
+                Button {
                     SoundEffects.playTap()
                     showAllBackups = true
+                } label: {
+                    HStack {
+                        Image(systemName: "photo.on.rectangle")
+                            .foregroundStyle(.secondary)
+                        Text("Your All BackUP Files Here!")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.plain)
             }
         }
     }
@@ -220,6 +266,8 @@ struct StatusBarView: View {
                 .buttonStyle(.plain)
                 .disabled(isApplying || (!overrides.hasAny && suppressedIdentifiers.isEmpty))
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
     }
 

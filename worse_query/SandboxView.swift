@@ -163,6 +163,10 @@ struct SandboxView: View {
                         utilityRow("Cache Data Cleaner", systemImage: "trash") {
                             CacheCleanerView()
                         }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Get Pairing File + VPN Status", systemImage: "key.fill") {
+                            PairingView()
+                        }
                     }
                 }
 
