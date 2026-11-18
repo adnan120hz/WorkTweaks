@@ -85,7 +85,7 @@ struct RootView: View {
                 .tag(AppTab.springboard)
 
             StatusBarView(console: console)
-                .tabItem { Label("Status Bar", systemImage: "signal") }
+                .tabItem { Label("Status Bar", systemImage: "cellularbars") }
                 .tag(AppTab.statusbar)
 
             LogView(console: console)
