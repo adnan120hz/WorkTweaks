@@ -129,7 +129,7 @@ final class PartialRestoreEngine {
                 relativePath: payload.relativePath,
                 fileID: fileID,
                 size: UInt64(payload.contents.count),
-                hash: SHA1.hash(data: payload.contents)
+                hash: Insecure.SHA1.hash(data: payload.contents)
             ))
         }
         // Minimal host manifests (a restore refuses a backup without them).
@@ -189,7 +189,7 @@ private enum MBDBManifest {
     static func fileID(domain: String, relativePath: String) -> String {
         let path = relativePath.hasPrefix("/") ? String(relativePath.dropFirst()) : relativePath
         let input = "\(domain)-\(path)"
-        let digest = SHA1.hash(data: Data(input.utf8))
+        let digest = Insecure.SHA1.hash(data: Data(input.utf8))
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 
