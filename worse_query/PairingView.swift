@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 import Darwin
 
 // MARK: - Get Pairing File + VPN Status (v6.1)
@@ -11,8 +10,10 @@ import Darwin
 //
 // Status is a dot: green = ready, gray = not ready.
 //   Get Pairing File — green when a pairing file is saved in
-//     the app (imported from SideStore / LiveContainer / iLoader
-//     / AltStore / Jitterbug / a computer). Gray when none.
+//     the app. The app obtains it on-device (iOS 27): Pair This
+//     iPhone shows a 6-digit PIN, approved in Settings › Privacy
+//     & Security › Developer Mode › Pair with WorkTweaks.
+//     Gray when none.
 //   VPN Tunnel — green when the Local Dev VPN tunnel is up
 //     (a utun interface on 10.7.x.x). Gray when not connected.
 //
@@ -110,7 +111,7 @@ enum VPNTunnelStatus {
 // MARK: - The page
 
 struct PairingView: View {
-    @State private var showImporter = false
+    @StateObject private var pairing = PairingController.shared
     @State private var statusMessage: String?
     @State private var hasPairing = PairingStore.hasPairingFile
     @State private var tunnelUp = VPNTunnelStatus.isTunnelUp
@@ -133,23 +134,23 @@ struct PairingView: View {
         .navigationTitle("Get Pairing File + VPN Status")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { refresh() }
-        .fileImporter(
-            isPresented: $showImporter,
-            allowedContentTypes: [.propertyList, .data],
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case .success(let urls):
-                guard let url = urls.first else { return }
-                if PairingStore.savePairingFile(from: url) {
-                    statusMessage = "Pairing file saved to the app."
-                } else {
-                    statusMessage = "Could not save that pairing file."
-                }
-                refresh()
-            case .failure:
-                statusMessage = "Pairing file import cancelled."
+    }
+
+    /// Starts the on-device pairing (iOS 27): shows a 6-digit PIN
+    /// to approve in Settings › Developer Mode › Pair with WorkTweaks.
+    private func startPairing() {
+        SoundEffects.playTap()
+        statusMessage = nil
+        Task {
+            do {
+                _ = try await pairing.startAndWait()
+                statusMessage = "Pairing file saved to the app."
+            } catch is CancellationError {
+                statusMessage = "Pairing cancelled."
+            } catch {
+                statusMessage = error.localizedDescription
             }
+            refresh()
         }
     }
 
@@ -176,7 +177,7 @@ struct PairingView: View {
         }
     }
 
-    // MARK: Get Pairing File
+    // MARK: Get Pairing File (on-device, iOS 27)
 
     private var pairingCard: some View {
         WTSectionCard(header: "Get Pairing File") {
@@ -193,21 +194,44 @@ struct PairingView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                Button("Import Pairing File") {
-                    SoundEffects.playTap()
-                    showImporter = true
-                }
-                .buttonStyle(.borderedProminent)
-                if hasPairing {
-                    Button("Remove Pairing File", role: .destructive) {
+                if pairing.running {
+                    Text(pairing.pairingStatus)
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let pin = pairing.pairingPIN {
+                        Text(pin)
+                            .font(.system(size: 44, weight: .bold, design: .monospaced))
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 4)
+                        Text("Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Button("Cancel Pairing") {
                         SoundEffects.playTap()
-                        PairingStore.removePairingFile()
-                        statusMessage = "Pairing file removed."
+                        pairing.softCancel()
                         refresh()
                     }
                     .buttonStyle(.bordered)
+                } else {
+                    Button("Pair This iPhone") {
+                        startPairing()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(pairing.running)
+                    if hasPairing {
+                        Button("Remove Pairing File", role: .destructive) {
+                            SoundEffects.playTap()
+                            PairingStore.removePairingFile()
+                            PairingController.deleteStoredPairingCredentials()
+                            statusMessage = "Pairing file removed."
+                            refresh()
+                        }
+                        .buttonStyle(.bordered)
+                    }
                 }
-                Text("Import a .mobiledevicepairing / .plist pairing file from SideStore, LiveContainer, iLoader, AltStore, Jitterbug, or a computer. It is saved in the app.")
+                Text("On-device pairing (iOS 27 only): the app shows a 6-digit PIN — approve it in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks. No import, no computer. The pairing file is saved in the app.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

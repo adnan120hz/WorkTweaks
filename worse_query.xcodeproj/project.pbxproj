@@ -8,7 +8,12 @@
 
 /* Begin PBXFileReference section */
 		3657C2D9303730E800908AE2 /* worse_query.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = worse_query.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3A243CE36F84FEDACB5046F /* AirliftFFI.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = worse_query/AirliftFFI.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXBuildFile section */
+		029B5ED6420541498F75A3FF /* AirliftFFI.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D3A243CE36F84FEDACB5046F /* AirliftFFI.xcframework */; };
+/* End PBXBuildFile section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3657C2DB303730E800908AE2 /* worse_query */ = {
@@ -22,6 +27,7 @@
 		3657C2D6303730E800908AE2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				029B5ED6420541498F75A3FF /* AirliftFFI.xcframework in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -250,6 +256,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WorkTweaks;
+				INFOPLIST_KEY_NSBonjourServices = "_remotepairing-pairable-host._tcp _worktweaksprobe._tcp";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WorkTweaks needs Local Network access to pair this iPhone on-device and obtain the pairing file.";
+				INFOPLIST_KEY_UIBackgroundModes = audio;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -294,6 +303,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WorkTweaks;
+				INFOPLIST_KEY_NSBonjourServices = "_remotepairing-pairable-host._tcp _worktweaksprobe._tcp";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WorkTweaks needs Local Network access to pair this iPhone on-device and obtain the pairing file.";
+				INFOPLIST_KEY_UIBackgroundModes = audio;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

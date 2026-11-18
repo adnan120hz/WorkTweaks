@@ -14,6 +14,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Fetch AirliftFFI
+        run: |
+          set -euo pipefail
+          # The 65 MB static library is not stored in this repo.
+          # Download the device slice (pinned to aircard-ios 40640c4d)
+          # so the pbxproj's AirliftFFI.xcframework reference resolves.
+          mkdir -p worse_query/AirliftFFI.xcframework/ios-arm64
+          curl -sL -o worse_query/AirliftFFI.xcframework/ios-arm64/libairlift_ffi.a \
+            "https://raw.githubusercontent.com/adnan120hz/aircard-ios/40640c4d827aeab8d798285b57d24fcf6be070d0/AirliftFFI.xcframework/ios-arm64/libairlift_ffi.a"
+          ls -lh worse_query/AirliftFFI.xcframework/ios-arm64/libairlift_ffi.a
+
       - name: Show toolchain
         run: |
           xcodebuild -version
