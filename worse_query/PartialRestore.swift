@@ -129,7 +129,7 @@ final class PartialRestoreEngine {
                 relativePath: payload.relativePath,
                 fileID: fileID,
                 size: UInt64(payload.contents.count),
-                hash: Insecure.SHA1.hash(data: payload.contents)
+                hash: Data(Insecure.SHA1.hash(data: payload.contents))
             ))
         }
         // Minimal host manifests (a restore refuses a backup without them).
