@@ -93,8 +93,8 @@ struct SpringBoardView: View {
     private var dynamicIslandCard: some View {
         WTSectionCard(header: "Dynamic Island") {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Suppress Dynamic Island Completely", isOn: $suppressDynamicIsland)
-                Text("Hides the Dynamic Island entirely. Key: SBSuppressDynamicIslandCompletely in the managed com.apple.springboard.plist (set = 1).")
+                Toggle("Disable Dynamic Island System", isOn: $suppressDynamicIsland)
+                Text("Disables the Dynamic Island system completely — not just hiding it. Key: SBSuppressDynamicIslandCompletely in the managed com.apple.springboard.plist (set = 1).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

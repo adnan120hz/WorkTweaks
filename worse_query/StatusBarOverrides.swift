@@ -297,7 +297,7 @@ enum SpringBoardOverrides {
             fromPropertyList: plist, format: .binary, options: 0)) ?? Data()
     }
 
-    /// Completely suppress the Dynamic Island.
+    /// Disable the Dynamic Island system completely.
     /// Key: `SBSuppressDynamicIslandCompletely` (Bool, set = 1).
     /// Domain: managed com.apple.springboard.plist.
     static func suppressDynamicIslandPlist(suppress: Bool) -> Data {
