@@ -13,6 +13,7 @@
 // wtPairingHostAltIRK); the RPPairing flow is aircard's.
 
 import Foundation
+import Combine
 import AirliftFFI
 
 /// Drives the RPPairing host: requests Local Network, keeps the app alive while
