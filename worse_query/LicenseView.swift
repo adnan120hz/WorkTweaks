@@ -141,7 +141,7 @@ struct LicenseView: View {
                     // Golden Nugget is the reference for the
                     // Status Bar & SpringBoard partial restore.
                     creditRow(
-                        title: "Golden Nugget",
+                        title: "Golden Nugget & WorkSlop",
                         detail: "Status Bar & SpringBoard — StatusBarOverrides.archive + SpringBoard plist keys (iOS 26 partial restore path)",
                         url: "https://github.com/GoldensHQ/GoldenNugget-mobile"
                     )

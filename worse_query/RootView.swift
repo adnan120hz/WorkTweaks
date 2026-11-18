@@ -5,7 +5,7 @@ import SwiftUI
 /// owns the selection so other views (e.g. the locked Tweaks tab)
 /// can ask to jump to a specific tab.
 enum AppTab: Hashable {
-    case sandbox, tweaks, extra, backup, log, springboard, statusbar
+    case sandbox, tweaks, extra, backup, log, springboard, statusbar, airlift
 }
 
 struct RootView: View {
@@ -87,6 +87,10 @@ struct RootView: View {
             StatusBarView(console: console)
                 .tabItem { Label("Status Bar", systemImage: "cellularbars") }
                 .tag(AppTab.statusbar)
+
+            AirliftView()
+                .tabItem { Label("Airlift", systemImage: "airplane") }
+                .tag(AppTab.airlift)
 
             LogView(console: console)
                 .tabItem { Label("Log", systemImage: "terminal") }
