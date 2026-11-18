@@ -52,7 +52,7 @@ struct StatusBarView: View {
                 Color.clear.frame(height: 60)
             }
             .navigationTitle("Status Bar")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .alert("Apply — read this first", isPresented: $showRisk) {
                 Button("Cancel", role: .cancel) { }
                 Button("Apply Anyway", role: .destructive) {
@@ -77,7 +77,7 @@ struct StatusBarView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Status Bar")
                     .font(.headline)
-                Text("Change the carrier name, network label and signal bars. iOS 27 only. Applied by the iOS 26 partial restore — a separate system from the Tweaks tab. LiveContainer is not recommended for this — use a direct install (Signed Apps) instead.")
+                Text("Change the carrier name, network label and signal bars. iOS 27 only. A separate system from the Tweaks tab. LiveContainer is not recommended for this — use a direct install (Signed Apps) instead.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -257,9 +257,6 @@ struct StatusBarView: View {
     private var applyCard: some View {
         WTSectionCard(header: "Apply") {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Applies by the iOS 26 partial restore. iOS 27 only.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 Button {
                     SoundEffects.playTap()
                     showRisk = true
