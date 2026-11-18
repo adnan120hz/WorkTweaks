@@ -214,57 +214,6 @@ enum ImageEngine {
     }
 }
 
-// MARK: - PhotosPickerItem Universal Image Loader
-
-extension PhotosPickerItem {
-    /// Loads a UIImage from the photo picker item, handling HEIC, Live Photos, ProRAW, and iCloud downloads safely.
-    func loadUIImage(maxDimension: CGFloat = 2048) async -> UIImage? {
-        // 1. Transferable DataRepresentation (automatic conversion to standard format)
-        struct ImageTransferable: Transferable {
-            let data: Data
-            static var transferRepresentation: some TransferRepresentation {
-                DataRepresentation(importedContentType: .image) { data in
-                    ImageTransferable(data: data)
-                }
-            }
-        }
-        if let result = try? await self.loadTransferable(type: ImageTransferable.self) {
-            if let img = ImageEngine.safeImageFromData(result.data, maxDimension: maxDimension) {
-                return img
-            }
-        }
-
-        // 2. Direct raw data
-        if let data = try? await self.loadTransferable(type: Data.self) {
-            if let img = ImageEngine.safeImageFromData(data, maxDimension: maxDimension) {
-                return img
-            }
-        }
-
-        // 3. File representation fallback (ideal for large camera roll photos)
-        struct FileImageTransferable: Transferable {
-            let url: URL
-            static var transferRepresentation: some TransferRepresentation {
-                FileRepresentation(importedContentType: .image) { received in
-                    let tmp = FileManager.default.temporaryDirectory
-                        .appendingPathComponent(UUID().uuidString + "_" + received.file.lastPathComponent)
-                    try? FileManager.default.copyItem(at: received.file, to: tmp)
-                    return FileImageTransferable(url: tmp)
-                }
-            }
-        }
-        if let fileResult = try? await self.loadTransferable(type: FileImageTransferable.self) {
-            defer { try? FileManager.default.removeItem(at: fileResult.url) }
-            if let data = try? Data(contentsOf: fileResult.url),
-               let img = ImageEngine.safeImageFromData(data, maxDimension: maxDimension) {
-                return img
-            }
-        }
-
-        return nil
-    }
-}
-
 // MARK: - PasscodeThemeReader (.passthm → key images)
 
 enum PasscodeThemeReader {

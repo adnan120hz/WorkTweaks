@@ -47,14 +47,7 @@ struct AirliftPasscodeView: View {
 
                 targetCard
                 flashCard
-
-                if let errorMessage = engine.errorMessage {
-                    Text(errorMessage)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 10)
-                }
+                errorBanner
 
                 // Clear the floating tab bar so the last card
                 // is not hidden behind it.
@@ -168,6 +161,19 @@ struct AirliftPasscodeView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
+        }
+    }
+
+    /// Error banner, kept as its own view so the main body stays
+    /// small enough for the type-checker.
+    @ViewBuilder
+    private var errorBanner: some View {
+        if let errorMessage = engine.errorMessage {
+            Text(errorMessage)
+                .font(.caption)
+                .foregroundStyle(.red)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 10)
         }
     }
 
@@ -446,7 +452,7 @@ struct AirliftPasscodeView: View {
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: engine.passcodeLanguageTarget == .all && engine.passcodeBoldTarget == .both ? "globe" : "bolt.fill")
                         .font(.caption)
-                        .foregroundStyle(engine.passcodeLanguageTarget == .all && engine.passcodeBoldTarget == .both ? .secondary : .orange)
+                        .foregroundStyle(engine.passcodeLanguageTarget == .all && engine.passcodeBoldTarget == .both ? Color.secondary : Color.orange)
                         .padding(.top, 1)
 
                     if engine.passcodeLanguageTarget == .all && engine.passcodeBoldTarget == .both {
@@ -674,3 +680,55 @@ struct PasscodeFlashLogView: View {
         }
     }
 }
+
+// MARK: - PhotosPickerItem Universal Image Loader
+
+extension PhotosPickerItem {
+    /// Loads a UIImage from the photo picker item, handling HEIC, Live Photos, ProRAW, and iCloud downloads safely.
+    func loadUIImage(maxDimension: CGFloat = 2048) async -> UIImage? {
+        // 1. Transferable DataRepresentation (automatic conversion to standard format)
+        struct ImageTransferable: Transferable {
+            let data: Data
+            static var transferRepresentation: some TransferRepresentation {
+                DataRepresentation(importedContentType: .image) { data in
+                    ImageTransferable(data: data)
+                }
+            }
+        }
+        if let result = try? await self.loadTransferable(type: ImageTransferable.self) {
+            if let img = ImageEngine.safeImageFromData(result.data, maxDimension: maxDimension) {
+                return img
+            }
+        }
+
+        // 2. Direct raw data
+        if let data = try? await self.loadTransferable(type: Data.self) {
+            if let img = ImageEngine.safeImageFromData(data, maxDimension: maxDimension) {
+                return img
+            }
+        }
+
+        // 3. File representation fallback (ideal for large camera roll photos)
+        struct FileImageTransferable: Transferable {
+            let url: URL
+            static var transferRepresentation: some TransferRepresentation {
+                FileRepresentation(importedContentType: .image) { received in
+                    let tmp = FileManager.default.temporaryDirectory
+                        .appendingPathComponent(UUID().uuidString + "_" + received.file.lastPathComponent)
+                    try? FileManager.default.copyItem(at: received.file, to: tmp)
+                    return FileImageTransferable(url: tmp)
+                }
+            }
+        }
+        if let fileResult = try? await self.loadTransferable(type: FileImageTransferable.self) {
+            defer { try? FileManager.default.removeItem(at: fileResult.url) }
+            if let data = try? Data(contentsOf: fileResult.url),
+               let img = ImageEngine.safeImageFromData(data, maxDimension: maxDimension) {
+                return img
+            }
+        }
+
+        return nil
+    }
+}
+

@@ -573,7 +573,7 @@ struct WalletCardRow: View {
                         .font(.caption)
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(copied ? .green : .secondary)
+                .foregroundStyle(copied ? Color.green : Color.secondary)
             }
 
             TextField("Card name (optional)", text: $renameText, onCommit: {
