@@ -25,7 +25,24 @@ struct SupportedRelease: Identifiable {
 
 enum SupportInfo {
     /// The allowlist — user-specified for v2.0, used verbatim.
+    /// iOS 26.0–26.6.2 (below 26.7.2) are iOS 26 only: App Data,
+    /// Cache Cleaner, Deploy, Package Builder and Package.
     static let supportedReleases: [SupportedRelease] = [
+        SupportedRelease(version: "iOS 26.0", build: "23A341", notes: "iOS 26 only", releaseDate: "September 15, 2025"),
+        SupportedRelease(version: "iOS 26.0.1", build: "23A355", notes: "iOS 26 only", releaseDate: "September 29, 2025"),
+        SupportedRelease(version: "iOS 26.1", build: "23B85", notes: "iOS 26 only", releaseDate: "November 3, 2025"),
+        SupportedRelease(version: "iOS 26.2", build: "23C55", notes: "iOS 26 only", releaseDate: "December 13, 2025"),
+        SupportedRelease(version: "iOS 26.2.1", build: "23C71", notes: "iOS 26 only", releaseDate: "January 26, 2026"),
+        SupportedRelease(version: "iOS 26.3", build: "23D127", notes: "iOS 26 only", releaseDate: "February 11, 2026"),
+        SupportedRelease(version: "iOS 26.3.1", build: "23D8133", notes: "iOS 26 only", releaseDate: "March 4, 2026"),
+        SupportedRelease(version: "iOS 26.4", build: "23E246", notes: "iOS 26 only", releaseDate: "March 24, 2026"),
+        SupportedRelease(version: "iOS 26.4.1", build: "23E254", notes: "iOS 26 only", releaseDate: "April 8, 2026"),
+        SupportedRelease(version: "iOS 26.4.2", build: "23E261", notes: "iOS 26 only", releaseDate: "April 22, 2026"),
+        SupportedRelease(version: "iOS 26.5", build: "23F77", notes: "iOS 26 only", releaseDate: "May 11, 2026"),
+        SupportedRelease(version: "iOS 26.5.2", build: "23F84", notes: "iOS 26 only", releaseDate: "June 29, 2026"),
+        SupportedRelease(version: "iOS 26.6", build: "23G71", notes: "iOS 26 only", releaseDate: "July 27, 2026"),
+        SupportedRelease(version: "iOS 26.6.1", build: "23G83", notes: "iOS 26 only", releaseDate: "August 17, 2026"),
+        SupportedRelease(version: "iOS 26.6.2", build: "23G90", notes: "iOS 26 only", releaseDate: "September 8, 2026"),
         SupportedRelease(version: "iOS 26.7.2", build: "23H128", notes: "Final Release (Security)", releaseDate: "October 26, 2026"),
         SupportedRelease(version: "iOS 27.0", build: "24A437", notes: "Final Release", releaseDate: "September 14, 2026"),
         SupportedRelease(version: "iOS 27.0.1", build: "24A446", notes: "Bug Fix Patch", releaseDate: "September 28, 2026"),
