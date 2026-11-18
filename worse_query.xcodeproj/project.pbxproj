@@ -59,7 +59,6 @@
 				3657C2D5303730E800908AE2 /* Sources */,
 				3657C2D6303730E800908AE2 /* Frameworks */,
 				3657C2D7303730E800908AE2 /* Resources */,
-				ED401999B113417CA18A8F3A /* Inject Pairing Info.plist Keys */,
 			);
 			buildRules = (
 			);
@@ -113,28 +112,6 @@
 			);
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		ED401999B113417CA18A8F3A /* Inject Pairing Info.plist Keys */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Inject Pairing Info.plist Keys";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Inject Bonjour services + background audio mode into the built Info.plist.\n# (INFOPLIST_KEY_* silently drops these array values, so set them directly.)\nset -e\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nif [ -f \"$PLIST\" ]; then\n  /usr/libexec/PlistBuddy -c \"Delete :NSBonjourServices\" \"$PLIST\" 2>/dev/null || true\n  /usr/libexec/PlistBuddy -c \"Add :NSBonjourServices array\" \"$PLIST\"\n  /usr/libexec/PlistBuddy -c \"Add :NSBonjourServices:0 string _remotepairing-pairable-host._tcp\" \"$PLIST\"\n  /usr/libexec/PlistBuddy -c \"Add :NSBonjourServices:1 string _worktweaksprobe._tcp\" \"$PLIST\"\n  /usr/libexec/PlistBuddy -c \"Delete :UIBackgroundModes\" \"$PLIST\" 2>/dev/null || true\n  /usr/libexec/PlistBuddy -c \"Add :UIBackgroundModes array\" \"$PLIST\"\n  /usr/libexec/PlistBuddy -c \"Add :UIBackgroundModes:0 string audio\" \"$PLIST\"\nfi\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		3657C2D5303730E800908AE2 /* Sources */ = {

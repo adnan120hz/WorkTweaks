@@ -45,6 +45,22 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build
 
+      - name: Inject pairing Info.plist keys
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          PLIST="$APP_PATH/Info.plist"
+          echo "Injecting into $PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :NSBonjourServices" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:0 string _remotepairing-pairable-host._tcp" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:1 string _worktweaksprobe._tcp" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :UIBackgroundModes" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Print :NSBonjourServices" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Print :UIBackgroundModes" "$PLIST"
+
       - name: Package IPA
         run: |
           set -euo pipefail
