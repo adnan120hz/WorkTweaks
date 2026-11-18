@@ -138,16 +138,13 @@ struct LicenseView: View {
                     .padding(.vertical, 7)
                     Divider()
                         .padding(.leading, 14)
-                    // Status Bar & SpringBoard is credited without a
-                    // link: the user named the method only.
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Status Bar & SpringBoard")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
-                        Text("Reference — StatusBarOverrides.archive + SpringBoard plist keys (iOS 26 partial restore path)")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 14)
+                    // Golden Nugget is the reference for the
+                    // Status Bar & SpringBoard partial restore.
+                    creditRow(
+                        title: "Golden Nugget",
+                        detail: "Status Bar & SpringBoard — StatusBarOverrides.archive + SpringBoard plist keys (iOS 26 partial restore path)",
+                        url: "https://github.com/GoldensHQ/GoldenNugget-mobile"
+                    )
                     .padding(.vertical, 7)
                 }
                 .padding(.vertical, 4)

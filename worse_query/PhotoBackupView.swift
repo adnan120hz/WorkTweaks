@@ -75,6 +75,8 @@ struct PhotoBackupView: View {
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
                     }
 
                     WTSectionCard {
@@ -112,6 +114,8 @@ struct PhotoBackupView: View {
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
                     }
 
                     WTSectionCard {
@@ -123,6 +127,8 @@ struct PhotoBackupView: View {
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
                     }
                 }
                 .padding(16)
@@ -261,11 +267,15 @@ struct PhotoRestoreView: View {
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
                     }
 
                     if files.isEmpty {
                         WTSectionCard {
                             Text("No backed-up photos or videos yet. Use \"Backup Your Photos & Videos Here!\" first.")
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -296,6 +306,8 @@ struct PhotoRestoreView: View {
                                     .buttonStyle(.plain)
                                 }
                             }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
                         }
 
                         Button("Restore (\(selected.count))") {

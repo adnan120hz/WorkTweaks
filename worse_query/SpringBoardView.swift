@@ -82,6 +82,7 @@ struct SpringBoardView: View {
         WTSectionCard(header: "Battery") {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Battery Percentage", isOn: $showBatteryPercentage)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 Text("Shows the battery percentage in the status bar. Key: SBShowBatteryPercentage in com.apple.springboard.plist.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -98,6 +99,7 @@ struct SpringBoardView: View {
         WTSectionCard(header: "Dynamic Island") {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Disable Dynamic Island System", isOn: $disableDynamicIsland)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 Text("Disables the Dynamic Island system completely — not just hiding it. Key: SBSuppressDynamicIslandCompletely in the managed com.apple.springboard.plist (set = 1).")
                     .font(.caption)
                     .foregroundStyle(.secondary)

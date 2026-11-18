@@ -93,12 +93,14 @@ struct StatusBarView: View {
         WTSectionCard(header: "Custom Carrier Name") {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Carrier name (Primary)", isOn: $overrides.carrierName.set)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.carrierName.set {
                     TextField("Carrier name (max 64)", text: $overrides.carrierName.text)
                         .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled()
                 }
                 Toggle("Carrier name (Secondary)", isOn: $overrides.secondaryCarrierName.set)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.secondaryCarrierName.set {
                     TextField("Secondary carrier name (max 64)", text: $overrides.secondaryCarrierName.text)
                         .textFieldStyle(.roundedBorder)
@@ -120,6 +122,7 @@ struct StatusBarView: View {
         WTSectionCard(header: "Network Type Label") {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Network label (Primary)", isOn: $overrides.dataNetworkType.set)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.dataNetworkType.set {
                     Picker("Network type", selection: $overrides.dataNetworkType.value) {
                         ForEach(StatusBarNetworkType.options, id: \.value) { option in
@@ -129,6 +132,7 @@ struct StatusBarView: View {
                     .pickerStyle(.menu)
                 }
                 Toggle("Network label (Secondary)", isOn: $overrides.secondaryDataNetworkType.set)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.secondaryDataNetworkType.set {
                     Picker("Secondary network type", selection: $overrides.secondaryDataNetworkType.value) {
                         ForEach(StatusBarNetworkType.options, id: \.value) { option in
@@ -153,10 +157,12 @@ struct StatusBarView: View {
         WTSectionCard(header: "Signal Bars") {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Signal bars (Primary)", isOn: $overrides.signalBars.set)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.signalBars.set {
                     Stepper("Bars: \(overrides.signalBars.value)", value: $overrides.signalBars.value, in: 0...4)
                 }
                 Toggle("Signal bars (Secondary)", isOn: $overrides.secondarySignalBars.set)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.secondarySignalBars.set {
                     Stepper("Secondary bars: \(overrides.secondarySignalBars.value)", value: $overrides.secondarySignalBars.value, in: 0...4)
                 }
@@ -176,8 +182,11 @@ struct StatusBarView: View {
         WTSectionCard(header: "Hide Status Bar Icons") {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Hide VPN icon", isOn: $hideVPN)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 Toggle("Hide Location icon", isOn: $hideLocation)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 Toggle("Hide Alarm icon", isOn: $hideAlarm)
+                    .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 Text("Partial — some icons may still show. Hidden through the archive's suppressed identifiers.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
