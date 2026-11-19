@@ -6,9 +6,16 @@ import SwiftUI
 /// file (Sandbox → Utilities → Get Pairing File) and a loopback VPN
 /// is strongly recommended while they run.
 struct AirliftView: View {
+    @State private var transport = TransportGate.check()
+
     var body: some View {
         NavigationStack {
             WTGlassPage {
+                if !transport.isReady {
+                    TransportGateCard(status: transport) {
+                        transport = TransportGate.check()
+                    }
+                }
                 WTSectionCard(header: "Airlift — from Aircard") {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Custom passcode keypad themes and Apple Wallet card art, flashed on-device through the Airlift exploit (iOS 18.0 – 27.2 beta 2).")
@@ -30,15 +37,20 @@ struct AirliftView: View {
                         menuRow("Passcode Themes", systemImage: "lock.circle.fill") {
                             AirliftPasscodeView()
                         }
+                        .disabled(!transport.isReady)
+                        .opacity(transport.isReady ? 1 : 0.5)
                         Divider().padding(.leading, 14)
                         menuRow("Wallet Cards", systemImage: "creditcard.fill") {
                             AirliftWalletView()
                         }
+                        .disabled(!transport.isReady)
+                        .opacity(transport.isReady ? 1 : 0.5)
                     }
                 }
             }
             .navigationTitle("Airlift")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear { transport = TransportGate.check() }
         }
     }
 

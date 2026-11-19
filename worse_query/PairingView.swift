@@ -20,29 +20,48 @@ import Darwin
 // The photo backup/restore does NOT need either of these —
 // it is local only.
 
-/// Where the pairing file lives (Documents, both canonical
-/// copies, matching the aircard convention).
+/// Where the pairing file lives (Documents, both canonical copies).
+/// The canonical name is worktweaks_pairing.plist; the old
+/// aircard_pairing.plist is still recognised once and migrated to the
+/// new name so an existing pairing is never lost by the rename.
 enum PairingStore {
     static var documentsURL: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
 
     static var primaryURL: URL {
-        documentsURL.appendingPathComponent("aircard_pairing.plist")
+        documentsURL.appendingPathComponent("worktweaks_pairing.plist")
     }
 
     static var secondaryURL: URL {
         documentsURL.appendingPathComponent("airlift_pairing.plist")
     }
 
+    static var legacyURL: URL {
+        documentsURL.appendingPathComponent("aircard_pairing.plist")
+    }
+
+    /// Moves a legacy aircard_pairing.plist to the WorkTweaks name once.
+    static func migrateLegacyPairingFile() {
+        guard !FileManager.default.fileExists(atPath: primaryURL.path),
+              FileManager.default.fileExists(atPath: legacyURL.path) else { return }
+        if let data = try? Data(contentsOf: legacyURL), !data.isEmpty {
+            try? data.write(to: primaryURL, options: .atomic)
+            try? data.write(to: secondaryURL, options: .atomic)
+            try? FileManager.default.removeItem(at: legacyURL)
+        }
+    }
+
     /// True when a pairing file is saved in the app.
     static var hasPairingFile: Bool {
-        FileManager.default.fileExists(atPath: primaryURL.path)
+        migrateLegacyPairingFile()
+        return FileManager.default.fileExists(atPath: primaryURL.path)
             || FileManager.default.fileExists(atPath: secondaryURL.path)
     }
 
     /// The saved pairing file's name, if any.
     static var savedFileName: String? {
+        migrateLegacyPairingFile()
         if FileManager.default.fileExists(atPath: primaryURL.path) {
             return primaryURL.lastPathComponent
         }
@@ -71,6 +90,7 @@ enum PairingStore {
     static func removePairingFile() {
         try? FileManager.default.removeItem(at: primaryURL)
         try? FileManager.default.removeItem(at: secondaryURL)
+        try? FileManager.default.removeItem(at: legacyURL)
     }
 }
 

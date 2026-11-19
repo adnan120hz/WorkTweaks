@@ -35,7 +35,7 @@ struct AirliftPasscodeView: View {
             WTGlassPage {
                 modeCard
 
-                if !engine.hasPairingFile {
+                if !engine.hasPairingFile || !engine.hasVPN {
                     pairingWarningCard
                 }
 
@@ -183,9 +183,9 @@ struct AirliftPasscodeView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("No pairing file")
+                    Text("Blocked — pairing / VPN not ready")
                         .font(.subheadline.weight(.semibold))
-                    Text("Flashing needs a pairing file. Pair first in Sandbox → Utilities → Get Pairing File, then come back here.")
+                    Text("Flashing needs a pairing file and the VPN tunnel. Pair first and connect the VPN in Sandbox → Utilities → Get Pairing File + VPN Status, then come back here.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

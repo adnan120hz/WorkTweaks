@@ -435,8 +435,12 @@ final class AirliftWalletEngine: ObservableObject {
     /// True when a pairing file is saved in the app.
     var hasPairingFile: Bool { PairingStore.hasPairingFile }
 
+    /// True when the Local Dev VPN tunnel is up (utun 10.7.x.x).
+    var hasVPN: Bool { VPNTunnelStatus.isTunnelUp }
+
     var canFlashCards: Bool {
         hasPairingFile &&
+        hasVPN &&
         flashPhase != .running &&
         cards.contains { $0.isSelected && ($0.skinImage != nil || $0.skinData != nil) }
     }

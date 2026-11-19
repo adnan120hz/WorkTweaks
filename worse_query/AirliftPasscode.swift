@@ -527,6 +527,11 @@ final class AirliftPasscodeEngine: ObservableObject {
         PairingStore.hasPairingFile
     }
 
+    /// True when the Local Dev VPN tunnel is up (utun 10.7.x.x).
+    var hasVPN: Bool {
+        VPNTunnelStatus.isTunnelUp
+    }
+
     /// Keys to flash: creator mode uses the per-digit custom keys;
     /// apply mode uses the loaded theme's preview keys.
     var effectiveKeys: [String: UIImage] {
@@ -539,7 +544,7 @@ final class AirliftPasscodeEngine: ObservableObject {
     }
 
     var canFlashPassthm: Bool {
-        guard hasPairingFile && flashPhase != .running else { return false }
+        guard hasPairingFile && hasVPN && flashPhase != .running else { return false }
         switch passcodeMode {
         case .applyTheme:
             return loadedTheme != nil && !(loadedTheme?.keysPreview.isEmpty ?? true)

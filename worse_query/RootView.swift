@@ -96,8 +96,14 @@ struct RootView: View {
                 .tabItem { Label("Log", systemImage: "terminal") }
                 .tag(AppTab.log)
         }
-        .onChange(of: selectedTab) { _, _ in
+        .onChange(of: selectedTab) { _, newTab in
             SoundEffects.playSwipe()
+            // The More list is iOS built-in, so it takes no tap
+            // gesture of its own — expand the sound to its picks
+            // here instead: a tab chosen from More also gets a tap.
+            if newTab == .springboard || newTab == .statusbar || newTab == .airlift || newTab == .log {
+                SoundEffects.playTap()
+            }
         }
         .onAppear {
             console.start()

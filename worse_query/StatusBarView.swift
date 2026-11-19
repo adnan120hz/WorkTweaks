@@ -19,6 +19,7 @@ struct StatusBarView: View {
     @State private var isApplying = false
     @State private var showPhotoBackup = false
     @State private var showAllBackups = false
+    @State private var transport = TransportGate.check()
 
     /// Identifiers hidden through the archive's suppressed set.
     /// Hiding is partial — some icons still show.
@@ -33,6 +34,11 @@ struct StatusBarView: View {
     var body: some View {
         NavigationStack {
             WTGlassPage {
+                if !transport.isReady {
+                    TransportGateCard(status: transport) {
+                        transport = TransportGate.check()
+                    }
+                }
                 introCard
                 carrierCard
                 networkCard
@@ -40,6 +46,7 @@ struct StatusBarView: View {
                 hideIconsCard
                 photoBackupCard
                 applyCard
+                ApplyDangerWarning()
                 if let applyMessage {
                     Text(applyMessage)
                         .font(.caption)
@@ -53,6 +60,7 @@ struct StatusBarView: View {
             }
             .navigationTitle("Status Bar")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear { transport = TransportGate.check() }
             .alert("Apply — read this first", isPresented: $showRisk) {
                 Button("Cancel", role: .cancel) { }
                 Button("Apply Anyway", role: .destructive) {
@@ -270,7 +278,7 @@ struct StatusBarView: View {
                     .foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
-                .disabled(isApplying || (!overrides.hasAny && suppressedIdentifiers.isEmpty))
+                .disabled(isApplying || (!overrides.hasAny && suppressedIdentifiers.isEmpty) || !transport.isReady)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)

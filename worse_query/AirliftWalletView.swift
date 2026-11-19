@@ -156,6 +156,11 @@ struct AirliftWalletView: View {
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
+                if !engine.hasVPN {
+                    Text("VPN tunnel is off. Open the Local Dev VPN app and connect — flashing needs it.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
@@ -342,6 +347,10 @@ struct AirliftWalletView: View {
 
                 if !engine.hasPairingFile {
                     Text("Flashing needs a pairing file. Pair this iPhone first in Sandbox → Utilities → Get Pairing File.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                } else if !engine.hasVPN {
+                    Text("Flashing needs the VPN tunnel. Open the Local Dev VPN app and connect first.")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 } else if !engine.cards.contains(where: { $0.isSelected && ($0.skinImage != nil || $0.skinData != nil) }) {

@@ -18,17 +18,24 @@ struct SpringBoardView: View {
     @State private var isApplying = false
     @State private var showPhotoBackup = false
     @State private var showAllBackups = false
+    @State private var transport = TransportGate.check()
 
     private var hasAny: Bool { showBatteryPercentage || disableDynamicIsland }
 
     var body: some View {
         NavigationStack {
             WTGlassPage {
+                if !transport.isReady {
+                    TransportGateCard(status: transport) {
+                        transport = TransportGate.check()
+                    }
+                }
                 introCard
                 batteryCard
                 dynamicIslandCard
                 photoBackupCard
                 applyCard
+                ApplyDangerWarning()
                 if let applyMessage {
                     Text(applyMessage)
                         .font(.caption)
@@ -42,6 +49,7 @@ struct SpringBoardView: View {
             }
             .navigationTitle("SpringBoard")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear { transport = TransportGate.check() }
             .alert("Apply — read this first", isPresented: $showRisk) {
                 Button("Cancel", role: .cancel) { }
                 Button("Apply Anyway", role: .destructive) {
@@ -183,7 +191,7 @@ struct SpringBoardView: View {
                     .foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
-                .disabled(isApplying || !hasAny)
+                .disabled(isApplying || !hasAny || !transport.isReady)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)

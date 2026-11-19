@@ -6,7 +6,7 @@
 // be a Mac (model Mac17,7); the user approves a 6-digit PIN in
 // Settings › Privacy & Security › Developer Mode › Pair with
 // WorkTweaks. The pairing file is written to Documents as
-// aircard_pairing.plist + airlift_pairing.plist (the canonical
+// worktweaks_pairing.plist + airlift_pairing.plist (the canonical
 // names PairingStore already uses).
 //
 // Only the names were adapted (host WorkTweaks, UserDefaults key
@@ -67,22 +67,22 @@ final class PairingController: ObservableObject {
         }
     }
 
-    /// Ensures the given pairing file is mirrored to canonical aircard_pairing.plist and airlift_pairing.plist.
+    /// Ensures the given pairing file is mirrored to canonical worktweaks_pairing.plist and airlift_pairing.plist.
     @discardableResult
     static func syncCanonicalPairingFile(from sourcePath: String) -> String {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let aircardURL = dir.appendingPathComponent("aircard_pairing.plist")
+        let worktweaksURL = dir.appendingPathComponent("worktweaks_pairing.plist")
         let airliftURL = dir.appendingPathComponent("airlift_pairing.plist")
 
         if let data = try? Data(contentsOf: URL(fileURLWithPath: sourcePath)), !data.isEmpty {
-            if sourcePath != aircardURL.path {
-                try? data.write(to: aircardURL, options: .atomic)
+            if sourcePath != worktweaksURL.path {
+                try? data.write(to: worktweaksURL, options: .atomic)
             }
             if sourcePath != airliftURL.path {
                 try? data.write(to: airliftURL, options: .atomic)
             }
-            customPairingFilePath = aircardURL.path
-            return aircardURL.path
+            customPairingFilePath = worktweaksURL.path
+            return worktweaksURL.path
         }
         return sourcePath
     }
@@ -90,12 +90,14 @@ final class PairingController: ObservableObject {
     /// Deletes every credential copy created or adopted by AirCard and clears the stored AltIRK.
     static func deleteStoredPairingCredentials() {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let aircardURL = dir.appendingPathComponent("aircard_pairing.plist")
+        let worktweaksURL = dir.appendingPathComponent("worktweaks_pairing.plist")
         let airliftURL = dir.appendingPathComponent("airlift_pairing.plist")
-        try? FileManager.default.removeItem(at: aircardURL)
+        let legacyURL = dir.appendingPathComponent("aircard_pairing.plist")
+        try? FileManager.default.removeItem(at: worktweaksURL)
         try? FileManager.default.removeItem(at: airliftURL)
+        try? FileManager.default.removeItem(at: legacyURL)
         if let custom = customPairingFilePath {
-            if custom != aircardURL.path && custom != airliftURL.path {
+            if custom != worktweaksURL.path && custom != airliftURL.path {
                 try? FileManager.default.removeItem(atPath: custom)
             }
             customPairingFilePath = nil
@@ -104,13 +106,15 @@ final class PairingController: ObservableObject {
     }
 
     /// Path where the pairing file is written or read from.
-    /// Checks for canonical aircard_pairing.plist, airlift_pairing.plist, or custom path.
+    /// Checks for canonical worktweaks_pairing.plist, airlift_pairing.plist,
+    /// the legacy aircard_pairing.plist (migrated to the new name on sight),
+    /// or a custom path.
     static func pairingFilePath() -> String {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let aircardPath = dir.appendingPathComponent("aircard_pairing.plist").path
-        if FileManager.default.fileExists(atPath: aircardPath) {
-            let size = (try? FileManager.default.attributesOfItem(atPath: aircardPath)[.size] as? Int) ?? 0
-            if size > 0 { return aircardPath }
+        let worktweaksPath = dir.appendingPathComponent("worktweaks_pairing.plist").path
+        if FileManager.default.fileExists(atPath: worktweaksPath) {
+            let size = (try? FileManager.default.attributesOfItem(atPath: worktweaksPath)[.size] as? Int) ?? 0
+            if size > 0 { return worktweaksPath }
         }
 
         let airliftPath = dir.appendingPathComponent("airlift_pairing.plist").path
@@ -118,7 +122,19 @@ final class PairingController: ObservableObject {
             let size = (try? FileManager.default.attributesOfItem(atPath: airliftPath)[.size] as? Int) ?? 0
             if size > 0 {
                 _ = syncCanonicalPairingFile(from: airliftPath)
-                return aircardPath
+                return worktweaksPath
+            }
+        }
+
+        // Legacy name from before the rename: adopt it once, then it
+        // lives under the WorkTweaks name from here on.
+        let legacyPath = dir.appendingPathComponent("aircard_pairing.plist").path
+        if FileManager.default.fileExists(atPath: legacyPath) {
+            let size = (try? FileManager.default.attributesOfItem(atPath: legacyPath)[.size] as? Int) ?? 0
+            if size > 0 {
+                _ = syncCanonicalPairingFile(from: legacyPath)
+                try? FileManager.default.removeItem(atPath: legacyPath)
+                return worktweaksPath
             }
         }
 
@@ -126,11 +142,11 @@ final class PairingController: ObservableObject {
             let size = (try? FileManager.default.attributesOfItem(atPath: custom)[.size] as? Int) ?? 0
             if size > 0 {
                 _ = syncCanonicalPairingFile(from: custom)
-                return aircardPath
+                return worktweaksPath
             }
         }
 
-        return aircardPath
+        return worktweaksPath
     }
 
     /// Start the host and resolve with the pairing-file path, or throw.
