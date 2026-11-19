@@ -138,14 +138,6 @@ struct LicenseView: View {
                     .padding(.vertical, 7)
                     Divider()
                         .padding(.leading, 14)
-                    // Golden Nugget is the reference for the
-                    // Status Bar & SpringBoard partial restore.
-                    creditRow(
-                        title: "Golden Nugget & WorkSlop",
-                        detail: "Status Bar & SpringBoard — StatusBarOverrides.archive + SpringBoard plist keys (iOS 26 partial restore path)",
-                        url: "https://github.com/GoldensHQ/GoldenNugget-mobile"
-                    )
-                    .padding(.vertical, 7)
                 }
                 .padding(.vertical, 4)
             }
@@ -154,7 +146,7 @@ struct LicenseView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     creditRow(
                         title: "Aircard",
-                        detail: "Get Pairing File + Local Dev VPN tunnel — the on-device pairing used by the partial restore.",
+                        detail: "Get Pairing File + Local Dev VPN tunnel — the on-device pairing Airlift uses to reach the device.",
                         url: "https://github.com/adnan120hz/aircard-ios"
                     )
                 }

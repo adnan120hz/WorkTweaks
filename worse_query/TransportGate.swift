@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// The pairing + VPN transport the partial restore (SpringBoard /
-/// Status Bar) and the Airlift features need. Both must be ready or
-/// the menu is blocked: a pairing file (Sandbox → Utilities →
-/// Get Pairing File) AND the Local Dev VPN tunnel up (utun 10.7.x.x).
+/// The pairing + VPN transport the Airlift features need. Both
+/// must be ready or the menu is blocked: a pairing file
+/// (Sandbox → Utilities → Get Pairing File) AND the Local Dev VPN
+/// tunnel up (utun 10.7.x.x).
 enum TransportGate {
     struct Status {
         let hasPairing: Bool
@@ -71,32 +71,3 @@ struct TransportGateCard: View {
     }
 }
 
-/// The strong warning shown directly below Apply in SpringBoard and
-/// Status Bar. The user's own words: applying deletes photos/videos,
-/// may not work on all iPhones (bootloop risk), and the restart that
-/// follows drops you on a gray lock screen where you swipe up, enter
-/// your passcode, and find your Apple ID logged out.
-struct ApplyDangerWarning: View {
-    var body: some View {
-        WTSectionCard(header: "Warning — read before you Apply") {
-            VStack(alignment: .leading, spacing: 8) {
-                warningLine(icon: "exclamationmark.triangle.fill", text: "Applying will delete your photos and videos. Back them up first (Backup Your Photos & Videos Here!).")
-                warningLine(icon: "exclamationmark.triangle.fill", text: "This may not work on all iPhones — it can cause a bootloop.")
-                warningLine(icon: "arrow.clockwise", text: "You must restart after applying. During the reboot your iPhone will show a gray lock screen — swipe up and enter your passcode. This will log you out of your Apple ID.")
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-        }
-    }
-
-    private func warningLine(icon: String, text: String) -> some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(systemName: icon)
-                .foregroundStyle(.red)
-                .padding(.top, 1)
-            Text(text)
-                .font(.subheadline)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-}

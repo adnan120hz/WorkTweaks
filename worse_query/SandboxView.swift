@@ -167,6 +167,14 @@ struct SandboxView: View {
                         utilityRow("Get Pairing File + VPN Status", systemImage: "key.fill") {
                             PairingView()
                         }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Airlift", systemImage: "airplane") {
+                            AirliftView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("All data changed", systemImage: "clock.arrow.circlepath") {
+                            AllDataChangedView()
+                        }
                     }
                 }
 

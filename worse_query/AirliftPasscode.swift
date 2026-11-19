@@ -801,6 +801,8 @@ final class AirliftPasscodeEngine: ObservableObject {
                 if allOk {
                     self.flashProgress = 1.0
                     self.flashPhase = .done(ok: true)
+                    let themeName = isCreator ? "Custom theme" : (self.loadedTheme?.name ?? "Passcode theme")
+                    ApplyHistory.record(source: "Airlift — Passcode Themes", detail: "\(themeName) flashed to the lock screen keypad.")
                     self.flashLog.append("🎉 Passcode theme applied! Lock your iPhone to see it.")
                     self.successAlertMessage = "Passcode theme successfully applied!\n\nLock your iPhone to see your new passcode keypad. If it does not show, restart your iPhone manually (Volume Up, Volume Down, then hold the Side button)."
                     self.showSuccessAlert = true

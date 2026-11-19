@@ -938,6 +938,7 @@ final class AirliftWalletEngine: ObservableObject {
                 if successCount > 0 {
                     self.flashPhase = .done(ok: true)
                     self.flashProgress = 1.0
+                    ApplyHistory.record(source: "Airlift — Wallet Cards", detail: "\(successCount)/\(selected.count) card(s) flashed with custom art.")
                     self.flashLog.append("\(successCount)/\(selected.count) card(s) flashed! Force-close Wallet app to see changes.")
                 } else {
                     self.flashPhase = .done(ok: false)

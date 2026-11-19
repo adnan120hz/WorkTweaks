@@ -1299,6 +1299,7 @@ final class GestaltManager: ObservableObject {
 
             print("(mg) successfully overwrote mobilegestalt!")
             lastError = nil
+            ApplyHistory.record(source: "Tweaks", detail: "MobileGestalt applied (tweaks + CacheExtra written).")
             refreshSnapshots()
             // The user chooses: some tweaks (especially Apple
             // Intelligence) need a full restart, not just a respring —

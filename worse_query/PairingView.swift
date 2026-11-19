@@ -5,8 +5,7 @@ import Darwin
 //
 // Lives in Sandbox → Utilities, below Cache Data Cleaner.
 // The pairing file + Local Dev VPN tunnel are the transport
-// the iOS 26 partial restore (SpringBoard / Status Bar) needs
-// to reach the device's backup service.
+// Airlift needs to reach the device.
 //
 // Status is a dot: green = ready, gray = not ready.
 //   Get Pairing File — green when a pairing file is saved in
@@ -187,7 +186,7 @@ struct PairingView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Get Pairing File + VPN Status")
                     .font(.headline)
-                Text("The pairing file + Local Dev VPN tunnel are the transport the iOS 26 partial restore (SpringBoard / Status Bar) uses to reach the device. Green = ready, gray = not ready.")
+                Text("The pairing file + Local Dev VPN tunnel are the transport Airlift uses to reach the device. Green = ready, gray = not ready.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

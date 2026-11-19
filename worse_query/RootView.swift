@@ -5,7 +5,7 @@ import SwiftUI
 /// owns the selection so other views (e.g. the locked Tweaks tab)
 /// can ask to jump to a specific tab.
 enum AppTab: Hashable {
-    case sandbox, tweaks, extra, backup, log, springboard, statusbar, airlift
+    case sandbox, tweaks, extra, backup, log
 }
 
 struct RootView: View {
@@ -80,30 +80,12 @@ struct RootView: View {
                 .tabItem { Label("Backup", systemImage: "externaldrive.badge.timemachine") }
                 .tag(AppTab.backup)
 
-            SpringBoardView(console: console)
-                .tabItem { Label("SpringBoard", systemImage: "square.grid.3x3") }
-                .tag(AppTab.springboard)
-
-            StatusBarView(console: console)
-                .tabItem { Label("Status Bar", systemImage: "cellularbars") }
-                .tag(AppTab.statusbar)
-
-            AirliftView()
-                .tabItem { Label("Airlift", systemImage: "airplane") }
-                .tag(AppTab.airlift)
-
             LogView(console: console)
                 .tabItem { Label("Log", systemImage: "terminal") }
                 .tag(AppTab.log)
         }
-        .onChange(of: selectedTab) { _, newTab in
+        .onChange(of: selectedTab) { _, _ in
             SoundEffects.playSwipe()
-            // The More list is iOS built-in, so it takes no tap
-            // gesture of its own — expand the sound to its picks
-            // here instead: a tab chosen from More also gets a tap.
-            if newTab == .springboard || newTab == .statusbar || newTab == .airlift || newTab == .log {
-                SoundEffects.playTap()
-            }
         }
         .onAppear {
             console.start()
