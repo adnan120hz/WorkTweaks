@@ -642,7 +642,7 @@ final class AirliftPasscodeEngine: ObservableObject {
         errorMessage = nil
 
         if VPNTunnelStatus.tunnelAddresses.isEmpty {
-            flashLog.append("⚠️ Notice: Loopback VPN (LocalDevVPN or SideStore WireGuard) is strongly recommended for on-device operations.")
+            flashLog.append("⚠️ Notice: Loopback VPN (LocalDevVPN) is strongly recommended for on-device operations.")
         }
 
         let pairingPath = PairingController.pairingFilePath()
