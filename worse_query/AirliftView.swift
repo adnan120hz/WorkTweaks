@@ -23,7 +23,7 @@ struct AirliftView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                     Divider().padding(.leading, 14)
-                    Text("Both need a pairing file first: Sandbox → Utilities → Get Pairing File. A loopback VPN (Local Dev VPN or SideStore WireGuard) is strongly recommended while flashing.")
+                    Text("Both need a pairing file first: Sandbox → Utilities → Get Pairing File. A loopback VPN (Local Dev VPN) is strongly recommended while flashing.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
