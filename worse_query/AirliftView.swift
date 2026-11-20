@@ -9,49 +9,47 @@ struct AirliftView: View {
     @State private var transport = TransportGate.check()
 
     var body: some View {
-        NavigationStack {
-            WTGlassPage {
-                if !transport.isReady {
-                    TransportGateCard(status: transport) {
-                        transport = TransportGate.check()
-                    }
-                }
-                WTSectionCard(header: "Airlift — from Aircard") {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text("Custom passcode keypad themes and Apple Wallet card art, flashed on-device through the Airlift exploit (iOS 18.0 – 27.2 beta 2).")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                        Divider().padding(.leading, 14)
-                        Text("Both need a pairing file first: Sandbox → Utilities → Get Pairing File. A loopback VPN (Local Dev VPN or SideStore WireGuard) is strongly recommended while flashing.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                    }
-                }
-
-                WTSectionCard(header: "Menus") {
-                    VStack(alignment: .leading, spacing: 0) {
-                        menuRow("Passcode Themes", systemImage: "lock.circle.fill") {
-                            AirliftPasscodeView()
-                        }
-                        .disabled(!transport.isReady)
-                        .opacity(transport.isReady ? 1 : 0.5)
-                        Divider().padding(.leading, 14)
-                        menuRow("Wallet Cards", systemImage: "creditcard.fill") {
-                            AirliftWalletView()
-                        }
-                        .disabled(!transport.isReady)
-                        .opacity(transport.isReady ? 1 : 0.5)
-                    }
+        WTGlassPage {
+            if !transport.isReady {
+                TransportGateCard(status: transport) {
+                    transport = TransportGate.check()
                 }
             }
-            .navigationTitle("Airlift")
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear { transport = TransportGate.check() }
+            WTSectionCard(header: "Airlift — from Aircard") {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Custom passcode keypad themes and Apple Wallet card art, flashed on-device through the Airlift exploit (iOS 18.0 – 27.2 beta 2).")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                    Divider().padding(.leading, 14)
+                    Text("Both need a pairing file first: Sandbox → Utilities → Get Pairing File. A loopback VPN (Local Dev VPN or SideStore WireGuard) is strongly recommended while flashing.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                }
+            }
+
+            WTSectionCard(header: "Menus") {
+                VStack(alignment: .leading, spacing: 0) {
+                    menuRow("Passcode Themes", systemImage: "lock.circle.fill") {
+                        AirliftPasscodeView()
+                    }
+                    .disabled(!transport.isReady)
+                    .opacity(transport.isReady ? 1 : 0.5)
+                    Divider().padding(.leading, 14)
+                    menuRow("Wallet Cards", systemImage: "creditcard.fill") {
+                        AirliftWalletView()
+                    }
+                    .disabled(!transport.isReady)
+                    .opacity(transport.isReady ? 1 : 0.5)
+                }
+            }
         }
+        .navigationTitle("Airlift")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { transport = TransportGate.check() }
     }
 
     /// One Airlift menu row: label on the left, chevron on the right,

@@ -31,103 +31,101 @@ struct AirliftPasscodeView: View {
     @State private var showKeyFileImporter = false
 
     var body: some View {
-        NavigationStack {
-            WTGlassPage {
-                modeCard
+        WTGlassPage {
+            modeCard
 
-                if !engine.hasPairingFile || !engine.hasVPN {
-                    pairingWarningCard
-                }
+            if !engine.hasPairingFile || !engine.hasVPN {
+                pairingWarningCard
+            }
 
-                if engine.passcodeMode == .applyTheme {
-                    applySection
-                } else {
-                    creatorSection
-                }
+            if engine.passcodeMode == .applyTheme {
+                applySection
+            } else {
+                creatorSection
+            }
 
-                targetCard
-                flashCard
-                errorBanner
+            targetCard
+            flashCard
+            errorBanner
 
-                // Clear the floating tab bar so the last card
-                // is not hidden behind it.
-                Color.clear.frame(height: 60)
+            // Clear the floating tab bar so the last card
+            // is not hidden behind it.
+            Color.clear.frame(height: 60)
+        }
+        .navigationTitle("Passcode Theme")
+        .navigationBarTitleDisplayMode(.inline)
+        .fileImporter(
+            isPresented: $showThemeImporter,
+            allowedContentTypes: [
+                UTType(filenameExtension: "passthm") ?? .archive,
+                UTType.zip,
+                UTType.archive
+            ],
+            allowsMultipleSelection: false
+        ) { result in
+            importPassthm(result: result)
+        }
+        .photosPicker(
+            isPresented: $showKeyPhotosPicker,
+            selection: $keyPickerItems,
+            maxSelectionCount: 1,
+            matching: .images
+        )
+        .onChange(of: keyPickerItems) { _, items in
+            guard let item = items.first,
+                  let digit = keyPickerDigit else {
+                if items.isEmpty { keyPickerDigit = nil }
+                return
             }
-            .navigationTitle("Passcode Theme")
-            .navigationBarTitleDisplayMode(.inline)
-            .fileImporter(
-                isPresented: $showThemeImporter,
-                allowedContentTypes: [
-                    UTType(filenameExtension: "passthm") ?? .archive,
-                    UTType.zip,
-                    UTType.archive
-                ],
-                allowsMultipleSelection: false
-            ) { result in
-                importPassthm(result: result)
-            }
-            .photosPicker(
-                isPresented: $showKeyPhotosPicker,
-                selection: $keyPickerItems,
-                maxSelectionCount: 1,
-                matching: .images
-            )
-            .onChange(of: keyPickerItems) { _, items in
-                guard let item = items.first,
-                      let digit = keyPickerDigit else {
-                    if items.isEmpty { keyPickerDigit = nil }
-                    return
+            let currentDigit = digit
+            Task {
+                if let image = await item.loadUIImage(maxDimension: 1024) {
+                    await MainActor.run { engine.setIndividualKey(digit: currentDigit, image: image) }
                 }
-                let currentDigit = digit
-                Task {
-                    if let image = await item.loadUIImage(maxDimension: 1024) {
-                        await MainActor.run { engine.setIndividualKey(digit: currentDigit, image: image) }
-                    }
-                    await MainActor.run {
-                        keyPickerItems = []
-                        keyPickerDigit = nil
-                    }
-                }
-            }
-            .fileImporter(
-                isPresented: $showKeyFileImporter,
-                allowedContentTypes: [.image, .png, .jpeg, .heic],
-                allowsMultipleSelection: false
-            ) { result in
-                guard let digit = keyPickerDigit else { return }
-                defer { keyPickerDigit = nil }
-                guard case .success(let urls) = result, let url = urls.first else { return }
-                guard url.startAccessingSecurityScopedResource() else { return }
-                defer { url.stopAccessingSecurityScopedResource() }
-                if let data = try? Data(contentsOf: url),
-                   let image = ImageEngine.safeImageFromData(data, maxDimension: 1024) {
-                    engine.setIndividualKey(digit: digit, image: image)
-                }
-            }
-            .confirmationDialog(
-                "Choose Key \(keyPickerDigit ?? "") Image Source",
-                isPresented: $showKeySourceDialog,
-                titleVisibility: .visible
-            ) {
-                Button {
-                    showKeyPhotosPicker = true
-                } label: {
-                    Label("Photo Library", systemImage: "photo.on.rectangle")
-                }
-                Button {
-                    showKeyFileImporter = true
-                } label: {
-                    Label("Choose from Files…", systemImage: "folder")
-                }
-                Button("Cancel", role: .cancel) {
+                await MainActor.run {
+                    keyPickerItems = []
                     keyPickerDigit = nil
                 }
             }
-            .alert("Passcode theme applied", isPresented: $engine.showSuccessAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(engine.successAlertMessage)
+        }
+        .fileImporter(
+            isPresented: $showKeyFileImporter,
+            allowedContentTypes: [.image, .png, .jpeg, .heic],
+            allowsMultipleSelection: false
+        ) { result in
+            guard let digit = keyPickerDigit else { return }
+            defer { keyPickerDigit = nil }
+            guard case .success(let urls) = result, let url = urls.first else { return }
+            guard url.startAccessingSecurityScopedResource() else { return }
+            defer { url.stopAccessingSecurityScopedResource() }
+            if let data = try? Data(contentsOf: url),
+               let image = ImageEngine.safeImageFromData(data, maxDimension: 1024) {
+                engine.setIndividualKey(digit: digit, image: image)
             }
+        }
+        .confirmationDialog(
+            "Choose Key \(keyPickerDigit ?? "") Image Source",
+            isPresented: $showKeySourceDialog,
+            titleVisibility: .visible
+        ) {
+            Button {
+                showKeyPhotosPicker = true
+            } label: {
+                Label("Photo Library", systemImage: "photo.on.rectangle")
+            }
+            Button {
+                showKeyFileImporter = true
+            } label: {
+                Label("Choose from Files…", systemImage: "folder")
+            }
+            Button("Cancel", role: .cancel) {
+                keyPickerDigit = nil
+            }
+        }
+        .alert("Passcode theme applied", isPresented: $engine.showSuccessAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(engine.successAlertMessage)
         }
     }
 
