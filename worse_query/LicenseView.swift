@@ -24,7 +24,7 @@ struct LicenseView: View {
                 .padding(.vertical, 10)
             }
 
-            WTSectionCard(header: "Compatibility — Supported iOS Versions & Builds", footer: "WorkTweaks v3.0 only opens on the builds listed above: the app checks your device's build at launch, and any other build gets the \"not supported\" screen instead of the app. On iOS 26 (below 26.7.2), only App Data, Cache Cleaner, Deploy, Package Builder and Package are supported. Developed and tested on iOS 27.0.1 (24A446).") {
+            WTSectionCard(header: "Compatibility — Supported iOS Versions & Builds", footer: "WorkTweaks v3.0 only opens on the builds listed above: the app checks your device's build at launch, and any other build gets the \"not supported\" screen instead of the app. On iOS 18 and iOS 26, only App Data and Airlift are supported (partial support). Developed and tested on iOS 27.0.1 (24A446).") {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(SupportInfo.supportedReleases.enumerated()), id: \.element.id) { index, release in
                         if index > 0 {

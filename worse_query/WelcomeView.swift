@@ -138,7 +138,7 @@ struct WelcomeView: View {
             }
 
             HStack(spacing: 8) {
-                chip(icon: "checkmark.shield", text: "iOS 26.0 – 27.3 Beta")
+                chip(icon: "checkmark.shield", text: "iOS 18.0 – 27.3 Beta")
                 chip(icon: "iphone", text: "No Jailbreak")
                 chip(icon: "lock.open", text: "Open Source")
             }
@@ -240,7 +240,7 @@ struct WelcomeView: View {
     private var compatibilitySection: some View {
         WTSectionCard(header: "Compatibility") {
             VStack(alignment: .leading, spacing: 8) {
-                Text("iOS 26.0 (23A341) — iOS 27.3 Beta 1 (24C5037i)")
+                Text("iOS 18.0 Beta 1 (22A5282m) — iOS 27.3 Beta 1 (24C5037i)")
                     .font(.subheadline.weight(.semibold))
                 Text("v3.0 checks your device's build at launch and only opens on the supported builds. The full version & build list lives in License & Credits.")
                     .font(.caption)
