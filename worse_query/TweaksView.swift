@@ -723,9 +723,8 @@ struct TweaksView: View {
                     Text("iPhone Air").tag("air")
                 }
 
-                if hasHomeButton() {
-                    Text("iPhone X Gestures").tag("x")
-                }
+                Text("iPhone X Gestures").tag("x")
+                Text("iPhone SE").tag("se")
             }
             .labelsHidden()
             .pickerStyle(.menu)

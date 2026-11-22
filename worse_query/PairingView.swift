@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import Darwin
 
 // MARK: - Get Pairing File + VPN Status (v6.1)
@@ -9,10 +10,11 @@ import Darwin
 //
 // Status is a dot: green = ready, gray = not ready.
 //   Get Pairing File — green when a pairing file is saved in
-//     the app. The app obtains it on-device (iOS 27): Pair This
-//     iPhone shows a 6-digit PIN, approved in Settings › Privacy
-//     & Security › Developer Mode › Pair with WorkTweaks.
-//     Gray when none.
+//     the app. Two ways to get one: on-device (iOS 27) via
+//     Pair This iPhone, which shows a 6-digit PIN approved in
+//     Settings › Privacy & Security › Developer Mode › Pair
+//     with WorkTweaks; or Import Pairing File, a manual .plist
+//     import from the computer. Gray when none.
 //   VPN Tunnel — green when the Local Dev VPN tunnel is up
 //     (a utun interface on 10.7.x.x). Gray when not connected.
 //
@@ -132,6 +134,7 @@ enum VPNTunnelStatus {
 struct PairingView: View {
     @StateObject private var pairing = PairingController.shared
     @State private var statusMessage: String?
+    @State private var showPairingImporter = false
     @State private var hasPairing = PairingStore.hasPairingFile
     @State private var tunnelUp = VPNTunnelStatus.isTunnelUp
     @State private var tunnelAddresses: [String] = VPNTunnelStatus.tunnelAddresses
@@ -153,6 +156,13 @@ struct PairingView: View {
         .navigationTitle("Get Pairing File + VPN Status")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { refresh() }
+        .fileImporter(
+            isPresented: $showPairingImporter,
+            allowedContentTypes: [.propertyList],
+            allowsMultipleSelection: false
+        ) { result in
+            importPairingFile(result: result)
+        }
     }
 
     /// Starts the on-device pairing (iOS 27): shows a 6-digit PIN
@@ -177,6 +187,41 @@ struct PairingView: View {
         hasPairing = PairingStore.hasPairingFile
         tunnelUp = VPNTunnelStatus.isTunnelUp
         tunnelAddresses = VPNTunnelStatus.tunnelAddresses
+    }
+
+    /// Imports a pairing file (.plist) picked by the user:
+    /// validates that it parses as a plist dictionary, then
+    /// saves it via PairingStore (both canonical copies).
+    private func importPairingFile(result: Result<[URL], Error>) {
+        SoundEffects.playTap()
+        statusMessage = nil
+        guard case .success(let urls) = result, let url = urls.first else {
+            if case .failure(let error) = result {
+                statusMessage = error.localizedDescription
+            }
+            return
+        }
+        guard url.startAccessingSecurityScopedResource() else {
+            statusMessage = "Could not access that file."
+            return
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
+        guard let data = try? Data(contentsOf: url) else {
+            statusMessage = "Could not read that file."
+            return
+        }
+        var format: PropertyListSerialization.PropertyListFormat?
+        let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: &format)
+        guard plist is [String: Any] else {
+            statusMessage = "That file is not a pairing file."
+            return
+        }
+        if PairingStore.savePairingFile(from: url) {
+            statusMessage = "Pairing file imported."
+        } else {
+            statusMessage = "Could not save that pairing file."
+        }
+        refresh()
     }
 
     // MARK: Intro
@@ -239,6 +284,11 @@ struct PairingView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(pairing.running)
+                    Button("Import Pairing File") {
+                        SoundEffects.playTap()
+                        showPairingImporter = true
+                    }
+                    .buttonStyle(.bordered)
                     if hasPairing {
                         Button("Remove Pairing File", role: .destructive) {
                             SoundEffects.playTap()
@@ -250,7 +300,7 @@ struct PairingView: View {
                         .buttonStyle(.bordered)
                     }
                 }
-                Text("On-device pairing (iOS 27 only): the app shows a 6-digit PIN — approve it in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks. No import, no computer. The pairing file is saved in the app.")
+                Text("Two ways to get a pairing file: Pair This iPhone (iOS 27 only) shows a 6-digit PIN — approve it in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks. Or import a pairing file (.plist) from your computer manually. The pairing file is saved in the app.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

@@ -993,6 +993,7 @@ final class GestaltManager: ObservableObject {
         case "duo": return 2034
         case "air": return 2736
         case "x": return 2436
+        case "se": return 2436  // GestaltEdit: 2436 is "iPhone X Gestures (SE)"
         default: return 0
         }
     }
