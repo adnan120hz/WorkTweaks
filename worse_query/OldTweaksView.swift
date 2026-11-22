@@ -196,6 +196,15 @@ struct OldTweaksView: View {
                 TextField("Device Name", text: $manager.deviceName)
                     .autocorrectionDisabled()
             }
+
+            Toggle("Custom Region Model", isOn: $manager.enableCustomRegion)
+                .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
+
+            if manager.enableCustomRegion {
+                TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.characters)
+            }
         } header: {
             Label("Device Artwork", systemImage: "paintbrush.pointed")
         }
