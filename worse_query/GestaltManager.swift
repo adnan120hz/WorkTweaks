@@ -371,14 +371,23 @@ enum SiriAICachePatch {
             print("(siri-ai) cache patch slot at byte \(guideOffset) (guide line 104)")
             return (guideOffset, nil)
         }
-        // 2. Scan every 51-byte-aligned chunk for the pattern.
+        // 2. Scan every byte offset for the pattern, not just
+        // 2. Scan every byte offset for the pattern, not just
+        // 51-byte-aligned chunks: on newer iOS the same 51-byte
+        // shape can sit at a shifted offset when CacheData grows.
+        // The shape itself is unchanged (byte 13 = 0x01, flip
+        // byte 21 = 0x00/0x02, rest 0x00) and exactly one match
+        // is required, so no offset is ever guessed.
+        // (Restored from v5.3.1 — the v5.2.1 restore that v6.1
+        // was built from had lost this unaligned scan, so a
+        // shifted slot was missed on every iOS.)
         var matches: [Int] = []
         var offset = 0
         while offset + lineLength <= cacheData.length {
             if lineMatches(bytes, at: offset, flip: 0x00) || lineMatches(bytes, at: offset, flip: 0x02) {
                 matches.append(offset)
             }
-            offset += lineLength
+            offset += 1
         }
         guard matches.count == 1 else {
             if matches.isEmpty {
