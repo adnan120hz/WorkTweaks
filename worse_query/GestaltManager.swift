@@ -382,6 +382,7 @@ enum SiriAICachePatch {
         }
         guard matches.count == 1 else {
             if matches.isEmpty {
+                logPatternDiagnostics(bytes, cacheData.length)
                 return (nil, "Siri AI cache pattern not found in CacheData.")
             }
             return (nil, "Siri AI cache pattern is ambiguous (\(matches.count) matches) — edit line 104 in Filza instead.")
@@ -389,6 +390,37 @@ enum SiriAICachePatch {
         cachedOffset = matches[0]
         print("(siri-ai) cache patch slot at byte \(matches[0]) (pattern scan)")
         return (matches[0], nil)
+    }
+
+    /// Dumps what the pattern scan saw, so a "not found" on a new
+    /// iOS version can be decoded from the Log alone instead of
+    /// needing the whole CacheData file: the CacheData length, the
+    /// guide chunk (line 104) as hex, and every 51-byte-aligned
+    /// chunk that contains a 0x01 byte (the marker the Siri AI slot
+    /// carries) with its non-zero byte positions. The slot moved
+    /// or reshaped on the new iOS if it is not the 27.0.1 shape
+    /// (byte 13 = 0x01, byte 21 = flip, rest zero).
+    private static func logPatternDiagnostics(_ bytes: UnsafePointer<UInt8>, _ length: Int) {
+        print("(siri-ai) pattern not found — CacheData length \(length) bytes, \(length / lineLength) chunks")
+        let guideOffset = guideLineChunk * lineLength
+        if guideOffset + lineLength <= length {
+            let hex = (0..<lineLength).map { String(format: "%02x", bytes[guideOffset + $0]) }.joined(separator: " ")
+            print("(siri-ai) guide chunk 97 (line 104): \(hex)")
+        } else {
+            print("(siri-ai) guide chunk 97 (line 104): out of range (CacheData too short)")
+        }
+        var offset = 0
+        var chunk = 0
+        while offset + lineLength <= length {
+            var hasMarker = false
+            for i in 0..<lineLength where bytes[offset + i] == 0x01 { hasMarker = true; break }
+            if hasMarker {
+                let nz = (0..<lineLength).filter { bytes[offset + $0] != 0 }.map { "\($0)=0x\(String(format: "%02x", bytes[offset + $0]))" }.joined(separator: " ")
+                print("(siri-ai) chunk \(chunk) @\(offset) has 0x01: \(nz)")
+            }
+            offset += lineLength
+            chunk += 1
+        }
     }
 
     static func isOn(in cacheData: NSData) -> Bool {
