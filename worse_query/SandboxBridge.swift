@@ -22,10 +22,7 @@ let workGestaltAppGroup = "group.cc.forcequit.worse-query"
 ///      This is the only source that exists when there is no
 ///      provisioning profile at all, e.g. under LiveContainer, where
 ///      the guest app runs inside the host process with the host's
-///      entitlements. (SecTaskCopyValueForEntitlement is the macOS
-///      spelling of this read and is not in the iOS SDK — csops is
-///      the syscall SecTask itself calls under the hood, so it is
-///      the iOS equivalent.)
+///      entitlements.
 ///   2. The app's embedded provisioning profile, whose Entitlements
 ///      section lists the application-groups the signed app has.
 ///   3. The configured value, signer-style derivations from the
@@ -175,34 +172,6 @@ enum AppGroupResolver {
             }
         }
         print("[AppGroup] using: \(resolvedGroup)")
-    }
-
-    // MARK: Host + UI diagnostics
-
-    /// Whether the app is running as a LiveContainer guest. A guest
-    /// runs inside the LiveContainer host process, so its bundle
-    /// lives under the host's container. A native / SideStore /
-    /// AltStore install has its own bundle path.
-    static var isLiveContainerGuest: Bool {
-        Bundle.main.bundlePath.localizedCaseInsensitiveContains("LiveContainer")
-    }
-
-    /// One-line host description for the diagnostics card.
-    static var hostDescription: String {
-        if isLiveContainerGuest { return "LiveContainer (guest)" }
-        if signedEntitlements() != nil { return "Signed install (SideStore / AltStore / iLoader)" }
-        return "Unknown host"
-    }
-
-    /// Structured probe results for the in-app diagnostics card:
-    /// every candidate group with whether its container resolves.
-    static var diagnosticRows: [(group: String, url: URL?)] {
-        probe()
-    }
-
-    /// True when at least one candidate group has a container.
-    static var hasUsableGroup: Bool {
-        probe().contains { $0.url != nil }
     }
 }
 

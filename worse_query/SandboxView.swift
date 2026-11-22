@@ -381,16 +381,6 @@ struct PathEnumerationPage: View {
 
 struct AppGroupPage: View {
     @Binding var groupText: String
-    @State private var rows: [(group: String, url: URL?)] = []
-    @State private var host = ""
-    @State private var hasUsable = true
-
-    private func refresh() {
-        rows = AppGroupResolver.diagnosticRows
-        host = AppGroupResolver.hostDescription
-        hasUsable = AppGroupResolver.hasUsableGroup
-        AppGroupResolver.logDiagnostics()
-    }
 
     var body: some View {
         WTGlassPage {
@@ -408,7 +398,7 @@ struct AppGroupPage: View {
                     Button {
                         AppGroupResolver.configuredGroup = groupText
                         print("[AppGroup] configured group set to: \(groupText)")
-                        refresh()
+                        AppGroupResolver.logDiagnostics()
                     } label: {
                         Text("Save App Group ID")
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -421,7 +411,7 @@ struct AppGroupPage: View {
                         .padding(.leading, 14)
 
                     Button {
-                        refresh()
+                        AppGroupResolver.logDiagnostics()
                     } label: {
                         Text("App Group Diagnostics")
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -431,64 +421,8 @@ struct AppGroupPage: View {
                     }
                 }
             }
-
-            WTSectionCard(header: "Diagnostics") {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        Text("Host")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(host)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 11)
-
-                    Divider()
-                        .padding(.leading, 14)
-
-                    ForEach(rows, id: \.group) { row in
-                        HStack {
-                            Image(systemName: row.url != nil ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundStyle(row.url != nil ? Color.green : Color.red)
-                            Text(row.group)
-                                .font(.system(.body, design: .monospaced))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                            Spacer()
-                            Text(row.url != nil ? "OK" : "No container")
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 11)
-                        Divider()
-                            .padding(.leading, 14)
-                    }
-
-                    HStack {
-                        Text("Using")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(AppGroupResolver.resolvedGroup)
-                            .font(.system(.body, design: .monospaced))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 11)
-
-                    if !hasUsable {
-                        Divider()
-                            .padding(.leading, 14)
-                        Text("LiveContainer App Group-nya Unknown/merah. Reinstall host lewat SideStore/AltStore dengan \u{2018}Keep All Extensions\u{2019} / Use Main Profile.")
-                            .foregroundStyle(.red)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 11)
-                    }
-                }
-            }
         }
         .navigationTitle("App Group")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { refresh() }
     }
 }
