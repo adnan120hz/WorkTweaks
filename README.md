@@ -5,7 +5,7 @@
 <h1 align="center">WorkTweaks</h1>
 
 <p align="center">
-  A MobileGestalt tweak app for iOS 26 &amp; 27 — unlock your device's hidden features without a jailbreak, powered by the <strong>worse_query</strong> sandbox escape.
+  A MobileGestalt tweak app for iOS 18, 26 &amp; 27 — unlock your device's hidden features without a jailbreak, powered by the <strong>worse_query</strong> sandbox escape.
 </p>
 
 <p align="center">
@@ -16,8 +16,9 @@
 
 ## Features
 
-- **Install without manual signing** *(new in v4.0)* — WorkTweaks reads its App Group dynamically from the entitlements of the running process and tries every App Group in the signature until one works (multi-group fallback), so it no longer depends on a manually-signed provisioning profile. Install the unsigned IPA with SideStore, AltStore, or LiveContainer and the tweaks work — device-verified in LiveContainer.
-- **Tweaks** — WorkTweaks' own catalog of 24 tweaks: Dynamic Island, Always-On Display, Apple Intelligence, Siri AI Cache Patch *(new in v4.3; pattern fix in v4.3.1)*, Stage Manager, Charge Limit, Action Button, Camera Control, iPadOS Mode, device spoofing, and more — applied with WorkTweaks' own in-place MobileGestalt write system, so tweaks persist across resprings and reboots. The catalog is organized into sections (All, Dynamic Island, Tweaks, Apple Intelligence, Add feature, Apply/Revert) with a search page. The Tweaks tab offers a **New UI / Old UI** choice *(new in v4.2)* — the current two-column layout or the v1 list layout, picked in Sandbox under Start Tweaks Feature; it applies to the Tweaks tab only. **(new in v5.1)** The Dynamic Island card has a **Fix Status Bar!** guide, the subtype picker gains **iPhone 18 Pro** (iOS 27.0.1+), **iPhone 18 Pro Max** (iOS 27.0.1+) and **iPhone Duo** (iOS 27.3+), menus and features play soft sound effects (toggle in Sandbox), section switches animate smoothly, and the app rotates to landscape when orientation lock is off. *(v5.1.1 refines the transition sound to a calmer one, and every toggle now plays a tap sound.)* *(v5.2 adds iPhone 17 Pro / 17 Pro Max subtypes and an iPhone Duo spoofing device.)* *(v5.2.1 adds a "Fix Apple Intelligence Here!" guide next to the Apple Intelligence toggle.)*
+- **Install without manual signing** *(new in v4.0)* — WorkTweaks reads its App Group dynamically from the entitlements of the running process and tries every App Group in the signature until one works (multi-group fallback), so it no longer depends on a manually-signed provisioning profile. Install the unsigned IPA with SideStore or AltStore and the tweaks work.
+- **Tweaks** — WorkTweaks' own catalog of 24 tweaks: Dynamic Island, Always-On Display, Apple Intelligence, Siri AI Cache Patch *(new in v4.3; pattern fix in v4.3.1)*, Stage Manager, Charge Limit, Action Button, Camera Control, iPadOS Mode, device spoofing, and more — applied with WorkTweaks' own in-place MobileGestalt write system, so tweaks persist across resprings and reboots. The catalog is organized into sections (All, Dynamic Island, Tweaks, Apple Intelligence, Add feature, Apply/Revert) with a search page. The Tweaks tab offers a **New UI / Old UI** choice *(new in v4.2)* — the current two-column layout or the v1 list layout, picked in Sandbox under Start Tweaks Feature; it applies to the Tweaks tab only. **(new in v5.1)** The Dynamic Island card has a **Fix Status Bar!** guide, the subtype picker gains **iPhone 18 Pro** (iOS 27.0.1+), **iPhone 18 Pro Max** (iOS 27.0.1+) and **iPhone Duo** (iOS 27.3+), menus and features play soft sound effects (toggle in Sandbox), section switches animate smoothly, and the app rotates to landscape when orientation lock is off. *(v5.1.1 refines the transition sound to a calmer one, and every toggle now plays a tap sound.)* *(v5.2 adds iPhone 17 Pro / 17 Pro Max subtypes and an iPhone Duo spoofing device.)* *(v5.2.1 adds a "Fix Apple Intelligence Here!" guide next to the Apple Intelligence toggle.)* *(v6.1 restores Custom Region Model from v5.3 — type the sales-region suffix, e.g. PA/A, under Custom Device Name; the Siri AI Cache Patch pattern scan now checks every byte offset, so it finds the slot on all iOS versions; and the subtype picker gains iPhone X Gestures and iPhone SE.)*
+- **Airlift & pairing** *(new in v6.1)* — Sandbox → Utilities: **Get Pairing File** obtains the pairing file on-device (iOS 27: Pair This iPhone shows a 6-digit PIN to approve in Settings) or imports one manually (.plist), and **Airlift** flashes Passcode Themes and Wallet Cards over the pairing + Local Dev VPN transport. **All data changed** keeps a history of everything ever applied.
 - **App Data** — browse the data containers of the apps on your device, open and edit text files in place, edit binary files byte by byte with the hex editor (a pristine backup is taken before the first byte edit), and add files and folders.
 - **Cache Data Cleaner** *(new in v3.13)* — Sandbox → Utilities: pick an app, see how much cache it keeps in `Library/Caches` and `tmp`, and empty those two folders after a confirmation. Only the contents of those two cache folders are deleted — Documents and the rest of Library are never touched — and the freed space is measured, not estimated.
 - **PosterBoard** — import `.tendies` wallpaper packages into PosterBoard's data store and remove the wallpapers you imported, tracked by receipts. The built-in **wallpaper maker** *(new in v4.1)* creates PosterBoard wallpapers on-device from a photo or a video (first 12 seconds, loop on/off) and installs them through the same verified path. On iOS 27.3 the container search falls back to a direct enumeration of the Application containers root when the shared scan misses it *(new in v4.3.1)*.
@@ -31,21 +32,57 @@
 
 ## Supported iOS versions
 
-WorkTweaks checks your exact iOS version and build at launch — only the builds below are supported, and unsupported devices stop at an "unsupported" screen instead of running with unknown keys:
+WorkTweaks checks your exact iOS version and build at launch — only the builds below are supported, and unsupported devices stop at an "unsupported" screen instead of running with unknown keys. **iOS 18 and iOS 26 are partially supported** (App Data + Airlift only); **iOS 27 is fully supported**:
 
-| Version | Build |
-| --- | --- |
-| iOS 26.7.2 | 23H128 |
-| iOS 27.0 | 24A437 |
-| iOS 27.0.1 | 24A446 |
-| iOS 27.2 Beta 1 | 24B5084k |
-| iOS 27.2 Beta 2 | 24B5089g |
-| iOS 27.2 Beta 3 | 24B5099f |
-| iOS 27.2 Beta 4 | 24B5110a |
-| iOS 27.2 RC | 24B115 |
-| iOS 27.2 | 24B119 |
-| iOS 27.3 Beta 1 | 24C5037i |
-
+| Version | Build | Support |
+| --- | --- | --- |
+| iOS 18.0 Beta 1 | 22A5282m | Partial (App Data + Airlift) |
+| iOS 18.0 Beta 2 | 22A5297f | Partial (App Data + Airlift) |
+| iOS 18.0 Beta 3 | 22A5307f | Partial (App Data + Airlift) |
+| iOS 18.0 Beta 3 Update | 22A5307i | Partial (App Data + Airlift) |
+| iOS 18.0 Beta 4 | 22A5316j | Partial (App Data + Airlift) |
+| iOS 18.0 Beta 4 Update | 22A5316k | Partial (App Data + Airlift) |
+| iOS 18.0 Beta 5 | 22A5326f | Partial (App Data + Airlift) |
+| iOS 18.0 Beta 6 | 22A5338b | Partial (App Data + Airlift) |
+| iOS 18.0 Beta 7 | 22A5346a | Partial (App Data + Airlift) |
+| iOS 18.0 Beta 8 | 22A5350a | Partial (App Data + Airlift) |
+| iOS 18.0 | 22A3354 | Partial (App Data + Airlift) |
+| iOS 26.0 | 23A341 | Partial (App Data + Airlift) |
+| iOS 26.0.1 | 23A355 | Partial (App Data + Airlift) |
+| iOS 26.1 | 23B85 | Partial (App Data + Airlift) |
+| iOS 26.2 | 23C55 | Partial (App Data + Airlift) |
+| iOS 26.2.1 | 23C71 | Partial (App Data + Airlift) |
+| iOS 26.3 | 23D127 | Partial (App Data + Airlift) |
+| iOS 26.3.1 | 23D8133 | Partial (App Data + Airlift) |
+| iOS 26.4 | 23E246 | Partial (App Data + Airlift) |
+| iOS 26.4.1 | 23E254 | Partial (App Data + Airlift) |
+| iOS 26.4.2 | 23E261 | Partial (App Data + Airlift) |
+| iOS 26.5 | 23F77 | Partial (App Data + Airlift) |
+| iOS 26.5.2 | 23F84 | Partial (App Data + Airlift) |
+| iOS 26.6 | 23G71 | Partial (App Data + Airlift) |
+| iOS 26.6.1 | 23G83 | Partial (App Data + Airlift) |
+| iOS 26.6.2 | 23G90 | Partial (App Data + Airlift) |
+| iOS 26.7.2 | 23H128 | Partial (App Data + Airlift) |
+| iOS 27.0 Beta 1 | 24A5355q | Full |
+| iOS 27.0 Beta 2 | 24A5370h | Full |
+| iOS 27.0 Beta 3 | 24A5380h | Full |
+| iOS 27.0 Beta 4 | 24A5390f | Full |
+| iOS 27.0 Beta 5 | 24A5408d | Full |
+| iOS 27.0 Beta 6 | 24A5418b | Full |
+| iOS 27.0 Beta 7 | 24A5424a | Full |
+| iOS 27.0 Beta 8 | 24A5430a | Full |
+| iOS 27.0 RC | 24A435 | Full |
+| iOS 27.0 | 24A437 | Full |
+| iOS 27.0.1 | 24A446 | Full |
+| iOS 27.1 | 24B91034 | Full |
+| iOS 27.2 Beta 1 | 24B5084k | Full |
+| iOS 27.2 Beta 2 | 24B5089g | Full |
+| iOS 27.2 Beta 3 | 24B5099f | Full |
+| iOS 27.2 Beta 4 | 24B5110a | Full |
+| iOS 27.2 RC | 24B115 | Full |
+| iOS 27.2 | 24B119 | Full |
+| iOS 27.2.1 | 24B156 | Full |
+| iOS 27.3 Beta 1 | 24C5037i | Full |
 Developed and tested on **iOS 27.0.1 (24A446)**.
 
 ## Companion app — Signed Apps
@@ -117,7 +154,7 @@ WorkTweaks is distributed as an unsigned IPA. Whichever route you take, the IPA 
 5. **Signing** section: set the Bundle ID to the same `cc.forcequit.worse-query.<your Team ID>` — check this field *after* choosing the IPA, because picking an IPA resets it to the IPA's original ID — then tap **Sign IPA**.
 6. **Export** the signed IPA and install it. The signed IPA already carries your own profile, so a plain installer is enough for this last step.
 
-**Option 3 — SideStore / AltStore / LiveContainer (no manual signing, v4.0+).** Install the unsigned IPA directly with SideStore, AltStore, or LiveContainer — no certificate, provisioning, or computer signing needed. WorkTweaks finds its App Group from the running process and works as installed.
+**Option 3 — SideStore / AltStore (no manual signing, v4.0+).** Install the unsigned IPA directly with SideStore or AltStore — no certificate, provisioning, or computer signing needed. WorkTweaks finds its App Group from the running process and works as installed.
 
 **What does NOT work:** signing WorkTweaks directly with **KSign**, or with **ESign's shared/free certificates** (the same applies to Sideloadly). Those signers cannot register the App Group under your team, so the signed result has no working App Group entitlement — WorkTweaks then cannot apply its tweaks. ESign is fine as the *installer* in step 6 for an IPA that Signed Apps has already signed; it just cannot do the provisioning itself.
 
@@ -125,5 +162,5 @@ WorkTweaks is distributed as an unsigned IPA. Whichever route you take, the IPA 
 
 - Every push to `main` builds an unsigned IPA in GitHub Actions (artifact `WorkTweaks-unsigned-ipa`).
 - The Xcode target is intentionally still named `worse_query` — only the display name is WorkTweaks.
-- The app must keep an App Group entitlement when signed. WorkTweaks reads its App Group dynamically from the entitlements of the running process at runtime (with multi-group fallback), so signer-rewritten bundle ids, team-suffixed groups, and installs via SideStore/AltStore/LiveContainer work automatically.
+- The app must keep an App Group entitlement when signed. WorkTweaks reads its App Group dynamically from the entitlements of the running process at runtime (with multi-group fallback), so signer-rewritten bundle ids, team-suffixed groups, and installs via SideStore/AltStore work automatically.
 - Use at your own risk — tweaks modify system files. Keep your original backup.
