@@ -210,7 +210,7 @@ struct PairingView: View {
             statusMessage = "Could not read that file."
             return
         }
-        var format: PropertyListSerialization.PropertyListFormat?
+        var format = PropertyListSerialization.PropertyListFormat.xml
         let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: &format)
         guard plist is [String: Any] else {
             statusMessage = "That file is not a pairing file."
