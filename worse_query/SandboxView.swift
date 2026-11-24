@@ -65,10 +65,10 @@ struct SandboxView: View {
         NavigationStack {
             WTGlassPage {
                 // Front door identity: app icon, name, and this
-                // device's support status — v7.0 flag-themed
-                // header: flag + "{Language} Version" under the
-                // name, version in the theme color, and the
-                // language picker row at the bottom.
+                // device's support status — v7.0 themed header:
+                // "{Language} Version" under the name (name text
+                // only, no flag graphic), version in the theme
+                // color, and the language picker row at the bottom.
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 14) {
@@ -93,15 +93,11 @@ struct SandboxView: View {
                                 + Text(" v\(appVersion)")
                                     .font(.caption)
                                     .foregroundStyle(lang.theme.accent)
-                                HStack(alignment: .center, spacing: 5) {
-                                    WTFlagView(language: lang.language)
-                                        .frame(width: 22, height: 15)
-                                    Text(lang.language.versionLabel)
-                                        // Wraps to two lines at large
-                                        // Dynamic Type sizes instead
-                                        // of truncating.
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
+                                Text(lang.language.versionLabel)
+                                    // Wraps to two lines at large
+                                    // Dynamic Type sizes instead
+                                    // of truncating.
+                                    .fixedSize(horizontal: false, vertical: true)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 // Badge centered against the FULL
@@ -140,14 +136,13 @@ struct SandboxView: View {
                         Divider()
                             .padding(.leading, 14)
 
-                        // Language picker row: flag + language
-                        // name; tapping opens the 4-language sheet.
+                        // Language picker row: language name
+                        // only, no flag; tapping opens the
+                        // 5-language sheet.
                         Button {
                             showLanguagePicker = true
                         } label: {
                             HStack(spacing: 10) {
-                                WTFlagView(language: lang.language)
-                                    .frame(width: 26, height: 18)
                                 Text(lang.tr("Language"))
                                     .font(.subheadline)
                                 Spacer(minLength: 0)
@@ -564,9 +559,10 @@ struct AppGroupPage: View {
 
 // MARK: - Language picker sheet (v7.0)
 //
-// The four languages with their drawn flags. Tapping one
-// switches the language immediately — the whole app
-// re-translates and re-themes with no restart.
+// The five languages, shown by name text only (no flag
+// graphics). Tapping one switches the language
+// immediately — the whole app re-translates and
+// re-themes with no restart.
 
 struct LanguagePickerSheet: View {
     @EnvironmentObject private var lang: WTLangStore
@@ -582,8 +578,6 @@ struct LanguagePickerSheet: View {
                         dismiss()
                     } label: {
                         HStack(spacing: 12) {
-                            WTFlagView(language: language)
-                                .frame(width: 32, height: 22)
                             Text(language.displayName)
                                 .foregroundStyle(.primary)
                             Spacer()

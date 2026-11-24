@@ -1,11 +1,14 @@
 import SwiftUI
 
-/// The seven main tabs, Sandbox first: it is the app's front door
+/// The five main tabs, Sandbox first: it is the app's front door
 /// (it holds the "Start Tweaks Feature" master switch). RootView
 /// owns the selection so other views (e.g. the locked Tweaks tab)
-/// can ask to jump to a specific tab.
+/// can ask to jump to a specific tab. Status Bar and
+/// SpringBoard are NOT tabs: they live only as Sandbox menu
+/// rows (below "Voice Memos & AI Cache"), so iOS never
+/// builds a "More" tab.
 enum AppTab: Hashable {
-    case sandbox, tweaks, extra, backup, log, springboard, statusbar
+    case sandbox, tweaks, extra, backup, log
 }
 
 struct RootView: View {
@@ -36,8 +39,9 @@ struct RootView: View {
                 UnsupportedView()
             }
         }
-        // The tint follows the language's flag theme (blue for
-        // English, red for Indonesian/Chinese/Vietnamese) — it
+        // The tint follows the selected language's theme
+        // color (blue for English, red for Indonesian/
+        // Chinese/Vietnamese, dark blue for Russian) — it
         // drives toggles, the selected tab, the segmented
         // picker and links app-wide.
         .tint(langStore.theme.accent)
@@ -89,26 +93,12 @@ struct RootView: View {
                 .tabItem { Label(langStore.tr("Backup"), systemImage: "externaldrive.badge.timemachine") }
                 .tag(AppTab.backup)
 
-            SpringBoardView(console: console)
-                .tabItem { Label("SpringBoard", systemImage: "square.grid.3x3") }
-                .tag(AppTab.springboard)
-
-            StatusBarView(console: console)
-                .tabItem { Label(langStore.tr("Status Bar"), systemImage: "cellularbars") }
-                .tag(AppTab.statusbar)
-
             LogView(console: console)
                 .tabItem { Label("Log", systemImage: "terminal") }
                 .tag(AppTab.log)
         }
-        .onChange(of: selectedTab) { _, newTab in
+        .onChange(of: selectedTab) { _, _ in
             SoundEffects.playSwipe()
-            // The More list is iOS built-in, so it takes no tap
-            // gesture of its own — expand the sound to its picks
-            // here instead: a tab chosen from More also gets a tap.
-            if newTab == .springboard || newTab == .statusbar || newTab == .log {
-                SoundEffects.playTap()
-            }
         }
         .onAppear {
             console.start()

@@ -56,8 +56,8 @@ extension View {
 /// The scrolling page shell: a stack of section cards over the
 /// system grouped background, with the Tweaks page's margins.
 /// No logos in the background: plain grouped background only.
-/// The flag theme lives in accent colors/gradients and in the
-/// small foreground flag indicators, never in a background.
+/// The flag theme lives in accent colors/gradients only —
+/// no flag graphics anywhere in the UI.
 struct WTGlassPage<Content: View>: View {
     @EnvironmentObject private var lang: WTLangStore
     @ViewBuilder let content: () -> Content

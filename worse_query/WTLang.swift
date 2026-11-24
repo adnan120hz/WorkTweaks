@@ -35,8 +35,8 @@ enum WTLanguage: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .enUS: return "English (US)"
-        case .id: return "Bahasa Indonesia"
-        case .zhHans: return "中文 (简体)"
+        case .id: return "Indonesia"
+        case .zhHans: return "中文"
         case .vi: return "Tiếng Việt"
         case .ru: return "Русский"
         }
