@@ -170,6 +170,10 @@ struct SandboxView: View {
                             AdCacheBlockerView()
                         }
                         Divider().padding(.leading, 14)
+                        utilityRow("Save Vault", systemImage: "archivebox") {
+                            SaveVaultView()
+                        }
+                        Divider().padding(.leading, 14)
                         utilityRow("Get Pairing File + VPN Status", systemImage: "key.fill") {
                             PairingView()
                         }

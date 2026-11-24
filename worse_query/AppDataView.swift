@@ -236,6 +236,12 @@ struct AppDataDirectoryView: View {
                     } label: {
                         Label("Add Folder", systemImage: "folder.badge.plus")
                     }
+                    Divider()
+                    NavigationLink {
+                        AppDataLargestFilesView(container: container)
+                    } label: {
+                        Label("Largest Files", systemImage: "arrow.down.circle")
+                    }
                 } label: {
                     Image(systemName: "plus")
                 }

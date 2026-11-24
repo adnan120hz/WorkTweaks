@@ -132,6 +132,13 @@ struct LicenseView: View {
                     )
                     Divider()
                         .padding(.leading, 14)
+                    creditRow(
+                        title: "WCMigrate — yangokok886",
+                        detail: "Reference — APFS save-vault idea (clonefile staging, atomic swap with rollback).",
+                        url: "https://github.com/yangokok886/WCMigrate"
+                    )
+                    Divider()
+                        .padding(.leading, 14)
                     // Toto is credited without a link: the
                     // user named the person only, no URL was given.
                     VStack(alignment: .leading, spacing: 3) {
@@ -206,6 +213,11 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     LabeledContent("Erosion-CN — Kianuni", value: "GPL-3.0")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("WCMigrate — yangokok886", value: "GPL-3.0")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }
