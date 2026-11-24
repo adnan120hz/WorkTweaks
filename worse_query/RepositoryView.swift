@@ -70,7 +70,7 @@ enum RepositoryStore {
     /// app, when it was installed before. Matching is by
     /// bundle ID — the one app a package may touch.
     static func installedReceipt(for entry: Entry) -> DeployReceipt? {
-        DeployManager.loadHistory().first { $0.receipt.bundleID == entry.package.bundleID }
+        DeployManager.loadHistory().first { $0.receipt.bundleID == entry.package.bundleID }?.receipt
     }
 
     /// Human date for a receipt timestamp (ISO8601 in the
