@@ -65,17 +65,24 @@ struct TutorialsView: View {
 
             WTSectionCard(header: wtLang.tr("Guide C — Turn On New Siri AI"), footer: wtLang.tr("This only makes the Join Waitlist button appear. The Siri AI model may still refuse to download — that part is not solved by this method yet.")) {
                 VStack(alignment: .leading, spacing: 0) {
-                    step(1, wtLang.tr("In the Tweaks tab, Apple Intelligence section, turn on Apple Intelligence and Siri AI Cache Patch. The cache patch is the Filza line-104 edit (one CacheData byte, 0x00 to 0x02) — done here, no Filza needed."))
+                    // The patch is manual now (the automatic
+                    // pattern is ambiguous on some devices):
+                    // steps 1–3 are the shared Siri guide.
+                    step(1, wtLang.tr(SiriManualGuide.plistSteps[0]))
                     Divider().padding(.leading, 14)
-                    step(2, wtLang.tr("Set the Spoofing picker (under Apple Intelligence) to iPhone 17 Pro (iPhone18,1)."))
+                    step(2, wtLang.tr(SiriManualGuide.plistSteps[1]))
                     Divider().padding(.leading, 14)
-                    step(3, wtLang.tr("Turn on the Charge Limit Menu toggle (Add feature section)."))
+                    step(3, wtLang.tr(SiriManualGuide.plistSteps[2]))
                     Divider().padding(.leading, 14)
-                    step(4, wtLang.tr("Go to the Apply/Revert section and tap Apply, then Respring. When the respring finishes, restart your iPhone."))
+                    step(4, wtLang.tr("Set the Spoofing picker (under Apple Intelligence) to iPhone 17 Pro (iPhone18,1)."))
                     Divider().padding(.leading, 14)
-                    step(5, wtLang.tr("Open Settings → Apple Intelligence & Siri and tap Join Waitlist. Wait about 15 minutes for it to be accepted."))
+                    step(5, wtLang.tr("Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section)."))
                     Divider().padding(.leading, 14)
-                    step(6, wtLang.tr("Connect your iPhone to power, connect to Wi-Fi, and leave the Settings → General → iPhone Storage tab open for about 1 hour while the model downloads."))
+                    step(6, wtLang.tr("Go to the Apply/Revert section and tap Apply, then Respring. When the respring finishes, restart your iPhone."))
+                    Divider().padding(.leading, 14)
+                    step(7, wtLang.tr("Open Settings → Apple Intelligence & Siri and tap Join Waitlist. Wait about 15 minutes for it to be accepted."))
+                    Divider().padding(.leading, 14)
+                    step(8, wtLang.tr("Connect your iPhone to power, connect to Wi-Fi, and leave the Settings → General → iPhone Storage tab open for about 1 hour while the model downloads."))
                 }
                 .padding(.vertical, 4)
             }

@@ -600,7 +600,7 @@ enum TweakCatalog {
             title: "Apple Intelligence",
             minv: 18.1,
             infoType: .info,
-            infoMessage: "How to use this tweak (see also Tutorials > Guide C — Turn On New Siri AI):\n1. Turn on this toggle and Siri AI Cache Patch.\n2. Set Spoofing (below) to iPhone 17 Pro (iPhone18,1).\n3. Turn on the Charge Limit Menu toggle.\n4. Apply, respring, then restart. Join Waitlist should appear in Settings > Apple Intelligence & Siri — tap it and wait about 15 minutes.\n5. Connect iPhone to power and leave the Settings > Storage tab open for ~1 hour while the model downloads.\n\nNOTE: Do not spoof back. The waitlist may appear while the model still refuses to download — that part is not solved yet.",
+            infoMessage: "How to use this tweak (see also Tutorials > Guide C — Turn On New Siri AI):\n1. Turn on this toggle, then do the Siri AI Cache Patch by hand (see the Siri AI Cache Patch card — it is a manual line-104 edit now).\n2. Set Spoofing (below) to iPhone 17 Pro (iPhone18,1).\n3. Turn on the Charge Limit Menu toggle.\n4. Apply, respring, then restart. Join Waitlist should appear in Settings > Apple Intelligence & Siri — tap it and wait about 15 minutes.\n5. Connect iPhone to power and leave the Settings > Storage tab open for ~1 hour while the model downloads.\n\nNOTE: Do not spoof back. The waitlist may appear while the model still refuses to download — that part is not solved yet.",
             keys: ["A62OafQ85EJAiiqKn4agtg"],
             canApply: { _ in nil },
             read: { dict in
@@ -618,23 +618,27 @@ enum TweakCatalog {
         ),
 
         // Siri AI Cache Patch — the Filza line-104 edit from the
-        // published "turn on new Siri AI" method, done inside
-        // WorkTweaks instead of Filza: one CacheData byte (line
+        // published "turn on new Siri AI" method, done by hand
+        // in WorkTweaks instead of Filza: one CacheData byte (line
         // 104 of com.apple.MobileGestalt.plist, byte 21 of that
-        // 51-byte line) flipped 0x00 -> 0x02. Used together with
-        // the Apple Intelligence toggle, a spoof to an Apple
-        // Intelligence device (Spoofing picker: iPhone 17 Pro),
-        // and the Charge Limit Menu toggle; Apply, respring,
-        // then restart, and Join Waitlist appears in Settings >
-        // Apple Intelligence & Siri. Honest limit (the method's
-        // own author says so): this makes the waitlist appear;
-        // the model download may still refuse.
+        // 51-byte line) flipped 0x00 -> 0x02 in the Mobile
+        // Gestalt.plist text editor. The automatic toggle is
+        // gone: on some devices the 51-byte shape matches more
+        // than once ("ambiguous") and the patch refuses to guess,
+        // so the user flips the byte on line 104 by hand. Used
+        // together with the Apple Intelligence toggle, a spoof to
+        // an Apple Intelligence device (Spoofing picker: iPhone
+        // 17 Pro), and the Charge Limit Menu toggle; Apply,
+        // respring, then restart, and Join Waitlist appears in
+        // Settings > Apple Intelligence & Siri. Honest limit (the
+        // method's own author says so): this makes the waitlist
+        // appear; the model download may still refuse.
         GestaltTweak(
             id: slug("Siri AI Cache Patch"),
             title: "Siri AI Cache Patch",
             minv: 18.1,
             infoType: .warning,
-            infoMessage: "The Filza line-104 edit, done here instead of Filza.\n\nUse with the Apple Intelligence toggle, Spoofing set to iPhone 17 Pro (iPhone18,1), and the Charge Limit Menu toggle. Then Apply, respring, and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri; tap it and wait about 15 minutes.\n\nThis only makes the waitlist appear. The Siri AI model may still refuse to download — that part is not solved by this method. Turning this off and applying restores the byte; Revert restores the original file.",
+            infoMessage: "The Filza line-104 edit, done by hand in WorkTweaks: open \"Mobile Gestalt.plist\" (below this card) → Open with Text Editor → jump to line 104 → change the 30th base64 character from A to g → Save. A pristine backup is made before the first save; Restore is in the viewer.\n\nThe automatic patch is off because the pattern can match more than once — the toggle refuses to guess. Use with the Apple Intelligence toggle, Spoofing set to iPhone 17 Pro (iPhone18,1), and the Charge Limit Menu toggle. Then Apply, respring, and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri; tap it and wait about 15 minutes.\n\nThis only makes the waitlist appear. The Siri AI model may still refuse to download — that part is not solved by this method. To turn the patch off, change the character back from g to A and Save; Revert restores the original file.",
             keys: [],
             canApply: { dict in
                 guard let cacheData = dict["CacheData"] as? NSMutableData else {

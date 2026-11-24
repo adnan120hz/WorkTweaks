@@ -411,8 +411,13 @@ struct TweaksView: View {
                 .padding(.vertical, 4)
         } else {
             ForEach(searchResults) { tweak in
-                TweakCard(manager: manager, tweak: tweak, onInfo: showInfo(for:))
-                    .disabled(tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
+                if tweak.id == "siri_ai_cache_patch" {
+                    SiriGuideCard(manager: manager)
+                    MobileGestaltPlistMenuRow(manager: manager)
+                } else {
+                    TweakCard(manager: manager, tweak: tweak, onInfo: showInfo(for:))
+                        .disabled(tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
+                }
 
                 // The follower cards behave exactly as in the
                 // section views: the subtype picker under
@@ -625,8 +630,16 @@ struct TweaksView: View {
     @ViewBuilder
     private var sectionCards: some View {
         ForEach(visibleTweaks(for: selectedSection)) { tweak in
-            TweakCard(manager: manager, tweak: tweak, onInfo: showInfo(for:))
-                .disabled(tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
+            if tweak.id == "siri_ai_cache_patch" {
+                // Manual now: the guide card instead of the auto
+                // toggle, and the Mobile Gestalt.plist menu row
+                // directly below it.
+                SiriGuideCard(manager: manager)
+                MobileGestaltPlistMenuRow(manager: manager)
+            } else {
+                TweakCard(manager: manager, tweak: tweak, onInfo: showInfo(for:))
+                    .disabled(tweak.id == "enable_ipados_mode" && ipadOSModeLocked)
+            }
 
             // The Dynamic Island model picker lives directly
             // under its tweak's card.

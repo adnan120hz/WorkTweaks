@@ -30,6 +30,13 @@ struct OldTweaksView: View {
     @AppStorage("atomic_write") private var atomicWrite = true
     @State private var showFixStatusBarGuide = false
     @State private var showFixAppleIntelligenceGuide = false
+    @State private var showSiriGuide = false
+
+    /// The manual Siri patch's current state (chunk 97 of
+    /// CacheData, read from the in-memory dict).
+    private var siriPatchState: SiriPatchState {
+        SiriPatchState.current(cacheData: manager.dictNow["CacheData"] as? Data)
+    }
 
     var body: some View {
         List {
@@ -59,6 +66,11 @@ struct OldTweaksView: View {
             Button(wtLang.tr("OK")) { }
         } message: {
             Text(wtLang.tr("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading."))
+        }
+        .alert(wtLang.tr("Siri AI Cache Patch"), isPresented: $showSiriGuide) {
+            Button(wtLang.tr("OK")) { }
+        } message: {
+            Text(SiriManualGuide.fullText(wtLang: wtLang))
         }
     }
 
@@ -281,7 +293,36 @@ struct OldTweaksView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Color.accentColor)
             }
-            OldTweakToggle(manager: manager, title: "Siri AI Cache Patch", onInfo: onInfo)
+            // Siri AI Cache Patch is manual now (the automatic
+            // pattern is ambiguous on some devices): a Read
+            // Tutorial row, and the Mobile Gestalt.plist menu
+            // row directly below it.
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Siri AI Cache Patch")
+                        .font(.subheadline.weight(.medium))
+                    Text(siriPatchState.line(wtLang: wtLang))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button(wtLang.tr("Read Tutorial")) {
+                    SoundEffects.playTap()
+                    showSiriGuide = true
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.accentColor)
+                .buttonStyle(.plain)
+            }
+            .padding(.vertical, 2)
+            NavigationLink {
+                MobileGestaltPlistView(manager: manager)
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "doc.text")
+                    Text("Mobile Gestalt.plist")
+                        .font(.subheadline.weight(.medium))
+                }
+            }
 
             HStack(spacing: 10) {
                 Picker(wtLang.tr("Spoofing"), selection: $manager.productType) {
