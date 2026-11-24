@@ -1000,6 +1000,10 @@ enum WTStrings {
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "Lalu nyalakan toggle Apple Intelligence dan Charge Limit Menu, atur Spoofing ke iPhone 17 Pro, Apply, respring lalu restart — Join Waitlist akan muncul di Settings > Apple Intelligence & Siri.",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "Nyalakan toggle Apple Intelligence dan Charge Limit Menu (bagian Add feature).",
 
+        "Edit the Siri line": "Edit baris Siri",
+        "Change one character on the Siri line to flip the patch — you don't need to read the whole file.": "Ubah satu karakter di baris Siri untuk membalik patch — Anda tidak perlu membaca seluruh file.",
+        "View file lines": "Lihat baris file",
+
     ]
 
     // Chinese (Simplified)
@@ -1885,6 +1889,10 @@ enum WTStrings {
         "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "在该行，将第 30 个 base64 字符从 A 改为 g（这会将 CacheData 第 21 个字节从 0x00 翻转为 0x02）。要再次关闭补丁，请将其从 g 改回 A。然后点击 Save——首次保存前会创建原始备份。",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "然后打开 Apple Intelligence 和 Charge Limit Menu 开关，将 Spoofing 设为 iPhone 17 Pro，点击 Apply、重新启动 SpringBoard 并重启设备——“加入候补名单”将出现在“设置”>“Apple Intelligence 与 Siri”中。",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "打开 Apple Intelligence 开关和 Charge Limit Menu 开关（Add feature 部分）。",
+
+        "Edit the Siri line": "编辑 Siri 行",
+        "Change one character on the Siri line to flip the patch — you don't need to read the whole file.": "只需修改 Siri 行上的一个字符即可翻转补丁——无需阅读整个文件。",
+        "View file lines": "查看文件行",
 
     ]
 
@@ -2772,6 +2780,10 @@ enum WTStrings {
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "Sau đó bật Apple Intelligence và nút Charge Limit Menu, đặt Spoofing thành iPhone 17 Pro, Apply, respring rồi khởi động lại — Join Waitlist sẽ xuất hiện trong Cài đặt > Apple Intelligence & Siri.",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "Bật nút Apple Intelligence và nút Charge Limit Menu (mục Add feature).",
 
+        "Edit the Siri line": "Chỉnh sửa dòng Siri",
+        "Change one character on the Siri line to flip the patch — you don't need to read the whole file.": "Chỉ cần thay đổi một ký tự trên dòng Siri để lật bản vá — bạn không cần đọc toàn bộ tệp.",
+        "View file lines": "Xem các dòng của tệp",
+
     ]
 
     // Russian
@@ -3657,6 +3669,10 @@ enum WTStrings {
         "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "В этой строке измените 30-й символ base64 с A на g (это переключит 21-й байт CacheData с 0x00 на 0x02). Чтобы снова выключить патч, верните с g на A. Затем нажмите Save — перед первым сохранением создаётся исходная резервная копия.",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "Затем включите Apple Intelligence и переключатель Charge Limit Menu, установите Spoofing на iPhone 17 Pro, нажмите Apply, выполните respring и перезагрузите устройство — кнопка Join Waitlist появится в «Настройки» > «Apple Intelligence и Siri».",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "Включите переключатели Apple Intelligence и Charge Limit Menu (раздел Add feature).",
+
+        "Edit the Siri line": "Редактировать строку Siri",
+        "Change one character on the Siri line to flip the patch — you don't need to read the whole file.": "Измените один символ в строке Siri, чтобы переключить патч — читать весь файл не нужно.",
+        "View file lines": "Просмотреть строки файла",
 
     ]
 }

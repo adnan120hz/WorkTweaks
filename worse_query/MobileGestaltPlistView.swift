@@ -11,6 +11,22 @@ import Combine
 // with line numbers, and an editor with a find field so the
 // user can jump to line 104 and flip the Siri byte by hand.
 //
+// Layout is edit-first: the "Open with Text Editor" and
+// "Jump to Siri line" actions sit at the TOP of the page, so
+// the first thing the user sees is how to edit; the read-only
+// lines list lives below them, collapsed behind "View file
+// lines". (Before, the editor link sat below a 420pt-tall
+// read-only list, so the user never found it and tried typing
+// in the read-only lines — which cannot type.)
+//
+// Typing in the editor is a real UITextView (FindableTextEditor).
+// It fills the editor page (.frame maxWidth/maxHeight .infinity —
+// a scrolling UITextView reports no intrinsic height, so without
+// the frame it can collapse to a strip with nothing to tap) and
+// takes focus on open and on "Jump to Siri line", so the
+// keyboard is up and the Siri character is selected — the user
+// just types over it.
+//
 // Representation, verified from the engine (GestaltManager):
 // the file is read fresh from disk after the session grant
 // (MGPaths.gestalt) and serialized to XML with
@@ -303,6 +319,11 @@ private struct FindableTextEditor: UIViewRepresentable {
     @Binding var jumpToSiriCharLine: Int?
     @Binding var findRequest: FindRequest?
     @Binding var matchInfo: String
+    /// Set to true to bring the keyboard up for the text view
+    /// (cleared once served). The editor sets it on open so the
+    /// user can type immediately instead of hunting for a tap
+    /// target.
+    @Binding var focusRequest: Bool
 
     func makeUIView(context: Context) -> UITextView {
         let tv = UITextView()
@@ -314,19 +335,31 @@ private struct FindableTextEditor: UIViewRepresentable {
         tv.smartInsertDeleteType = .no
         tv.spellCheckingType = .no
         tv.backgroundColor = .clear
+        tv.keyboardDismissMode = .interactive
         tv.delegate = context.coordinator
         return tv
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {
         if uiView.text != text { uiView.text = text }
+        if focusRequest {
+            DispatchQueue.main.async {
+                uiView.becomeFirstResponder()
+                self.focusRequest = false
+            }
+        }
         if let line = jumpToLine {
             context.coordinator.goToLine(line, in: uiView)
             DispatchQueue.main.async { self.jumpToLine = nil }
         }
         if let line = jumpToSiriCharLine {
             context.coordinator.selectSiriChar(line, in: uiView)
-            DispatchQueue.main.async { self.jumpToSiriCharLine = nil }
+            // The character is selected so the user can type over
+            // it right away — bring the keyboard up with it.
+            DispatchQueue.main.async {
+                uiView.becomeFirstResponder()
+                self.jumpToSiriCharLine = nil
+            }
         }
         if let request = findRequest, context.coordinator.lastFindNonce != request.nonce {
             context.coordinator.lastFindNonce = request.nonce
@@ -456,27 +489,12 @@ struct MobileGestaltPlistView: View {
                     .padding(.horizontal, 14).padding(.vertical, 10)
                 }
             } else {
+                // Edit-first: the actions are the first thing on
+                // the page; the read-only lines sit below them,
+                // collapsed, so nothing buries the way to type.
+                editCard
                 stateCard
-                explainerCard
-                linesCard
-
-                NavigationLink {
-                    MobileGestaltPlistEditorView(store: store, manager: manager)
-                } label: {
-                    HStack(spacing: 8) {
-                        RowIcon(systemImage: "pencil")
-                        Text(wtLang.tr("Open with Text Editor"))
-                            .font(.subheadline.weight(.semibold))
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .wtGlassCard(cornerRadius: 14)
-                }
-                .buttonStyle(.plain)
+                linesDisclosure
 
                 if store.hasPristineBackup {
                     Button {
@@ -531,6 +549,41 @@ struct MobileGestaltPlistView: View {
         }
     }
 
+    /// The edit actions, first on the page. Two full-width
+    /// rows, one under the other: side by side they do not fit —
+    /// both labels together are ~410pt wide against ~315pt of
+    /// card width on his phone, so a row would truncate.
+    private var editCard: some View {
+        WTSectionCard {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(wtLang.tr("Edit the Siri line"))
+                    .font(.subheadline.weight(.semibold))
+                Text(wtLang.tr("Change one character on the Siri line to flip the patch — you don't need to read the whole file."))
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                NavigationLink {
+                    MobileGestaltPlistEditorView(store: store, manager: manager)
+                } label: {
+                    Label(wtLang.tr("Open with Text Editor"), systemImage: "pencil")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .buttonStyle(.borderedProminent)
+                if let line = store.siriLine {
+                    NavigationLink {
+                        MobileGestaltPlistEditorView(store: store, manager: manager, jumpToSiriLineOnOpen: line)
+                    } label: {
+                        Label(wtLang.tr("Jump to Siri line"), systemImage: "arrow.down.to.line")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+        }
+    }
+
     private var stateCard: some View {
         WTSectionCard {
             VStack(alignment: .leading, spacing: 6) {
@@ -564,47 +617,55 @@ struct MobileGestaltPlistView: View {
         }
     }
 
-    private var explainerCard: some View {
+    /// The read-only lines, collapsed by default: the list is
+    /// reference, not the way to edit, so it must not push the
+    /// edit actions off the screen. Expanding it scrolls to the
+    /// highlighted Siri line, as before.
+    private var linesDisclosure: some View {
         WTSectionCard {
-            Text(wtLang.tr("This is the same text Filza shows for this file. CacheData is the long base64 block; its lines are 51 bytes each. The Siri line is highlighted."))
-                .font(.subheadline).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 14).padding(.vertical, 10)
-        }
-    }
-
-    private var linesCard: some View {
-        WTSectionCard {
-            ScrollViewReader { proxy in
-                ScrollView([.vertical, .horizontal]) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        ForEach(Array(store.lines.enumerated()), id: \.offset) { index, line in
-                            HStack(alignment: .top, spacing: 8) {
-                                Text("\(index + 1)")
-                                    .font(.system(size: 11, design: .monospaced))
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 40, alignment: .trailing)
-                                Text(line.isEmpty ? " " : line)
-                                    .font(.system(size: 11, design: .monospaced))
-                                    .fixedSize(horizontal: true, vertical: false)
+            DisclosureGroup {
+                Text(wtLang.tr("This is the same text Filza shows for this file. CacheData is the long base64 block; its lines are 51 bytes each. The Siri line is highlighted."))
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+                ScrollViewReader { proxy in
+                    ScrollView([.vertical, .horizontal]) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            ForEach(Array(store.lines.enumerated()), id: \.offset) { index, line in
+                                HStack(alignment: .top, spacing: 8) {
+                                    Text("\(index + 1)")
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 40, alignment: .trailing)
+                                    Text(line.isEmpty ? " " : line)
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .fixedSize(horizontal: true, vertical: false)
+                                }
+                                .id(index + 1)
+                                .padding(.horizontal, 6)
+                                .background(store.siriLine == index + 1 ? Color.accentColor.opacity(0.18) : Color.clear)
                             }
-                            .id(index + 1)
-                            .padding(.horizontal, 6)
-                            .background(store.siriLine == index + 1 ? Color.accentColor.opacity(0.18) : Color.clear)
+                        }
+                        .padding(.vertical, 8)
+                    }
+                    .frame(maxHeight: 420)
+                    .onAppear {
+                        if let line = store.siriLine {
+                            DispatchQueue.main.async {
+                                proxy.scrollTo(line, anchor: .top)
+                            }
                         }
                     }
-                    .padding(.vertical, 8)
                 }
-                .frame(maxHeight: 420)
-                .onAppear {
-                    if let line = store.siriLine {
-                        DispatchQueue.main.async {
-                            proxy.scrollTo(line, anchor: .top)
-                        }
-                    }
+            } label: {
+                HStack(spacing: 8) {
+                    RowIcon(systemImage: "list.bullet")
+                    Text(wtLang.tr("View file lines"))
+                        .font(.subheadline.weight(.semibold))
+                    Spacer(minLength: 0)
                 }
             }
-            .padding(.horizontal, 6).padding(.vertical, 6)
+            .padding(.horizontal, 14).padding(.vertical, 10)
         }
     }
 }
@@ -617,6 +678,13 @@ struct MobileGestaltPlistEditorView: View {
     @EnvironmentObject private var wtLang: WTLangStore
     @Environment(\.dismiss) private var dismiss
 
+    /// When set, the editor opens already jumped to this line's
+    /// Siri character, keyboard up — the viewer passes the Siri
+    /// line for its "Jump to Siri line" button. Nil opens the
+    /// plain editor (keyboard still comes up: the page is for
+    /// typing).
+    let jumpToSiriLineOnOpen: Int? = nil
+
     @State private var editedText: String = ""
     @State private var findText = ""
     @State private var lineField = ""
@@ -624,6 +692,7 @@ struct MobileGestaltPlistEditorView: View {
     @State private var jumpToSiriCharLine: Int?
     @State private var findRequest: FindRequest?
     @State private var matchInfo = ""
+    @State private var focusEditor = false
     @State private var showSaveConfirm = false
     @State private var saveMessage: String?
     @State private var saveSucceeded = false
@@ -632,7 +701,12 @@ struct MobileGestaltPlistEditorView: View {
         VStack(spacing: 0) {
             findBar
             Divider()
-            FindableTextEditor(text: $editedText, jumpToLine: $jumpToLine, jumpToSiriCharLine: $jumpToSiriCharLine, findRequest: $findRequest, matchInfo: $matchInfo)
+            FindableTextEditor(text: $editedText, jumpToLine: $jumpToLine, jumpToSiriCharLine: $jumpToSiriCharLine, findRequest: $findRequest, matchInfo: $matchInfo, focusRequest: $focusEditor)
+                // A scrolling UITextView reports no intrinsic
+                // height, so without this the editor can collapse
+                // to a strip with nothing to tap — the fill makes
+                // the whole page below the find bar typable.
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.horizontal, 4)
             footerBar
         }
@@ -654,6 +728,12 @@ struct MobileGestaltPlistEditorView: View {
                     lineField = "\(line)"
                 }
             }
+            if let line = jumpToSiriLineOnOpen {
+                jumpToSiriCharLine = line
+            }
+            // The page is for typing: keyboard up on open so the
+            // user never has to discover the tap target.
+            focusEditor = true
         }
         .confirmationDialog(wtLang.tr("Save the edited file?"), isPresented: $showSaveConfirm, titleVisibility: .visible) {
             Button(wtLang.tr("Save")) {
