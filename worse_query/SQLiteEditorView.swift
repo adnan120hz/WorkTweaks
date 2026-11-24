@@ -179,7 +179,7 @@ struct SQLiteEditorView: View {
                 .font(.system(.caption, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .frame(width: 64, alignment: .leading)
-            ForEach(Array(editor.columns.enumerated()), id: \.element.offset) { colIndex, column in
+            ForEach(Array(editor.columns.enumerated()), id: \.offset) { colIndex, column in
                 cellView(rowIndex: rowIndex, colIndex: colIndex, column: column)
             }
             Button(role: .destructive) {
