@@ -287,6 +287,7 @@ struct TweaksView: View {
     // only the arrangement changes, and it changes back
     // automatically when the text size shrinks.
 
+    @ViewBuilder
     private var columnsView: some View {
         if dynamicTypeSize.wtIsLargeText {
             singleColumnView
