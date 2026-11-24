@@ -357,7 +357,7 @@ struct AirliftPasscodeView: View {
                             }
                             .font(.headline)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 44)
+                            .frame(minHeight: 44)
                         }
                         .buttonStyle(.bordered)
 
@@ -371,7 +371,7 @@ struct AirliftPasscodeView: View {
                                 }
                                 .font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 44)
+                                .frame(minHeight: 44)
                             }
                             .buttonStyle(.borderedProminent)
                         }
@@ -387,7 +387,7 @@ struct AirliftPasscodeView: View {
                             }
                             .font(.headline)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 44)
+                            .frame(minHeight: 44)
                         }
                         .buttonStyle(.bordered)
                         .tint(.red)
@@ -492,7 +492,7 @@ struct AirliftPasscodeView: View {
                             }
                             .font(.headline)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 44)
+                            .frame(minHeight: 44)
                         }
                         .buttonStyle(.bordered)
                         .tint(.red)
@@ -538,7 +538,7 @@ struct AirliftPasscodeView: View {
                 }
                 .font(.headline)
                 .frame(maxWidth: .infinity)
-                .frame(height: 44)
+                .frame(minHeight: 44)
             }
             .buttonStyle(.borderedProminent)
             .tint(.orange)
@@ -555,7 +555,7 @@ struct AirliftPasscodeView: View {
                 }
                 .font(.headline)
                 .frame(maxWidth: .infinity)
-                .frame(height: 44)
+                .frame(minHeight: 44)
             }
             .buttonStyle(.borderedProminent)
             .disabled(!engine.canFlashPassthm)
@@ -644,9 +644,9 @@ struct PasscodeFlashLogView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.caption2.weight(.bold))
                         Text(copied ? wtLang.tr("Copied") : wtLang.tr("Copy"))
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.caption2.weight(.bold))
                     }
                     .foregroundStyle(copied ? .green : .blue)
                     .padding(.horizontal, 9)
@@ -662,7 +662,7 @@ struct PasscodeFlashLogView: View {
                     LazyVStack(alignment: .leading, spacing: 2) {
                         ForEach(lines.indices, id: \.self) { i in
                             Text(lines[i])
-                                .font(.system(size: 12, design: .monospaced))
+                                .font(.system(.caption, design: .monospaced))
                                 .fixedSize(horizontal: false, vertical: true)
                                 .id(i)
                         }

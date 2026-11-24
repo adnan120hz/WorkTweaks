@@ -64,7 +64,7 @@ struct UnsupportedView: View {
     private var header: some View {
         VStack(spacing: 16) {
             Image(systemName: "iphone.slash")
-                .font(.system(size: 52))
+                .font(.largeTitle)
                 .foregroundStyle(.orange)
 
             VStack(spacing: 8) {

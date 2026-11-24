@@ -16,6 +16,8 @@ import SwiftUI
 struct BackupView: View {
     @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var manager: GestaltManager
+    @State private var showPhotoBackup = false
+    @State private var showAllBackups = false
 
     var body: some View {
         NavigationStack {
@@ -78,6 +80,59 @@ struct BackupView: View {
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
                     }
+                }
+
+                // All Data Backup: user-picked photos/videos
+                // into BackUP_Data, restore via share sheet —
+                // the same PhotoBackupView/PhotoRestoreView
+                // the SpringBoard/Status Bar pages open.
+                WTSectionCard(header: wtLang.tr("All Data Backup")) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Button {
+                            SoundEffects.playTap()
+                            showPhotoBackup = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "photo.badge.plus")
+                                    .foregroundStyle(.secondary)
+                                Text(wtLang.tr("Backup Your Photos & Videos Here!"))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        Divider()
+                            .padding(.leading, 14)
+                        Button {
+                            SoundEffects.playTap()
+                            showAllBackups = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "photo.on.rectangle")
+                                    .foregroundStyle(.secondary)
+                                Text(wtLang.tr("Your All BackUP Files Here!"))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .sheet(isPresented: $showPhotoBackup) {
+                    PhotoBackupView()
+                }
+                .sheet(isPresented: $showAllBackups) {
+                    PhotoRestoreView()
                 }
             }
             .navigationTitle(wtLang.tr("Backup"))

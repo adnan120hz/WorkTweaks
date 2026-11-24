@@ -97,6 +97,10 @@ struct SandboxView: View {
                                     WTFlagView(language: lang.language)
                                         .frame(width: 22, height: 15)
                                     Text(lang.language.versionLabel)
+                                        // Wraps to two lines at large
+                                        // Dynamic Type sizes instead
+                                        // of truncating.
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -107,6 +111,10 @@ struct SandboxView: View {
                                     Image(systemName: SupportInfo.isSupported ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                                         .foregroundStyle(SupportInfo.isSupported ? Color.accentColor : .orange)
                                     Text(supportLine)
+                                        // Wraps to two lines at large
+                                        // Dynamic Type sizes instead
+                                        // of truncating.
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                                 .font(.caption)
                                 .foregroundStyle(.secondary)

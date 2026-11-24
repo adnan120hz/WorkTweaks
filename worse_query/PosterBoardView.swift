@@ -271,7 +271,7 @@ struct PosterBoardView: View {
                 pendingDelete = receipt
             } label: {
                 Image(systemName: "trash")
-                    .font(.system(size: 15, weight: .regular))
+                    .font(.subheadline)
             }
             .buttonStyle(.plain)
             .disabled(manager.isBusy)

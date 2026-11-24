@@ -138,7 +138,10 @@ struct RowIcon: View {
 
     var body: some View {
         Image(systemName: systemImage)
-            .font(.system(size: 17, weight: .regular))
+            // Scalable: .body is 17pt at default size and
+            // grows with Dynamic Type, like the text it sits
+            // beside. A fixed .system(size:) would not scale.
+            .font(.body)
             .foregroundStyle(color)
             .frame(width: 30)
     }

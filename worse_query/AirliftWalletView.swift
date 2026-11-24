@@ -208,7 +208,7 @@ struct AirliftWalletView: View {
         WTSectionCard {
             VStack(spacing: 14) {
                 Image(systemName: "creditcard.viewfinder")
-                    .font(.system(size: 44))
+                    .font(.largeTitle)
                     .foregroundStyle(.blue.opacity(0.8))
                 Text(wtLang.tr("No Cards Detected Yet"))
                     .font(.headline)
@@ -530,7 +530,7 @@ struct WalletCardRow: View {
                         )
                     Button(action: onClearImage) {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24))
+                            .font(.title2)
                             .foregroundStyle(.white.opacity(0.95))
                             .background(Circle().fill(Color.black.opacity(0.55)))
                     }

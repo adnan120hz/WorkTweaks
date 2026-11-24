@@ -265,7 +265,7 @@ struct PairingView: View {
                         .fixedSize(horizontal: false, vertical: true)
                     if let pin = pairing.pairingPIN {
                         Text(pin)
-                            .font(.system(size: 44, weight: .bold, design: .monospaced))
+                            .font(.system(.largeTitle, design: .monospaced).bold())
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, 4)
                         Text(wtLang.tr("Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks."))

@@ -240,7 +240,7 @@ struct TweaksView: View {
         VStack(spacing: 18) {
             Spacer()
             Image(systemName: "lock.fill")
-                .font(.system(size: 52))
+                .font(.largeTitle)
                 .foregroundStyle(.secondary)
             VStack(spacing: 8) {
                 Text(wtLang.tr("Tweaks are locked"))
@@ -445,7 +445,7 @@ struct TweaksView: View {
                 } label: {
                     HStack(spacing: 9) {
                         Image(systemName: section.icon)
-                            .font(.system(size: 15, weight: .regular))
+                            .font(.subheadline)
                             .foregroundStyle(selectedSection == section ? Color.white : Color.accentColor)
                             .frame(width: 22)
                         Text(section.title)
@@ -522,7 +522,7 @@ struct TweaksView: View {
         Button(action: { SoundEffects.playTap(); action() }) {
             HStack(spacing: 9) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 15, weight: .regular))
+                    .font(.subheadline)
                     .foregroundStyle(Color.accentColor)
                     .frame(width: 22)
                 Text(title)
@@ -542,7 +542,7 @@ struct TweaksView: View {
     private var statusCard: some View {
         HStack(spacing: 12) {
             Image(systemName: statusIcon)
-                .font(.system(size: 20))
+                .font(.title3)
                 .foregroundStyle(statusColor)
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 2) {
