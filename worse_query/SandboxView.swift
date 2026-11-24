@@ -84,21 +84,26 @@ struct SandboxView: View {
                                 .frame(width: 52, height: 52)
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             VStack(alignment: .leading, spacing: 3) {
-                                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                                    Text("WorkTweaks")
-                                        .font(.headline)
-                                    Text("v\(appVersion)")
-                                        .font(.caption)
-                                        .foregroundStyle(lang.theme.accent)
-                                }
-                                HStack(spacing: 5) {
+                                // One Text with mixed fonts, so
+                                // "v7.0" sits exactly on the
+                                // "WorkTweaks" baseline (an HStack
+                                // lets the smaller text float).
+                                Text("WorkTweaks")
+                                    .font(.headline)
+                                + Text(" v\(appVersion)")
+                                    .font(.caption)
+                                    .foregroundStyle(lang.theme.accent)
+                                HStack(alignment: .center, spacing: 5) {
                                     WTFlagView(language: lang.language)
                                         .frame(width: 22, height: 15)
                                     Text(lang.language.versionLabel)
                                 }
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                                HStack(spacing: 5) {
+                                // Badge centered against the FULL
+                                // two-line support text, not
+                                // pinned to its first line.
+                                HStack(alignment: .center, spacing: 5) {
                                     Image(systemName: SupportInfo.isSupported ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                                         .foregroundStyle(SupportInfo.isSupported ? Color.accentColor : .orange)
                                     Text(supportLine)
@@ -239,6 +244,14 @@ struct SandboxView: View {
                         Divider().padding(.leading, 14)
                         utilityRow("Voice Memos & AI Cache", systemImage: "waveform") {
                             VoiceMemosAIView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow(lang.tr("Status Bar"), systemImage: "cellularbars") {
+                            StatusBarView(console: console)
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("SpringBoard", systemImage: "square.grid.3x3") {
+                            SpringBoardView(console: console)
                         }
                     }
                 }

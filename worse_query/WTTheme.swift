@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Flag theme (v7.0)
 //
 // The accent color, gradients and backgrounds follow the
-// selected language's flag. The four palettes are deliberately
+// selected language's flag. The five palettes are deliberately
 // VISIBLY DISTINCT even where the flags look similar:
 //   en-US — blue accent (#0A84FF) + navy, red/white secondary
 //   id    — red accent (#E7000B) + white, top-to-bottom gradient
@@ -11,6 +11,9 @@ import SwiftUI
 //           gradient, 1 large + 4 small gold stars
 //   vi    — bright red (#DA251D) + yellow (#FFFF00), horizontal
 //           gradient red → warm orange-red, 1 large yellow star
+//   ru    — flag blue (#0039A6) + white/red tricolour;
+//           the blue is visibly darker than the US accent
+//           (#0A84FF), so the two never read as the same.
 // zh vs vi differ in red, in second color (gold vs pure
 // yellow), in gradient direction and stops, and in the star
 // motif — so the two themes never read as the same.
@@ -86,6 +89,19 @@ struct WTTheme {
                 gradientStart: .leading,
                 gradientEnd: .trailing
             )
+        case .ru:
+            return WTTheme(
+                language: .ru,
+                accent: Color(red: 0x00 / 255, green: 0x39 / 255, blue: 0xA6 / 255),
+                accentDeep: Color(red: 0x00 / 255, green: 0x22 / 255, blue: 0x6E / 255),
+                secondary: Color(red: 0xD5 / 255, green: 0x2B / 255, blue: 0x1E / 255),
+                gradientColors: [
+                    Color(red: 0x00 / 255, green: 0x39 / 255, blue: 0xA6 / 255),
+                    Color(red: 0x00 / 255, green: 0x22 / 255, blue: 0x6E / 255),
+                ],
+                gradientStart: .top,
+                gradientEnd: .bottom
+            )
         }
     }
 
@@ -128,8 +144,12 @@ struct WTStarShape: Shape {
 
 /// The selected language's flag, drawn with SwiftUI shapes.
 /// id: red over white bands. zh: red field, 1 large + 4 small
-/// gold stars. vi: red field, 1 large yellow star. en-US:
+/// gold stars. vi: red field, 1 large yellow star. ru: white
+/// over blue over red horizontal tricolour. en-US:
 /// 13 stripes + blue canton with a simplified star grid.
+/// Used ONLY as small foreground indicators (header-card
+/// language row, language picker sheet) — never in any
+/// page background.
 struct WTFlagView: View {
     let language: WTLanguage
 
@@ -167,6 +187,13 @@ struct WTFlagView: View {
                         .fill(Color(red: 1, green: 1, blue: 0))
                         .frame(width: h * 0.62, height: h * 0.62)
                         .position(x: w * 0.5, y: h * 0.5)
+                case .ru:
+                    // White over blue over red tricolour.
+                    VStack(spacing: 0) {
+                        Color.white
+                        Color(red: 0x00 / 255, green: 0x39 / 255, blue: 0xA6 / 255)
+                        Color(red: 0xD5 / 255, green: 0x2B / 255, blue: 0x1E / 255)
+                    }
                 case .enUS:
                     VStack(spacing: 0) {
                         ForEach(0..<13) { i in

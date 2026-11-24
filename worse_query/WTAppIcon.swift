@@ -11,12 +11,13 @@ import UIKit
 // iOS scales the 1024 image as needed.
 //
 // The current blue icon IS the English (US) look, so en-US
-// uses the primary icon (nil) and the other three languages
+// uses the primary icon (nil) and the other four languages
 // use alternates:
 //   en-US   -> nil (primary, blue)
 //   id      -> AppIcon-ID (red #E7000B, white WT)
 //   zh-Hans -> AppIcon-CN (deep red #DE2910, gold WT)
 //   vi      -> AppIcon-VN (bright red #DA251D, yellow WT)
+//   ru      -> AppIcon-RU (blue #0039A6 field, white W + red T)
 //
 // iOS shows a small system alert when the icon changes —
 // that is stock iOS behavior, not something the app
@@ -30,6 +31,7 @@ enum WTAppIcon {
         case .id: return "AppIcon-ID"
         case .zhHans: return "AppIcon-CN"
         case .vi: return "AppIcon-VN"
+        case .ru: return "AppIcon-RU"
         }
     }
 
@@ -61,6 +63,7 @@ enum WTHeaderIcon {
         case .id: return "AppIcon-ID"
         case .zhHans: return "AppIcon-CN"
         case .vi: return "AppIcon-VN"
+        case .ru: return "AppIcon-RU"
         }
     }
 
