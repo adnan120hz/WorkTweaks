@@ -697,6 +697,15 @@ struct MobileGestaltPlistEditorView: View {
     @State private var saveMessage: String?
     @State private var saveSucceeded = false
 
+    /// Explicit init: the synthesized memberwise init only takes
+    /// the two properties without defaults (store, manager), so
+    /// the jump-on-open parameter needs its own init.
+    init(store: MobileGestaltPlistStore, manager: GestaltManager, jumpToSiriLineOnOpen: Int? = nil) {
+        self.store = store
+        self.manager = manager
+        self.jumpToSiriLineOnOpen = jumpToSiriLineOnOpen
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             findBar
