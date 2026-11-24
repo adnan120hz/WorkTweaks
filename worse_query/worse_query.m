@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <xpc/xpc.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include "worse_query.h"
 
 typedef void *(*container_query_create_fn)(void);
@@ -57,10 +58,10 @@ static void clean_symlink(NSString *group) {
 
 // So, who's ready for round two?
 int64_t worse_query(NSString *target, NSString *group, bool alt_flags, bool create_dir) {
-    // Check if the target exists
+    // Check if the target exists (ignore EACCES/EPERM when Seatbelt blocks un-granted parent container)
     if (!create_dir) {
         struct stat st;
-        if (lstat(target.fileSystemRepresentation, &st) != 0) return -255; // Nothing exists at this path, and create_dir is false
+        if (lstat(target.fileSystemRepresentation, &st) != 0 && errno == ENOENT) return -255; // Nothing exists at this path, and create_dir is false
     }
     
     // Get the App Group's path
