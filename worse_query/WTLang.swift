@@ -1006,6 +1006,11 @@ enum WTStrings {
         "Edit the Siri line": "Edit baris Siri",
         "Change one character on the Siri line to flip the patch — you don't need to read the whole file.": "Ubah satu karakter di baris Siri untuk membalik patch — Anda tidak perlu membaca seluruh file.",
         "View file lines": "Lihat baris file",
+        "Packages by Adnan.120hz — tap one to install it into its app, or save its zip in Files.": "Paket dari Adnan.120hz — ketuk satu untuk memasangnya ke aplikasinya, atau simpan zip-nya di Files.",
+        "Save to Files": "Simpan ke Files",
+        "Installed": "Terinstal",
+        "Installed on %@": "Terinstal pada %@",
+        "No packages could be loaded from the app bundle.": "Tidak ada paket yang bisa dimuat dari app bundle.",
 
     ]
 
@@ -1899,6 +1904,11 @@ enum WTStrings {
         "Edit the Siri line": "编辑 Siri 行",
         "Change one character on the Siri line to flip the patch — you don't need to read the whole file.": "只需修改 Siri 行上的一个字符即可翻转补丁——无需阅读整个文件。",
         "View file lines": "查看文件行",
+        "Packages by Adnan.120hz — tap one to install it into its app, or save its zip in Files.": "Adnan.120hz 的软件包——点按一个将其安装到对应 App，或将其 zip 保存到“文件”。",
+        "Save to Files": "保存到“文件”",
+        "Installed": "已安装",
+        "Installed on %@": "安装于 %@",
+        "No packages could be loaded from the app bundle.": "无法从 App 包中加载任何软件包。",
 
     ]
 
@@ -2792,6 +2802,11 @@ enum WTStrings {
         "Edit the Siri line": "Chỉnh sửa dòng Siri",
         "Change one character on the Siri line to flip the patch — you don't need to read the whole file.": "Chỉ cần thay đổi một ký tự trên dòng Siri để lật bản vá — bạn không cần đọc toàn bộ tệp.",
         "View file lines": "Xem các dòng của tệp",
+        "Packages by Adnan.120hz — tap one to install it into its app, or save its zip in Files.": "Các gói của Adnan.120hz — chạm vào một gói để cài vào app của nó, hoặc lưu file zip vào Files.",
+        "Save to Files": "Lưu vào Files",
+        "Installed": "Đã cài đặt",
+        "Installed on %@": "Đã cài đặt vào %@",
+        "No packages could be loaded from the app bundle.": "Không thể tải gói nào từ app bundle.",
 
     ]
 
@@ -3685,6 +3700,11 @@ enum WTStrings {
         "Edit the Siri line": "Редактировать строку Siri",
         "Change one character on the Siri line to flip the patch — you don't need to read the whole file.": "Измените один символ в строке Siri, чтобы переключить патч — читать весь файл не нужно.",
         "View file lines": "Просмотреть строки файла",
+        "Packages by Adnan.120hz — tap one to install it into its app, or save its zip in Files.": "Пакеты от Adnan.120hz — нажмите на пакет, чтобы установить его в приложение, или сохранить его zip в Files.",
+        "Save to Files": "Сохранить в Files",
+        "Installed": "Установлено",
+        "Installed on %@": "Установлено %@",
+        "No packages could be loaded from the app bundle.": "Не удалось загрузить пакеты из app bundle.",
 
     ]
 }

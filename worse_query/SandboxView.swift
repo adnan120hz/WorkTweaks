@@ -237,6 +237,10 @@ struct SandboxView: View {
                             AppDataView()
                         }
                         Divider().padding(.leading, 14)
+                        utilityRow("Adnan.120hz Repository", systemImage: "shippingbox") {
+                            RepositoryView()
+                        }
+                        Divider().padding(.leading, 14)
                         utilityRow("Save Vault", systemImage: "archivebox") {
                             SaveVaultView()
                         }
