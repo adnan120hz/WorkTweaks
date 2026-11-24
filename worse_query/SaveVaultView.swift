@@ -14,7 +14,7 @@ import UniformTypeIdentifiers
 
 struct SaveVaultView: View {
     @ObservedObject private var appData = AppDataManager.shared
-    @StateObject private var vault = SaveVaultManager()
+    private let vault = SaveVaultManager()
 
     @State private var selectedBundleID: String?
     @State private var certText = ""
@@ -290,7 +290,7 @@ struct SaveVaultView: View {
                         resultMessage = message
                         resultIsError = false
                     case .failure(let message):
-                        resultMessage = message
+                        resultMessage = message.message
                         resultIsError = true
                     }
                 }
@@ -361,7 +361,7 @@ struct SaveVaultView: View {
                 resultIsError = false
                 refreshSnapshots()
             case .failure(let message):
-                resultMessage = message
+                resultMessage = message.message
                 resultIsError = true
             }
         }
@@ -380,7 +380,7 @@ struct SaveVaultView: View {
                 resultIsError = false
                 zipURLToShare = url
             case .failure(let message):
-                resultMessage = message
+                resultMessage = message.message
                 resultIsError = true
             }
         }
@@ -399,7 +399,7 @@ struct SaveVaultView: View {
                 resultMessage = message
                 resultIsError = false
             case .failure(let message):
-                resultMessage = message
+                resultMessage = message.message
                 resultIsError = true
             }
         }

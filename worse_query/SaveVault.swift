@@ -72,7 +72,14 @@ enum SaveVaultCertState {
     case unknown
 }
 
-final class SaveVaultManager: ObservableObject {
+/// Failure payload for the vault's Result completions
+/// (Swift's Result requires Failure: Error, and a bare
+/// String does not conform).
+struct VaultError: Error {
+    let message: String
+}
+
+final class SaveVaultManager {
     static let targetSubdirectories = [
         "Documents",
         "Library/Application Support",
@@ -452,7 +459,7 @@ extension SaveVaultManager {
     /// background queue; the completion reports the manifest
     /// on success, or an honest error message. A failed stage
     /// deletes its partial snapshot.
-    func stage(container: AppContainer, completion: @escaping (Result<SaveVaultManifest, String>) -> Void) {
+    func stage(container: AppContainer, completion: @escaping (Result<SaveVaultManifest, VaultError>) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             DispatchQueue.main.sync { UIApplication.shared.isIdleTimerDisabled = true }
             defer { DispatchQueue.main.async { UIApplication.shared.isIdleTimerDisabled = false } }
@@ -461,7 +468,7 @@ extension SaveVaultManager {
         }
     }
 
-    private func performStage(container: AppContainer) -> Result<SaveVaultManifest, String> {
+    private func performStage(container: AppContainer) -> Result<SaveVaultManifest, VaultError> {
         let fm = FileManager.default
         let bundleID = container.bundleID
         print("[Vault] staging \(bundleID) from \(container.path)")
@@ -470,11 +477,11 @@ extension SaveVaultManager {
         let wal = Self.activeWALFiles(containerPath: container.path)
         if !wal.isEmpty {
             print("[Vault] stage blocked — active WAL: \(wal.joined(separator: ", "))")
-            return .failure("The app is still writing its database (\(wal.count) active WAL file(s)). Close \(bundleID) first, wait a few seconds, then stage again. Nothing was staged.")
+            return .failure(VaultError(message: "The app is still writing its database (\(wal.count) active WAL file(s)). Close \(bundleID) first, wait a few seconds, then stage again. Nothing was staged."))
         }
 
         guard let root = Self.vaultRoot, let snapDir = Self.snapshotDir(bundleID: bundleID) else {
-            return .failure("The vault folder inside this app's Documents could not be created.")
+            return .failure(VaultError(message: "The vault folder inside this app's Documents could not be created."))
         }
         // Guard 1: cert gate (informational at stage time —
         // the expiry is recorded in the manifest). Runs before
@@ -492,21 +499,21 @@ extension SaveVaultManager {
         do {
             try fm.createDirectory(at: root, withIntermediateDirectories: true)
         } catch {
-            return .failure("Could not create the vault folder: \(error.localizedDescription)")
+            return .failure(VaultError(message: "Could not create the vault folder: \(error.localizedDescription)"))
         }
         // A previous snapshot for this app is replaced.
         try? fm.removeItem(at: snapDir)
         do {
             try fm.createDirectory(at: snapDir, withIntermediateDirectories: true)
         } catch {
-            return .failure("Could not create the snapshot folder: \(error.localizedDescription)")
+            return .failure(VaultError(message: "Could not create the snapshot folder: \(error.localizedDescription)"))
         }
 
         let handle = consumeExtension(container.path)
         print("[Vault] grant for stage -> \(handle)")
         guard handle > 0 else {
             try? fm.removeItem(at: snapDir)
-            return .failure("The sandbox extension for \(bundleID) was refused (code \(handle)). Nothing was staged.")
+            return .failure(VaultError(message: "The sandbox extension for \(bundleID) was refused (code \(handle)). Nothing was staged."))
         }
         defer { releaseExtension(handle) }
 
@@ -518,7 +525,7 @@ extension SaveVaultManager {
             guard Self.isDirectory(src) else { continue }
             let dst = (snapDir.path as NSString).appendingPathComponent(subdir)
             // Create the parent (Library) writable first.
-            try? fm.createDirectory(at: (dst as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+            try? fm.createDirectory(atPath: (dst as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
             if !Self.cloneTree(src: src, dst: dst) {
                 cloneOK = false
                 print("[Vault] clone failed for \(subdir)")
@@ -532,7 +539,7 @@ extension SaveVaultManager {
         }
         guard cloneOK else {
             try? fm.removeItem(at: snapDir)
-            return .failure("Cloning \(bundleID) failed partway — the partial snapshot was deleted. The details are in the Log.")
+            return .failure(VaultError(message: "Cloning \(bundleID) failed partway — the partial snapshot was deleted. The details are in the Log."))
         }
 
         // Guard 4: verify the clone matches the source
@@ -548,7 +555,7 @@ extension SaveVaultManager {
         guard verify.items == total.items, verify.files == total.files else {
             try? fm.removeItem(at: snapDir)
             print("[Vault] stage verify failed: source \(total.items) items / \(total.files) files, clone \(verify.items) / \(verify.files)")
-            return .failure("The staged copy did not match the source (\(verify.files) of \(total.files) files) — the partial snapshot was deleted. Nothing was staged.")
+            return .failure(VaultError(message: "The staged copy did not match the source (\(verify.files) of \(total.files) files) — the partial snapshot was deleted. Nothing was staged."))
         }
 
         let manifest = SaveVaultManifest(
@@ -568,7 +575,7 @@ extension SaveVaultManager {
             try data.write(to: snapDir.appendingPathComponent("manifest.json"))
         } catch {
             try? fm.removeItem(at: snapDir)
-            return .failure("Could not write the snapshot manifest: \(error.localizedDescription)")
+            return .failure(VaultError(message: "Could not write the snapshot manifest: \(error.localizedDescription)"))
         }
         print("[Vault] staged \(bundleID): \(total.items) items, \(total.files) files, \(total.bytes) bytes")
         DispatchQueue.main.async { AppDataManager.shared.invalidateScanCache() }
@@ -581,7 +588,7 @@ extension SaveVaultManager {
     /// container (found by bundle id). Atomic swap with .bak
     /// rollback; the vault copy is kept. Runs on a background
     /// queue.
-    func restore(manifest: SaveVaultManifest, targetBundleID: String? = nil, completion: @escaping (Result<String, String>) -> Void) {
+    func restore(manifest: SaveVaultManifest, targetBundleID: String? = nil, completion: @escaping (Result<String, VaultError>) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             DispatchQueue.main.sync { UIApplication.shared.isIdleTimerDisabled = true }
             defer { DispatchQueue.main.async { UIApplication.shared.isIdleTimerDisabled = false } }
@@ -590,14 +597,14 @@ extension SaveVaultManager {
         }
     }
 
-    private func performRestore(manifest: SaveVaultManifest, targetBundleID: String) -> Result<String, String> {
+    private func performRestore(manifest: SaveVaultManifest, targetBundleID: String) -> Result<String, VaultError> {
         let fm = FileManager.default
         let bundleID = manifest.sourceBundleID
         print("[Vault] restoring \(bundleID) into \(targetBundleID)")
 
         guard let snapDir = Self.snapshotDir(bundleID: bundleID),
               fm.fileExists(atPath: snapDir.path) else {
-            return .failure("The staged snapshot for \(bundleID) is gone from the vault.")
+            return .failure(VaultError(message: "The staged snapshot for \(bundleID) is gone from the vault."))
         }
         // Guard 4 (read side): vault must still match its
         // manifest before anything is touched.
@@ -611,7 +618,7 @@ extension SaveVaultManager {
         }
         guard vaultCounts.items == manifest.itemCount, vaultCounts.files == manifest.fileCount else {
             print("[Vault] restore refused — vault mismatch: manifest \(manifest.itemCount)/\(manifest.fileCount), disk \(vaultCounts.items)/\(vaultCounts.files)")
-            return .failure("The vault copy no longer matches its manifest (\(vaultCounts.files) of \(manifest.fileCount) files) — restore refused so a partial restore cannot happen.")
+            return .failure(VaultError(message: "The vault copy no longer matches its manifest (\(vaultCounts.files) of \(manifest.fileCount) files) — restore refused so a partial restore cannot happen."))
         }
 
         // Target resolution by bundle id, never the old UUID.
@@ -621,7 +628,7 @@ extension SaveVaultManager {
         // plist to match.
         DispatchQueue.main.sync { AppDataManager.shared.scanIfNeeded() }
         guard let target = AppDataManager.shared.containers.first(where: { $0.bundleID == targetBundleID }) else {
-            return .failure("\(targetBundleID) is not installed (or has not been opened once since reinstall). Install it, open it once, close it, then restore.")
+            return .failure(VaultError(message: "\(targetBundleID) is not installed (or has not been opened once since reinstall). Install it, open it once, close it, then restore."))
         }
         let targetPath = target.path
 
@@ -631,19 +638,19 @@ extension SaveVaultManager {
         let docsBak = (targetPath as NSString).appendingPathComponent("Documents.worktweaks_pre_restore_bak")
         let docsLive = (targetPath as NSString).appendingPathComponent("Documents")
         if fm.fileExists(atPath: docsBak) && !fm.fileExists(atPath: docsLive) {
-            return .failure("A previous restore was interrupted (a .bak folder is left without a live Documents). Restore aborted — check the target's container before trying again.")
+            return .failure(VaultError(message: "A previous restore was interrupted (a .bak folder is left without a live Documents). Restore aborted — check the target's container before trying again."))
         }
 
         // Guard 2: WAL-lock scan on the target.
         let wal = Self.activeWALFiles(containerPath: targetPath)
         if !wal.isEmpty {
-            return .failure("The target app is still writing its database (\(wal.count) active WAL file(s)). Close \(targetBundleID) first, wait a few seconds, then restore again. Nothing was changed.")
+            return .failure(VaultError(message: "The target app is still writing its database (\(wal.count) active WAL file(s)). Close \(targetBundleID) first, wait a few seconds, then restore again. Nothing was changed."))
         }
 
         let handle = consumeExtension(targetPath)
         print("[Vault] grant for restore -> \(handle)")
         guard handle > 0 else {
-            return .failure("The sandbox extension for \(targetBundleID) was refused (code \(handle)). Nothing was changed.")
+            return .failure(VaultError(message: "The sandbox extension for \(targetBundleID) was refused (code \(handle)). Nothing was changed."))
         }
         defer { releaseExtension(handle) }
 
@@ -668,7 +675,7 @@ extension SaveVaultManager {
             for subdir in manifest.subdirectories {
                 let src = (snapDir.path as NSString).appendingPathComponent(subdir)
                 let dst = (targetPath as NSString).appendingPathComponent(subdir)
-                try? fm.createDirectory(at: (dst as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+                try? fm.createDirectory(atPath: (dst as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
                 if !Self.cloneTree(src: src, dst: dst) {
                     restoreError = "Cloning \(subdir) into the target failed."
                     break
@@ -701,7 +708,7 @@ extension SaveVaultManager {
                 try? fm.moveItem(atPath: pair.bak, toPath: pair.live)
             }
             print("[Vault] restore failed, rolled back from .bak: \(error)")
-            return .failure("Restore failed and was rolled back from the backup: \(error) The target is back to its pre-restore state.")
+            return .failure(VaultError(message: "Restore failed and was rolled back from the backup: \(error) The target is back to its pre-restore state."))
         }
 
         // Cross-bundle-ID adapt: WeChat-style renames
@@ -760,27 +767,27 @@ extension SaveVaultManager {
     /// streams a stored (uncompressed) ZIP to this app's
     /// Documents/SaveVaultBackups/<bundleID>__<date>.zip with
     /// a BackupManifest.plist at the zip root.
-    func zipBackup(container: AppContainer, completion: @escaping (Result<URL, String>) -> Void) {
+    func zipBackup(container: AppContainer, completion: @escaping (Result<URL, VaultError>) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             let result = self.performZipBackup(container: container)
             DispatchQueue.main.async { completion(result) }
         }
     }
 
-    private func performZipBackup(container: AppContainer) -> Result<URL, String> {
+    private func performZipBackup(container: AppContainer) -> Result<URL, VaultError> {
         let fm = FileManager.default
         let bundleID = container.bundleID
         print("[Vault] ZIP backup for \(bundleID)")
 
         let wal = Self.activeWALFiles(containerPath: container.path)
         if !wal.isEmpty {
-            return .failure("The app is still writing its database (\(wal.count) active WAL file(s)). Close \(bundleID) first, wait a few seconds, then back up again.")
+            return .failure(VaultError(message: "The app is still writing its database (\(wal.count) active WAL file(s)). Close \(bundleID) first, wait a few seconds, then back up again."))
         }
 
         let handle = consumeExtension(container.path)
         print("[Vault] grant for ZIP backup -> \(handle)")
         guard handle > 0 else {
-            return .failure("The sandbox extension for \(bundleID) was refused (code \(handle)). Nothing was backed up.")
+            return .failure(VaultError(message: "The sandbox extension for \(bundleID) was refused (code \(handle)). Nothing was backed up."))
         }
         defer { releaseExtension(handle) }
 
@@ -789,7 +796,7 @@ extension SaveVaultManager {
         do {
             try fm.createDirectory(at: staging, withIntermediateDirectories: true)
         } catch {
-            return .failure("Could not create ZIP staging: \(error.localizedDescription)")
+            return .failure(VaultError(message: "Could not create ZIP staging: \(error.localizedDescription)"))
         }
         var stagedSubdirs: [String] = []
         var total = SaveVaultCounts()
@@ -797,11 +804,11 @@ extension SaveVaultManager {
             let src = (container.path as NSString).appendingPathComponent(subdir)
             guard Self.isDirectory(src) else { continue }
             let dst = (staging.path as NSString).appendingPathComponent(subdir)
-            try? fm.createDirectory(at: (dst as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+            try? fm.createDirectory(atPath: (dst as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
             do {
                 try fm.copyItem(atPath: src, toPath: dst)
             } catch {
-                return .failure("Copying \(subdir) into ZIP staging failed: \(error.localizedDescription)")
+                return .failure(VaultError(message: "Copying \(subdir) into ZIP staging failed: \(error.localizedDescription)"))
             }
             stagedSubdirs.append(subdir)
             let counts = Self.countSubdirectory(containerPath: container.path, subdir: subdir)
@@ -810,7 +817,7 @@ extension SaveVaultManager {
             total.bytes += counts.bytes
         }
         guard !stagedSubdirs.isEmpty else {
-            return .failure("\(bundleID) has no Documents, Preferences or Application Support to back up.")
+            return .failure(VaultError(message: "\(bundleID) has no Documents, Preferences or Application Support to back up."))
         }
 
         // BackupManifest.plist at the zip root: the bundle id
@@ -823,21 +830,21 @@ extension SaveVaultManager {
             "logicalBytes": total.bytes,
         ]
         guard let manifestData = try? PropertyListSerialization.data(fromPropertyList: manifestPlist, format: .xml, options: 0) else {
-            return .failure("Could not build the backup manifest.")
+            return .failure(VaultError(message: "Could not build the backup manifest."))
         }
         do {
             try manifestData.write(to: staging.appendingPathComponent("BackupManifest.plist"))
         } catch {
-            return .failure("Could not write the backup manifest: \(error.localizedDescription)")
+            return .failure(VaultError(message: "Could not write the backup manifest: \(error.localizedDescription)"))
         }
 
         guard let outRoot = Self.zipBackupsRoot else {
-            return .failure("Could not create the backups folder.")
+            return .failure(VaultError(message: "Could not create the backups folder."))
         }
         do {
             try fm.createDirectory(at: outRoot, withIntermediateDirectories: true)
         } catch {
-            return .failure("Could not create the backups folder: \(error.localizedDescription)")
+            return .failure(VaultError(message: "Could not create the backups folder: \(error.localizedDescription)"))
         }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -852,7 +859,7 @@ extension SaveVaultManager {
         collectZipEntries(dir: staging.path, base: staging.path, into: &entries)
         let writer = VaultZipWriter(url: zipURL)
         guard writer.open() else {
-            return .failure("Could not create \(zipName).")
+            return .failure(VaultError(message: "Could not create \(zipName)."))
         }
         var zipOK = true
         for name in entries {
@@ -870,7 +877,7 @@ extension SaveVaultManager {
         writer.close(success: zipOK)
         guard zipOK else {
             try? fm.removeItem(at: zipURL)
-            return .failure("Writing the ZIP failed partway — the partial file was deleted.")
+            return .failure(VaultError(message: "Writing the ZIP failed partway — the partial file was deleted."))
         }
         let zipSize = (try? fm.attributesOfItem(atPath: zipURL.path)[.size] as? NSNumber)?.int64Value ?? 0
         print("[Vault] ZIP backup done: \(zipName) (\(total.files) files, \(zipSize) bytes)")
@@ -904,21 +911,21 @@ extension SaveVaultManager {
     /// place — files written atomically, never overwriting a
     /// symlink in the destination. No rollback (unlike the
     /// APFS path). Protected bundle ids are blocked.
-    func zipRestore(zipURL: URL, completion: @escaping (Result<String, String>) -> Void) {
+    func zipRestore(zipURL: URL, completion: @escaping (Result<String, VaultError>) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             let result = self.performZipRestore(zipURL: zipURL)
             DispatchQueue.main.async { completion(result) }
         }
     }
 
-    private func performZipRestore(zipURL: URL) -> Result<String, String> {
+    private func performZipRestore(zipURL: URL) -> Result<String, VaultError> {
         let fm = FileManager.default
         guard let zipSize = (try? fm.attributesOfItem(atPath: zipURL.path)[.size] as? NSNumber)?.int64Value,
               zipSize <= 1_073_741_824 else {
-            return .failure("That ZIP is larger than 1 GB — restore refuses it rather than risk running out of memory.")
+            return .failure(VaultError(message: "That ZIP is larger than 1 GB — restore refuses it rather than risk running out of memory."))
         }
         guard let data = try? Data(contentsOf: zipURL) else {
-            return .failure("Could not read \(zipURL.lastPathComponent).")
+            return .failure(VaultError(message: "Could not read \(zipURL.lastPathComponent)."))
         }
         let entries: [String: Data]
         switch DeployManager.zipEntries(from: data) {
@@ -926,24 +933,24 @@ extension SaveVaultManager {
             entries = dict
         case .failure(let error):
             print("[Vault] ZIP read failed: \(error.message)")
-            return .failure(error.message)
+            return .failure(VaultError(message: error.message))
         }
         guard let manifestData = entries["BackupManifest.plist"],
               let plist = try? PropertyListSerialization.propertyList(from: manifestData, options: [], format: nil) as? [String: Any],
               let bundleID = plist["bundleID"] as? String, !bundleID.isEmpty else {
-            return .failure("That ZIP has no BackupManifest.plist — it is not a Save Vault backup.")
+            return .failure(VaultError(message: "That ZIP has no BackupManifest.plist — it is not a Save Vault backup."))
         }
         if bundleID.hasPrefix("com.apple.") || SaveVaultManager.protectedRestoreBundleIDs.contains(bundleID) {
-            return .failure("Restore into \(bundleID) is blocked — system bundle ids are never restore targets.")
+            return .failure(VaultError(message: "Restore into \(bundleID) is blocked — system bundle ids are never restore targets."))
         }
         DispatchQueue.main.sync { AppDataManager.shared.scanIfNeeded() }
         guard let target = AppDataManager.shared.containers.first(where: { $0.bundleID == bundleID }) else {
-            return .failure("\(bundleID) is not installed (or has not been opened once since reinstall). Install it, open it once, close it, then restore.")
+            return .failure(VaultError(message: "\(bundleID) is not installed (or has not been opened once since reinstall). Install it, open it once, close it, then restore."))
         }
         let targetPath = target.path
         let wal = Self.activeWALFiles(containerPath: targetPath)
         if !wal.isEmpty {
-            return .failure("The target app is still writing its database (\(wal.count) active WAL file(s)). Close \(bundleID) first, wait a few seconds, then restore again. Nothing was changed.")
+            return .failure(VaultError(message: "The target app is still writing its database (\(wal.count) active WAL file(s)). Close \(bundleID) first, wait a few seconds, then restore again. Nothing was changed."))
         }
 
         // Zip-Slip validation up front: every entry must
@@ -952,12 +959,12 @@ extension SaveVaultManager {
         for (name, entryData) in entries {
             if name == "BackupManifest.plist" { continue }
             if name.hasPrefix("/") || name.contains("..") {
-                return .failure("The ZIP contains an unsafe path (\(name)) — rejected whole, nothing was written.")
+                return .failure(VaultError(message: "The ZIP contains an unsafe path (\(name)) — rejected whole, nothing was written."))
             }
             let dest = (targetPath as NSString).appendingPathComponent(name)
             let resolved = (dest as NSString).standardizingPath
             guard resolved == targetPath || resolved.hasPrefix(targetPath + "/") else {
-                return .failure("The ZIP contains a path escaping the container (\(name)) — rejected whole, nothing was written.")
+                return .failure(VaultError(message: "The ZIP contains a path escaping the container (\(name)) — rejected whole, nothing was written."))
             }
             planned.append((name: name, data: entryData))
         }
@@ -965,7 +972,7 @@ extension SaveVaultManager {
         let handle = consumeExtension(targetPath)
         print("[Vault] grant for ZIP restore -> \(handle)")
         guard handle > 0 else {
-            return .failure("The sandbox extension for \(bundleID) was refused (code \(handle)). Nothing was changed.")
+            return .failure(VaultError(message: "The sandbox extension for \(bundleID) was refused (code \(handle)). Nothing was changed."))
         }
         defer { releaseExtension(handle) }
 
@@ -984,7 +991,7 @@ extension SaveVaultManager {
                 continue
             }
             do {
-                try fm.createDirectory(at: (dest as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+                try fm.createDirectory(atPath: (dest as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
                 try entry.data.write(to: URL(fileURLWithPath: dest), options: .atomic)
                 written += 1
             } catch {
