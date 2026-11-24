@@ -166,6 +166,10 @@ struct SandboxView: View {
                             CacheCleanerView()
                         }
                         Divider().padding(.leading, 14)
+                        utilityRow("Splash Ad Cache Lock", systemImage: "megaphone.slash") {
+                            AdCacheBlockerView()
+                        }
+                        Divider().padding(.leading, 14)
                         utilityRow("Get Pairing File + VPN Status", systemImage: "key.fill") {
                             PairingView()
                         }

@@ -125,6 +125,13 @@ struct LicenseView: View {
                     )
                     Divider()
                         .padding(.leading, 14)
+                    creditRow(
+                        title: "Erosion-CN — Kianuni",
+                        detail: "Reference — Splash Ad Cache Lock mechanism (ad SDK cache lock, save vault, diagnostics).",
+                        url: "https://github.com/Kianuni/Erosion-CN"
+                    )
+                    Divider()
+                        .padding(.leading, 14)
                     // Toto is credited without a link: the
                     // user named the person only, no URL was given.
                     VStack(alignment: .leading, spacing: 3) {
@@ -194,6 +201,11 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     LabeledContent("Pocket Poster — leminlimez", value: "GPL-3.0")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("Erosion-CN — Kianuni", value: "GPL-3.0")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }
