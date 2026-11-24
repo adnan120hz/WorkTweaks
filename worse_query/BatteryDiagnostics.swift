@@ -19,11 +19,20 @@ import Darwin
 // READWRITE so WAL replay happens on the private clone only,
 // never on the original. Fallback is a plain copyItem.
 //
+// The directory is tried as an ordered candidate chain
+// (databaseCandidates): the SystemGroup path first — it is the
+// path Erosion-CN uses — then the /var/mobile/Library/BatteryLife
+// locations. On the user's iOS 27.0.1 the SystemGroup path
+// returns ENOENT (-255), so the chain moves on. The
+// /var/mobile/Library/... candidates are NOT verified on 27.0.1:
+// /var/mobile/Library is not a container, so a grant there may
+// fail -5/-6 instead of succeeding; each attempt is logged and
+// the chain just moves on. The blocked state lists every
+// candidate tried and the last grant code.
+//
 // Fail-safe, like the rest of the app: a refused grant or an
 // unreadable database produces an honest blocked state with
 // the real result code, and nothing is written anywhere.
-// Some iOS 26 firmware restricts the powerlog sandbox token;
-// iOS 27 reads fully.
 
 struct BatterySample: Identifiable {
     let id = UUID()
@@ -68,7 +77,21 @@ struct ThermalEvent: Identifiable {
 }
 
 final class BatteryDiagnostics: ObservableObject {
-    static let batteryLifeDir = "/private/var/containers/Shared/SystemGroup/systemgroup.com.apple.powerlog/Library/BatteryLife"
+    /// Ordered (directory, filename) candidates, tried in order
+    /// until a grant returns a positive handle AND the file exists.
+    /// (1) SystemGroup — Erosion-CN's path, kept first: it may
+    /// work on other iOS versions. (2)/(3) The /var/mobile/Library
+    /// locations (PowerLog.PLSQL, then CurrentPowerlog.PLSQL).
+    static let databaseCandidates: [(dir: String, file: String)] = [
+        ("/private/var/containers/Shared/SystemGroup/systemgroup.com.apple.powerlog/Library/BatteryLife", "CurrentPowerlog.PLSQL"),
+        ("/private/var/mobile/Library/BatteryLife", "PowerLog.PLSQL"),
+        ("/private/var/mobile/Library/BatteryLife", "CurrentPowerlog.PLSQL"),
+    ]
+    /// The SystemGroup directory (first candidate), kept for
+    /// callers that only need the canonical location.
+    static let batteryLifeDir = databaseCandidates[0].dir
+    /// The snapshot destination name — the clone is always stored
+    /// under this name whatever the source file was called.
     static let databaseName = "CurrentPowerlog.PLSQL"
 
     enum LoadState {
@@ -119,19 +142,37 @@ final class BatteryDiagnostics: ObservableObject {
     }
 
     private func performLoad() {
-        let handle = consumeExtension(Self.batteryLifeDir)
-        print("[Battery] grant for \(Self.batteryLifeDir) -> \(handle)")
-        guard handle > 0 else {
-            finishBlocked("The sandbox extension for the powerlog directory was refused (code \(handle)). Nothing was read or written — the exact grant result is in the Log.")
+        // Try each candidate in order until one grants AND its
+        // database file exists. Every attempt is logged with its
+        // code so the Log shows exactly which candidate resolved.
+        var lastCode: Int64 = -1
+        var tried: [String] = []
+        var resolved: (dir: String, file: String, handle: Int64)?
+        for candidate in Self.databaseCandidates {
+            let handle = consumeExtension(candidate.dir)
+            print("[Battery] grant for \(candidate.dir) -> \(handle)")
+            tried.append("\(candidate.dir)/\(candidate.file) (code \(handle))")
+            if handle <= 0 {
+                lastCode = handle
+                continue
+            }
+            let dbPath = (candidate.dir as NSString).appendingPathComponent(candidate.file)
+            if FileManager.default.fileExists(atPath: dbPath) {
+                resolved = (candidate.dir, candidate.file, handle)
+                print("[Battery] resolved \(dbPath)")
+                break
+            }
+            print("[Battery] no file at \(dbPath) — releasing grant, trying next candidate")
+            releaseExtension(handle)
+            lastCode = -255
+        }
+        guard let resolved else {
+            finishBlocked("The powerlog directory could not be opened. Tried: \(tried.joined(separator: "; ")). Last grant code \(lastCode). Nothing was read or written — the exact grant results are in the Log.")
             return
         }
-        defer { releaseExtension(handle) }
+        defer { releaseExtension(resolved.handle) }
 
-        let dbPath = (Self.batteryLifeDir as NSString).appendingPathComponent(Self.databaseName)
-        guard FileManager.default.fileExists(atPath: dbPath) else {
-            finishBlocked("CurrentPowerlog.PLSQL was not found at \(dbPath). Nothing was read or written.")
-            return
-        }
+        let dbPath = (resolved.dir as NSString).appendingPathComponent(resolved.file)
 
         // Snapshot the DB + sidecars into our own temp dir, then
         // release the grant before opening anything.

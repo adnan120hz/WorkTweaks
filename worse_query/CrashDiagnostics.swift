@@ -17,10 +17,23 @@ import Darwin
 // grant does not include write access the page shows
 // read-only mode and Clean All stays disabled.
 //
+// The root is tried as an ordered candidate chain (diagRoots):
+// the SystemGroup path first — it is the path Erosion-CN uses —
+// then the /var/mobile/Library/Logs/CrashReporter locations,
+// the Settings → Analytics Data store. On the user's iOS 27.0.1
+// the SystemGroup path returns ENOENT (-255), so the chain
+// moves on. The /var/mobile/Library/... candidates are NOT
+// verified as grantable here: that tree is not a container, so
+// a grant there may fail -5/-6 instead of succeeding; each
+// attempt is logged and the chain just moves on. performLoad
+// stores the root that resolved (resolvedRoot) and every
+// later operation — preview, share, Clean All — grants that
+// same root, so a listed report never points at a dead path.
+//
 // Fail-safe, like the rest of the app: a refused grant
-// produces an honest blocked state with the real result
-// code, and nothing outside the listed report files is
-// ever touched.
+// produces an honest blocked state listing the candidates
+// tried and the last grant code, and nothing outside the
+// listed report files is ever touched.
 
 enum CrashKind: String {
     case jetsam = "Jetsam"
@@ -56,7 +69,21 @@ struct CrashReport: Identifiable {
 }
 
 final class CrashDiagnostics: ObservableObject {
-    static let diagRoot = "/private/var/containers/Shared/SystemGroup/systemgroup.com.apple.osanalytics/Library/Logs/DiagnosticReports"
+    /// Ordered candidate roots, tried in order until one grants.
+    /// (1) SystemGroup — Erosion-CN's path, kept first: it may
+    /// work on other iOS versions. (2) The Settings → Analytics
+    /// Data store (verified as the .ips store on iOS 27.1/27.2.1).
+    /// (3) Its parent CrashReporter directory (.ips also live
+    /// directly there). Retired under a fallback root is only
+    /// read when present, never assumed.
+    static let diagRoots: [String] = [
+        "/private/var/containers/Shared/SystemGroup/systemgroup.com.apple.osanalytics/Library/Logs/DiagnosticReports",
+        "/private/var/mobile/Library/Logs/CrashReporter/DiagnosticLogs",
+        "/private/var/mobile/Library/Logs/CrashReporter",
+    ]
+    /// The SystemGroup root (first candidate), kept for callers
+    /// that only need the canonical location.
+    static let diagRoot = diagRoots[0]
     static let retiredSubdir = "Retired"
 
     enum LoadState {
@@ -73,6 +100,17 @@ final class CrashDiagnostics: ObservableObject {
     @Published var isCleaning = false
     @Published var lastResult: String?
 
+    /// The candidate root that granted during the last load.
+    /// Every per-operation grant (preview / share / Clean All)
+    /// uses this root, so a listed report never points at a
+    /// dead path. Nil before the first successful load.
+    private var resolvedRoot: String?
+
+    /// The root to grant for a per-operation action: the one
+    /// that resolved during load, falling back to the first
+    /// (SystemGroup) candidate before any load succeeded.
+    private var operationRoot: String { resolvedRoot ?? Self.diagRoot }
+
     // MARK: Load
 
     func load() {
@@ -87,24 +125,41 @@ final class CrashDiagnostics: ObservableObject {
     }
 
     private func performLoad() {
-        let handle = consumeExtension(Self.diagRoot)
-        print("[Jetsam] grant for \(Self.diagRoot) -> \(handle)")
-        guard handle > 0 else {
-            finishBlocked("The sandbox extension for the DiagnosticReports directory was refused (code \(handle)). Nothing was read or written — the exact grant result is in the Log.")
+        // Try each candidate root in order until one grants.
+        // Every attempt is logged with its code so the Log shows
+        // exactly which candidate resolved.
+        var lastCode: Int64 = -1
+        var tried: [String] = []
+        var resolved: (root: String, handle: Int64)?
+        for root in Self.diagRoots {
+            let handle = consumeExtension(root)
+            print("[Jetsam] grant for \(root) -> \(handle)")
+            tried.append("\(root) (code \(handle))")
+            if handle <= 0 {
+                lastCode = handle
+                continue
+            }
+            resolved = (root, handle)
+            print("[Jetsam] resolved \(root)")
+            break
+        }
+        guard let resolved else {
+            finishBlocked("The DiagnosticReports directory could not be opened. Tried: \(tried.joined(separator: "; ")). Last grant code \(lastCode). Nothing was read or written — the exact grant results are in the Log.")
             return
         }
-        defer { releaseExtension(handle) }
+        defer { releaseExtension(resolved.handle) }
+        self.resolvedRoot = resolved.root
 
         let fm = FileManager.default
-        guard fm.fileExists(atPath: Self.diagRoot) else {
-            finishBlocked("DiagnosticReports was not found at \(Self.diagRoot). Nothing was read or written.")
+        guard fm.fileExists(atPath: resolved.root) else {
+            finishBlocked("DiagnosticReports was not found at \(resolved.root). Nothing was read or written.")
             return
         }
-        let writable = fm.isWritableFile(atPath: Self.diagRoot)
-        print("[Jetsam] DiagnosticReports writable: \(writable)")
+        let writable = fm.isWritableFile(atPath: resolved.root)
+        print("[Jetsam] \(resolved.root) writable: \(writable)")
 
         var found: [CrashReport] = []
-        for dir in [Self.diagRoot, (Self.diagRoot as NSString).appendingPathComponent(Self.retiredSubdir)] {
+        for dir in [resolved.root, (resolved.root as NSString).appendingPathComponent(Self.retiredSubdir)] {
             guard let children = try? fm.contentsOfDirectory(atPath: dir) else { continue }
             for child in children {
                 let full = (dir as NSString).appendingPathComponent(child)
@@ -223,8 +278,10 @@ final class CrashDiagnostics: ObservableObject {
 
     /// First 128 KB of the report as text, for the detail sheet.
     func previewText(for report: CrashReport, completion: @escaping (String) -> Void) {
+        // Capture the resolved root before dispatching.
+        let root = operationRoot
         DispatchQueue.global(qos: .userInitiated).async {
-            let handle = consumeExtension(Self.diagRoot)
+            let handle = consumeExtension(root)
             guard handle > 0 else {
                 DispatchQueue.main.async { completion("Could not open \(report.fileName) (grant refused, code \(handle)).") }
                 return
@@ -244,8 +301,10 @@ final class CrashDiagnostics: ObservableObject {
     /// Copy the report into our own temp dir (under a grant) so
     /// the share sheet can export the full file.
     func shareURL(for report: CrashReport, completion: @escaping (URL?) -> Void) {
+        // Capture the resolved root before dispatching.
+        let root = operationRoot
         DispatchQueue.global(qos: .userInitiated).async {
-            let handle = consumeExtension(Self.diagRoot)
+            let handle = consumeExtension(root)
             guard handle > 0 else {
                 print("[Jetsam] share grant refused: \(handle)")
                 DispatchQueue.main.async { completion(nil) }
@@ -276,7 +335,10 @@ final class CrashDiagnostics: ObservableObject {
         let targets = reports
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
-            let handle = consumeExtension(Self.diagRoot)
+            // Grant the same root the load resolved — never the
+            // dead SystemGroup path when a fallback resolved.
+            let root = self.operationRoot
+            let handle = consumeExtension(root)
             guard handle > 0 else {
                 DispatchQueue.main.async {
                     self.isCleaning = false
