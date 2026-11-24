@@ -2553,6 +2553,8 @@ enum WTStrings {
         "true or false.": "true hoặc false.",
         "v3.0 checks your device's build at launch and only opens on the supported builds. The full version & build list lives in License & Credits.": "v3.0 kiểm tra bản dựng của thiết bị khi khởi chạy và chỉ mở trên các bản dựng được hỗ trợ. Danh sách đầy đủ về phiên bản & bản dựng nằm trong License & Credits.",
         "worse_query — the core system (sandbox escape)": "worse_query — hệ thống lõi (sandbox escape)",
+    ]
+
     // Russian
     static let ru: [String: String] = [
 " and ": " и ",
@@ -3364,7 +3366,5 @@ enum WTStrings {
 "true or false.": "true или false.",
 "v3.0 checks your device's build at launch and only opens on the supported builds. The full version & build list lives in License & Credits.": "v3.0 проверяет сборку вашего устройства при запуске и открывается только на поддерживаемых сборках. Полный список версий и сборок — в License & Credits.",
 "worse_query — the core system (sandbox escape)": "worse_query — основная система (sandbox escape)",
-    ]
-
     ]
 }
