@@ -682,8 +682,10 @@ struct MobileGestaltPlistEditorView: View {
     /// Siri character, keyboard up — the viewer passes the Siri
     /// line for its "Jump to Siri line" button. Nil opens the
     /// plain editor (keyboard still comes up: the page is for
-    /// typing).
-    let jumpToSiriLineOnOpen: Int? = nil
+    /// typing). No default here: a `let` with a default cannot
+    /// be assigned again in init, so the init below (default nil)
+    /// is the only place it is set.
+    let jumpToSiriLineOnOpen: Int?
 
     @State private var editedText: String = ""
     @State private var findText = ""
