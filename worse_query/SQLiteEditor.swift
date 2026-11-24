@@ -425,10 +425,10 @@ final class SQLiteDatabaseEditor: ObservableObject {
                     self.saveMessage = message
                     self.originalRows = self.rows
                     print("[SQLite] saved: \(message)")
-                case .failure(let message):
-                    self.saveMessage = message
+                case .failure(let error):
+                    self.saveMessage = error.message
                     self.saveFailed = true
-                    print("[SQLite] save failed: \(message)")
+                    print("[SQLite] save failed: \(error.message)")
                 }
             }
         }

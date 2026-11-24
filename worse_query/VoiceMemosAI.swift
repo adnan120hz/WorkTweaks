@@ -404,9 +404,9 @@ final class VoiceMemosAI: ObservableObject {
                     self.exportURL = url
                     self.exportMessage = "Exported \(selected.count) recording(s) to \(url.lastPathComponent)."
                     print("[VoiceMemos] export done: \(url.path)")
-                case .failure(let message):
-                    self.exportMessage = message
-                    print("[VoiceMemos] export failed: \(message)")
+                case .failure(let error):
+                    self.exportMessage = error.message
+                    print("[VoiceMemos] export failed: \(error.message)")
                 }
             }
         }

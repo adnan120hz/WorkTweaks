@@ -97,25 +97,7 @@ struct SQLiteEditorView: View {
                                 .padding(.vertical, 8)
                                 Divider()
                                 ForEach(Array(editor.rows.enumerated()), id: \.element.id) { rowIndex, row in
-                                    HStack(spacing: 0) {
-                                        Text("\(row.rowid)")
-                                            .font(.system(.caption, design: .monospaced))
-                                            .foregroundStyle(.secondary)
-                                            .frame(width: 64, alignment: .leading)
-                                        ForEach(Array(editor.columns.enumerated()), id: \.element.offset) { colIndex, column in
-                                            cellView(rowIndex: rowIndex, colIndex: colIndex, column: column)
-                                        }
-                                        Button(role: .destructive) {
-                                            showDeleteConfirm = row
-                                        } label: {
-                                            Image(systemName: "trash")
-                                                .font(.caption)
-                                                .padding(.horizontal, 8)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 6)
+                                    dataRow(rowIndex: rowIndex, row: row)
                                     if rowIndex < editor.rows.count - 1 {
                                         Divider()
                                             .padding(.leading, 14)
@@ -189,6 +171,30 @@ struct SQLiteEditorView: View {
         }
     }
 
+    /// One data row, extracted so the page body stays small
+    /// enough for the type-checker.
+    private func dataRow(rowIndex: Int, row: SQLiteTableRow) -> some View {
+        HStack(spacing: 0) {
+            Text("\(row.rowid)")
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .frame(width: 64, alignment: .leading)
+            ForEach(Array(editor.columns.enumerated()), id: \.element.offset) { colIndex, column in
+                cellView(rowIndex: rowIndex, colIndex: colIndex, column: column)
+            }
+            Button(role: .destructive) {
+                showDeleteConfirm = row
+            } label: {
+                Image(systemName: "trash")
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+    }
+
     private func cellView(rowIndex: Int, colIndex: Int, column: SQLiteColumn) -> some View {
         let cell = editor.rows[rowIndex].values[colIndex]
         let isChanged = editor.rows[rowIndex].values[colIndex] != originalCell(rowIndex: rowIndex, colIndex: colIndex)
@@ -199,7 +205,7 @@ struct SQLiteEditorView: View {
             Text(cell.display)
                 .font(.system(.caption, design: .monospaced))
                 .lineLimit(1)
-                .foregroundStyle(cell.isNull ? .secondary : (isChanged ? .orange : .primary))
+                .foregroundStyle(cell.isNull ? Color.secondary : (isChanged ? Color.orange : Color.primary))
                 .frame(minWidth: 110, alignment: .leading)
         }
         .buttonStyle(.plain)

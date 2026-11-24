@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import Network
 import Darwin
 
@@ -294,8 +295,8 @@ final class WiFiShareServer: ObservableObject {
 
     private func beginUpload(_ connection: NWConnection, state: WiFiConnState, request: WiFiHTTPRequest) -> Bool {
         let query = Self.queryItems(request.rawTarget)
-        guard let dirRel = query["path"] ?? "",
-              let name = query["name"]?.removingPercentEncoding,
+        let dirRel = query["path"] ?? ""
+        guard let name = query["name"]?.removingPercentEncoding,
               !name.isEmpty, !name.contains("/"), name != ".", name != "..",
               let dirURL = resolvePath(dirRel), isDirectory(dirURL.path) else {
             sendText(connection, status: 400, text: "PUT needs ?path=<folder>&name=<filename>.")

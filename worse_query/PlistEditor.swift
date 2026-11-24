@@ -203,7 +203,7 @@ final class PlistEditor: ObservableObject {
                 return "Use true or false for a Bool."
             }
         case .date:
-            guard scalarValue(kind: .date, text: text) != nil else {
+            guard Self.scalarValue(kind: .date, text: text) != nil else {
                 return "Use an ISO date (e.g. 2026-11-24T15:30:00Z) or yyyy-MM-dd HH:mm:ss."
             }
         default:
@@ -251,7 +251,7 @@ final class PlistEditor: ObservableObject {
         case .bool:
             return ["true", "false", "1", "0", "yes", "no"].contains(text.lowercased()) ? nil : "Use true or false for a Bool."
         case .date:
-            return scalarValue(kind: .date, text: text) == nil ? "Use an ISO date (e.g. 2026-11-24T15:30:00Z) or yyyy-MM-dd HH:mm:ss." : nil
+            return Self.scalarValue(kind: .date, text: text) == nil ? "Use an ISO date (e.g. 2026-11-24T15:30:00Z) or yyyy-MM-dd HH:mm:ss." : nil
         default:
             return nil
         }
@@ -287,10 +287,10 @@ final class PlistEditor: ObservableObject {
                     self.saveMessage = message
                     self.originalRows = self.rows
                     print("[Plist] saved: \(message)")
-                case .failure(let message):
-                    self.saveMessage = message
+                case .failure(let error):
+                    self.saveMessage = error.message
                     self.saveFailed = true
-                    print("[Plist] save failed: \(message)")
+                    print("[Plist] save failed: \(error.message)")
                 }
             }
         }
