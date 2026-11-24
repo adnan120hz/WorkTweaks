@@ -174,6 +174,14 @@ struct SandboxView: View {
                             SaveVaultView()
                         }
                         Divider().padding(.leading, 14)
+                        utilityRow("Battery & Thermal", systemImage: "battery.100") {
+                            BatteryDiagnosticsView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Jetsam & Crash", systemImage: "doc.text.magnifyingglass") {
+                            CrashDiagnosticsView()
+                        }
+                        Divider().padding(.leading, 14)
                         utilityRow("Get Pairing File + VPN Status", systemImage: "key.fill") {
                             PairingView()
                         }
