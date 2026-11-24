@@ -12,6 +12,21 @@ import SwiftUI
 /// through this view, so they all share one size, one weight, and
 /// one color. Tweaks keep their own unique symbol (see
 /// TweakCatalog.presentation) — only the rendering is uniform.
+// MARK: - Large Text layout
+//
+// One trigger for the whole app: Dynamic Type .xxxLarge and
+// every Accessibility size (.accessibility1–.accessibility5).
+// At those sizes fixed-width side columns and two-column
+// layouts squeeze their labels until they truncate or overlap,
+// so layouts that read this flag collapse to a single column
+// and let their labels wrap (see TweaksView.columnsView and
+// the keypad below). Default sizes are untouched.
+
+extension DynamicTypeSize {
+    /// True from .xxxLarge up, including all Accessibility sizes.
+    var wtIsLargeText: Bool { self >= .xxxLarge }
+}
+
 // MARK: - Liquid Glass card surface
 //
 // Every card in the app renders on the iOS 26 Liquid Glass
@@ -60,12 +75,19 @@ extension View {
 /// no flag graphics anywhere in the UI.
 struct WTGlassPage<Content: View>: View {
     @EnvironmentObject private var lang: WTLangStore
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ViewBuilder let content: () -> Content
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 content()
+
+                // Bottom clearance so the last card is never
+                // hidden behind the floating tab bar — taller
+                // at Large Text, where scaled type makes the
+                // tab bar overlap more content.
+                Color.clear.frame(height: dynamicTypeSize.wtIsLargeText ? 56 : 24)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -143,7 +165,10 @@ struct RowIcon: View {
             // beside. A fixed .system(size:) would not scale.
             .font(.body)
             .foregroundStyle(color)
-            .frame(width: 30)
+            // minWidth, not a fixed width: at Large Text the
+            // scaled icon needs more than 30pt, and a fixed
+            // frame would clip it.
+            .frame(minWidth: 30)
     }
 }
 

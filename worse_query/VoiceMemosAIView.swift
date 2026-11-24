@@ -77,7 +77,7 @@ struct VoiceMemosAIView: View {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(recording.title)
                                                 .font(.subheadline)
-                                                .lineLimit(1)
+                                                .fixedSize(horizontal: false, vertical: true)
                                             HStack(spacing: 6) {
                                                 if let duration = recording.duration {
                                                     Text(formattedDuration(duration))
@@ -196,7 +196,7 @@ struct VoiceMemosAIView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(target.name)
                                         .font(.subheadline.weight(.semibold))
-                                        .lineLimit(1)
+                                        .fixedSize(horizontal: false, vertical: true)
                                     if target.probed {
                                         Text(wtLang.tr("%d file(s) • %@ total • %@ in Caches", target.fileCount, wtFormatSize(target.bytes), wtFormatSize(target.cachesBytes)))
                                             .font(.caption)

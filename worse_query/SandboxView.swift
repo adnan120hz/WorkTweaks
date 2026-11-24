@@ -350,6 +350,9 @@ struct SandboxView: View {
             HStack(spacing: 10) {
                 Label(title, systemImage: systemImage)
                     .font(.subheadline)
+                    // Wrap the label instead of truncating it at
+                    // Large Text.
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
@@ -366,11 +369,15 @@ struct SandboxView: View {
     /// One label/value line of the identity card's device-details
     /// block.
     private func deviceInfoRow(_ label: String, _ value: String) -> some View {
-        HStack {
+        HStack(alignment: .top) {
             Text(label)
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
+                // Long values (build strings) wrap instead of
+                // truncating at Large Text.
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.trailing)
         }
         .font(.caption)
     }

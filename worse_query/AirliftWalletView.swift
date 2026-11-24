@@ -562,7 +562,7 @@ struct WalletCardRow: View {
                     .foregroundStyle(.blue)
                 Text(card.title)
                     .font(.subheadline.bold())
-                    .lineLimit(1)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer()
                 Toggle("", isOn: Binding(
                     get: { card.isSelected },

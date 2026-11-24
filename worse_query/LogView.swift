@@ -15,6 +15,9 @@ struct LogView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
                         .id("log-bottom")
+                    // Clearance so the last log lines are never
+                    // hidden behind the floating tab bar.
+                    Color.clear.frame(height: 32)
                 }
                 .background(Color(.systemGroupedBackground))
                 .navigationTitle(wtLang.tr("Log"))

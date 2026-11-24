@@ -141,7 +141,7 @@ struct ProfileViewerView: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(file.name)
                                             .font(.subheadline)
-                                            .lineLimit(1)
+                                            .fixedSize(horizontal: false, vertical: true)
                                         if let modified = file.modified {
                                             Text(modified, style: .date)
                                                 .font(.caption)

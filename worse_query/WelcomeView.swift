@@ -253,7 +253,7 @@ private struct DeveloperPage: View {
             Image(systemName: systemImage)
                 .font(.body)
                 .foregroundStyle(Color.accentColor)
-                .frame(width: 30)
+                .frame(minWidth: 30)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(.subheadline.weight(.semibold))

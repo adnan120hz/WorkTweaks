@@ -300,7 +300,7 @@ struct AppDataDirectoryView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.name)
                     .font(.subheadline)
-                    .lineLimit(1)
+                    .fixedSize(horizontal: false, vertical: true)
                 if !entry.isDirectory {
                     Text(wtFormatSize(entry.size))
                         .font(.caption)

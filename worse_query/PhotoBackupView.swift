@@ -301,7 +301,7 @@ struct PhotoRestoreView: View {
                                             Text(file.lastPathComponent)
                                                 .font(.subheadline)
                                                 .foregroundStyle(.primary)
-                                                .lineLimit(1)
+                                                .fixedSize(horizontal: false, vertical: true)
                                             Spacer(minLength: 0)
                                         }
                                     }

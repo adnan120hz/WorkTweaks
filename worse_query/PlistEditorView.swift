@@ -146,7 +146,7 @@ struct PlistEditorView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(row.key)
                             .font(.subheadline.weight(.semibold))
-                            .lineLimit(1)
+                            .fixedSize(horizontal: false, vertical: true)
                         Text(row.display)
                             .font(.system(.caption, design: .monospaced))
                             .foregroundStyle(.secondary)

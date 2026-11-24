@@ -571,6 +571,13 @@ struct AirliftPasscodeView: View {
 struct KeypadPreviewGrid: View {
     let keys: [String: UIImage]
 
+    // The dial-pad stays 3 columns at every size (it is a
+    // phone keypad, not a card grid) — but the key circles
+    // scale with Dynamic Type instead of staying a fixed
+    // 64pt, so the scaled digit never clips out of its
+    // circle at Large Text.
+    @ScaledMetric(relativeTo: .title2) private var keySize: CGFloat = 64
+
     private var cells: [(digit: String, letters: String)] {
         var rows: [(String, String)] = []
         for btn in KeypadLayout.allButtons where btn.digit != "0" {
@@ -592,12 +599,12 @@ struct KeypadPreviewGrid: View {
                     ZStack {
                         Circle()
                             .fill(Color(uiColor: .secondarySystemBackground))
-                            .frame(width: 64, height: 64)
+                            .frame(width: keySize, height: keySize)
                         if let img = keys[cell.digit] {
                             Image(uiImage: img)
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 64, height: 64)
+                                .frame(width: keySize, height: keySize)
                                 .clipShape(Circle())
                         } else {
                             Text(cell.digit)

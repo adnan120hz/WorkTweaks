@@ -96,6 +96,9 @@ struct TweaksView: View {
     let console: Console
     @ObservedObject var manager: GestaltManager
     @EnvironmentObject private var wtLang: WTLangStore
+    /// Large Text trigger (see SharedUI): at .xxxLarge and
+    /// above the two-column layout collapses to one column.
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Switches the TabView to the Sandbox tab (RootView owns the
     /// selection); used by the locked state's button.
     var onOpenSandbox: () -> Void
@@ -268,9 +271,68 @@ struct TweaksView: View {
         .background(Color(.systemGroupedBackground))
     }
 
-    // MARK: Two-column layout
+    // MARK: Two-column layout (single column at Large Text)
+    //
+    // Default sizes keep the two-column page: a scrolling
+    // column of tweak cards on the left and the fixed
+    // 150pt Sections/identity/Menus column on the right.
+    // At Large Text (Dynamic Type .xxxLarge and above,
+    // including all Accessibility sizes) that 150pt column
+    // is too narrow for its labels ("Dynamic Island",
+    // "Apple Intelligence" truncate, cards overlap the big
+    // title) and the squeezed left column truncates card
+    // titles — so the page collapses to ONE full-width
+    // scrolling column: identity, Sections, Menus, then the
+    // tweak cards. Same cards, same order, same actions;
+    // only the arrangement changes, and it changes back
+    // automatically when the text size shrinks.
 
     private var columnsView: some View {
+        if dynamicTypeSize.wtIsLargeText {
+            singleColumnView
+        } else {
+            twoColumnView
+        }
+    }
+
+    /// The Large Text layout: every card full-width in one
+    /// scrolling column, with bottom clearance taller than
+    /// the floating tab bar so the last card is never hidden
+    /// behind it.
+    private var singleColumnView: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                identityMiniCard
+                sectionsCard
+                menusCard
+
+                statusCard
+
+                if manager.isEmpty || !manager.isValid {
+                    warningCard
+                }
+
+                if selectedSection == .applyRevert {
+                    actionsBlock
+                        .transition(.opacity)
+                } else {
+                    sectionCards
+                        .transition(.opacity)
+                }
+
+                footerLinks
+
+                Color.clear.frame(height: 56)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
+            .animation(.easeInOut(duration: 0.25), value: selectedSection)
+        }
+        .scrollIndicators(.hidden)
+        .background(Color(.systemGroupedBackground))
+    }
+
+    private var twoColumnView: some View {
         HStack(alignment: .top, spacing: 12) {
             ScrollView {
                 VStack(spacing: 12) {
@@ -292,6 +354,10 @@ struct TweaksView: View {
                     }
 
                     footerLinks
+
+                    // Bottom clearance so the last card is never
+                    // hidden behind the floating tab bar.
+                    Color.clear.frame(height: 32)
                 }
                 .padding(.vertical, 16)
                 .animation(.easeInOut(duration: 0.25), value: selectedSection)
@@ -452,10 +518,15 @@ struct TweaksView: View {
                         Image(systemName: section.icon)
                             .font(.subheadline)
                             .foregroundStyle(selectedSection == section ? Color.white : Color.accentColor)
-                            .frame(width: 22)
+                            // minWidth, not fixed: at Large Text the
+                            // scaled icon needs more room.
+                            .frame(minWidth: 22)
                         Text(section.title)
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(selectedSection == section ? Color.white : Color.primary)
+                            // Wrap to a second line instead of
+                            // truncating ("Dynamic I…") at Large Text.
+                            .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, 10)
@@ -529,10 +600,11 @@ struct TweaksView: View {
                 Image(systemName: systemImage)
                     .font(.subheadline)
                     .foregroundStyle(Color.accentColor)
-                    .frame(width: 22)
+                    .frame(minWidth: 22)
                 Text(title)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 10)
@@ -549,7 +621,7 @@ struct TweaksView: View {
             Image(systemName: statusIcon)
                 .font(.title3)
                 .foregroundStyle(statusColor)
-                .frame(width: 30)
+                .frame(minWidth: 30)
             VStack(alignment: .leading, spacing: 2) {
                 Text(statusTitle)
                     .font(.subheadline.weight(.semibold))
@@ -1000,6 +1072,8 @@ struct TweakCard: View {
             HStack(spacing: 8) {
                 Text(stateLine)
                     .font(.caption).foregroundStyle(.secondary)
+                    // Wrap instead of truncating at Large Text.
+                    .fixedSize(horizontal: false, vertical: true)
                 // The status-bar fix guide lives next to the
                 // "On" line of the Dynamic Island card only.
                 if tweak.id == "enable_dynamic_island_capability", tweak.isOn(in: manager.dictNow) {
