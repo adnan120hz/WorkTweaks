@@ -127,7 +127,7 @@ struct LicenseView: View {
                         .padding(.leading, 14)
                     creditRow(
                         title: "Erosion-CN — Kianuni",
-                        detail: "Reference — Splash Ad Cache Lock mechanism (ad SDK cache lock, save vault, diagnostics).",
+                        detail: "Reference — Splash Ad Cache Lock mechanism (ad SDK cache lock, save vault, diagnostics, Wi-Fi file sharing, Voice Memos export, AI cache probes).",
                         url: "https://github.com/Kianuni/Erosion-CN"
                     )
                     Divider()

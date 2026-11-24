@@ -407,6 +407,26 @@ struct AppDataFileView: View {
                         }
                 }
 
+                if isPlistFile {
+                    WTSectionCard(footer: "Opens the property list as an editable key/type/value table, with a backup taken before the first save.") {
+                        NavigationLink {
+                            PlistEditorView(manager: manager, path: path, name: name)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Text("Open as Property List")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
                 WTSectionCard(footer: "Saving writes the file in place, under the container's sandbox extension.") {
                     Button {
                         if manager.saveText(path: path, text: text, isNew: !fileExists) {
@@ -475,6 +495,46 @@ struct AppDataFileView: View {
                     }
                 }
 
+                if isSQLiteFile {
+                    WTSectionCard(footer: "Opens the database as editable tables, with a backup taken before the first save. Close the owning app before editing.") {
+                        NavigationLink {
+                            SQLiteEditorView(manager: manager, path: path, name: name)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Text("Open as SQLite Database")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                if isPlistFile {
+                    WTSectionCard(footer: "Opens the property list as an editable key/type/value table, with a backup taken before the first save.") {
+                        NavigationLink {
+                            PlistEditorView(manager: manager, path: path, name: name)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Text("Open as Property List")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
                 if hasBackup {
                     WTSectionCard(footer: "Copies the backup taken before the first byte edit back over this file, in place.") {
                         Button(role: .destructive) {
@@ -517,6 +577,19 @@ struct AppDataFileView: View {
         .onAppear {
             load()
         }
+    }
+
+    /// Whether the file looks like a SQLite database
+    /// (.sqlite / .db / .sqlite3) — offered the table editor.
+    private var isSQLiteFile: Bool {
+        let lower = name.lowercased()
+        return lower.hasSuffix(".sqlite") || lower.hasSuffix(".db") || lower.hasSuffix(".sqlite3")
+    }
+
+    /// Whether the file is a property list — offered the
+    /// key/type/value table editor.
+    private var isPlistFile: Bool {
+        name.lowercased().hasSuffix(".plist")
     }
 
     /// Why a file may be unreadable, shown on the read-failure

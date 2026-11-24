@@ -182,6 +182,18 @@ struct SandboxView: View {
                             CrashDiagnosticsView()
                         }
                         Divider().padding(.leading, 14)
+                        utilityRow("Wi-Fi File Sharing", systemImage: "wifi") {
+                            WiFiShareView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Configuration Profiles", systemImage: "person.badge.key") {
+                            ProfileViewerView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Voice Memos & AI Cache", systemImage: "waveform") {
+                            VoiceMemosAIView()
+                        }
+                        Divider().padding(.leading, 14)
                         utilityRow("Get Pairing File + VPN Status", systemImage: "key.fill") {
                             PairingView()
                         }
