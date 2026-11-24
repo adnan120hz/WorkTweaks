@@ -85,7 +85,7 @@ struct BackupView: View {
                 // All Data Backup: user-picked photos/videos
                 // into BackUP_Data, restore via share sheet —
                 // the same PhotoBackupView/PhotoRestoreView
-                // the SpringBoard/Status Bar pages open.
+                // that power this section.
                 WTSectionCard(header: wtLang.tr("All Data Backup")) {
                     VStack(alignment: .leading, spacing: 0) {
                         Button {

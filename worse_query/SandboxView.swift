@@ -248,14 +248,6 @@ struct SandboxView: View {
                         utilityRow("Voice Memos & AI Cache", systemImage: "waveform") {
                             VoiceMemosAIView()
                         }
-                        Divider().padding(.leading, 14)
-                        utilityRow(lang.tr("Status Bar"), systemImage: "cellularbars") {
-                            StatusBarView(console: console)
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("SpringBoard", systemImage: "square.grid.3x3") {
-                            SpringBoardView(console: console)
-                        }
                     }
                 }
 

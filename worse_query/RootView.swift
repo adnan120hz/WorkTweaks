@@ -3,10 +3,8 @@ import SwiftUI
 /// The five main tabs, Sandbox first: it is the app's front door
 /// (it holds the "Start Tweaks Feature" master switch). RootView
 /// owns the selection so other views (e.g. the locked Tweaks tab)
-/// can ask to jump to a specific tab. Status Bar and
-/// SpringBoard are NOT tabs: they live only as Sandbox menu
-/// rows (below "Voice Memos & AI Cache"), so iOS never
-/// builds a "More" tab.
+/// can ask to jump to a specific tab. Exactly five tabs, so iOS
+/// never builds a "More" tab.
 enum AppTab: Hashable {
     case sandbox, tweaks, extra, backup, log
 }
