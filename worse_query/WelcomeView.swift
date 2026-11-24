@@ -1,29 +1,48 @@
 import SwiftUI
 
-// MARK: - Welcome (v7.0 three-page Introducing)
+// MARK: - Welcome (v7.0 three-page Introducing, redesigned)
 //
 // Shown exactly once per install: the first time WorkTweaks is
 // opened. Three swipeable pages with a smooth slide per page:
 // 1. the developer (Adnan, GitHub, TikTok), 2. every feature
-// in v7.0, 3. license & credits. "Skip" dismisses from any
-// page; "Next" advances, and on the last page it becomes
-// "Get Started". Either one records that the welcome has been
-// seen (UserDefaults key wt.welcomeV2Seen, see RootView) and
-// it never appears again — unless the app is deleted and
-// reinstalled. The gating is unchanged from v2.0.
+// in v7.0, 3. license & credits. "Next" advances, and on the
+// last page it becomes "Get Started" — that is the only way
+// out. There is NO Skip anywhere: the user asked for the Skip
+// menu to be gone entirely, so the welcome must be walked
+// through page by page. Either button records that the
+// welcome has been seen (UserDefaults key wt.welcomeV2Seen,
+// see RootView) and it never appears again — unless the app
+// is deleted and reinstalled. The gating is unchanged from
+// v2.0.
+//
+// DESIGN (redesigned 2026-11-24, replacing the f2395fcb
+// layout): there is NO bottom bar and NO background panel
+// behind the buttons at all — the old .ultraThinMaterial
+// bar covered the bottom of the developer card, which is
+// what the user objected to. Instead a single floating pill
+// button (Next / Get Started) plus a row of three page dots
+// hovers over the content with transparent surroundings —
+// just the pill, with a soft shadow so it reads over any
+// content scrolling underneath. Every page's ScrollView
+// carries bottom padding taller than the floating control,
+// so the last card is never hidden behind it. Pages are
+// leading-aligned and content-first: a hero block (icon +
+// title + subtitle) then glass section cards. No big emoji
+// headers, no centered avatar card.
 //
 // Every string goes through wtLang.tr, so the pages follow the
-// app language (English default). Emojis are decorative here
-// by the user's order — the rest of the app stays emoji-free.
-// Dynamic Type: scalable TextStyle fonts only, no fixed
-// heights, rows wrap instead of truncating.
+// app language (English default). The feature-row emojis stay
+// — they are decorative here by the user's order; the rest of
+// the app stays emoji-free. Dynamic Type: scalable TextStyle
+// fonts only, no fixed heights, rows wrap instead of
+// truncating.
 
 struct WelcomeView: View {
     @EnvironmentObject private var wtLang: WTLangStore
 
-    /// Called when the user taps "Get Started" or "Skip" — the
-    /// parent marks the welcome as seen and moves on to the
-    /// support check.
+    /// Called when the user taps "Get Started" — the parent
+    /// marks the welcome as seen and moves on to the support
+    /// check.
     var onStart: () -> Void
 
     @State private var page = 0
@@ -35,21 +54,24 @@ struct WelcomeView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack(alignment: .bottom) {
             TabView(selection: $page) {
-                DeveloperPage()
+                DeveloperPage(versionText: versionText)
                     .tag(0)
                 FeaturesPage()
                     .tag(1)
                 CreditsPage(onShowFullLicense: { showLicense = true })
                     .tag(2)
             }
-            .tabViewStyle(.page(indexDisplayMode: .always))
+            // The system page dots are off: the floating
+            // control below draws its own three dots, so the
+            // dots and the pill move as one unit with no bar.
+            .tabViewStyle(.page(indexDisplayMode: .never))
             // The slide between pages is the animation the user
             // asked for: one smooth ease per page, swipe or tap.
             .animation(.easeInOut(duration: 0.35), value: page)
 
-            bottomBar
+            floatingControls
         }
         .background(Color(.systemGroupedBackground))
         .sheet(isPresented: $showLicense) {
@@ -64,10 +86,25 @@ struct WelcomeView: View {
         }
     }
 
-    // MARK: Bottom bar
+    // MARK: Floating controls — no bar, no background
 
-    private var bottomBar: some View {
-        VStack(spacing: 10) {
+    /// The only navigation: three dots plus one pill button,
+    /// floating over the page content with transparent
+    /// surroundings. No material, no solid color, no panel —
+    /// nothing behind the button can cover content, because
+    /// there is nothing behind it at all.
+    private var floatingControls: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 7) {
+                ForEach(0..<3, id: \.self) { index in
+                    Circle()
+                        .fill(index == page ? Color.accentColor : Color.secondary.opacity(0.35))
+                        .frame(width: 7, height: 7)
+                        .animation(.easeInOut(duration: 0.25), value: page)
+                        .accessibilityHidden(true)
+                }
+            }
+
             if page < 2 {
                 Button {
                     page += 1
@@ -82,6 +119,7 @@ struct WelcomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
             } else {
                 Button {
                     onStart()
@@ -96,87 +134,66 @@ struct WelcomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
             }
-
-            Button {
-                onStart()
-            } label: {
-                Text(wtLang.tr("Skip"))
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 13)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-
-            Text(versionText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.horizontal, 22)
-        .padding(.top, 10)
-        .padding(.bottom, 12)
-        .background(.ultraThinMaterial)
+        .padding(.bottom, 14)
     }
 }
 
 // MARK: - Page 1: Developer
+//
+// Leading-aligned hero (icon, title, subtitle) then one
+// glass card: the developer's name and role, one intro line,
+// and two full-width tappable link rows showing the actual
+// handles (@adnan.120hz, adnan120hz) with an external-link
+// chevron — instead of the old centered avatar card with two
+// side-by-side buttons.
 
 private struct DeveloperPage: View {
     @EnvironmentObject private var wtLang: WTLangStore
 
+    var versionText: String
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(alignment: .leading, spacing: 20) {
                 // The real icon artwork for the current language —
                 // same PNGs as the home-screen alternate icons.
                 Image(uiImage: WTHeaderIcon.image(for: wtLang.language))
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 104, height: 104)
-                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .frame(width: 88, height: 88)
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
                             .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
                     )
                     .accessibilityLabel("WorkTweaks")
+                    .padding(.top, 8)
 
-                VStack(spacing: 8) {
-                    Text("👋")
-                        .font(.largeTitle)
+                VStack(alignment: .leading, spacing: 8) {
                     Text(wtLang.tr("Welcome to WorkTweaks"))
-                        .font(.title.weight(.bold))
-                        .multilineTextAlignment(.center)
+                        .font(.largeTitle.weight(.bold))
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(wtLang.tr("A MobileGestalt tweak tool for iOS 26 & 27 — unlock your device's hidden features without a jailbreak, powered by the worse_query sandbox escape."))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 WTSectionCard(header: wtLang.tr("Meet the Developer")) {
                     VStack(alignment: .leading, spacing: 0) {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.accentColor)
-                                    .frame(width: 46, height: 46)
-                                Text("A")
-                                    .font(.title3.weight(.bold))
-                                    .foregroundStyle(.white)
-                            }
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text("Adnan")
-                                    .font(.headline)
-                                Text(wtLang.tr("Developer"))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Adnan")
+                                .font(.title3.weight(.bold))
+                            Text(wtLang.tr("Developer"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 10)
 
                         Divider()
                             .padding(.leading, 14)
@@ -185,106 +202,157 @@ private struct DeveloperPage: View {
                             .font(.subheadline)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, 10)
 
                         Divider()
                             .padding(.leading, 14)
 
-                        HStack(spacing: 10) {
-                            Link(destination: URL(string: "https://www.tiktok.com/@adnan.120hz")!) {
-                                Label("TikTok", systemImage: "music.note")
-                                    .font(.footnote.weight(.semibold))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 4)
-                            }
-                            .buttonStyle(.bordered)
-                            Link(destination: URL(string: "https://github.com/adnan120hz")!) {
-                                Label("GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
-                                    .font(.footnote.weight(.semibold))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 4)
-                            }
-                            .buttonStyle(.bordered)
+                        Link(destination: URL(string: "https://www.tiktok.com/@adnan.120hz")!) {
+                            linkRow(
+                                systemImage: "music.note",
+                                title: "TikTok",
+                                handle: "@adnan.120hz"
+                            )
                         }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
+                        .buttonStyle(.plain)
+
+                        Divider()
+                            .padding(.leading, 14)
+
+                        Link(destination: URL(string: "https://github.com/adnan120hz")!) {
+                            linkRow(
+                                systemImage: "chevron.left.forwardslash.chevron.right",
+                                title: "GitHub",
+                                handle: "adnan120hz"
+                            )
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
 
                 Text(wtLang.tr("Follow for updates, demos and new tweaks."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
+
+                Text(versionText)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
-            .padding(16)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            // Taller than the floating pill + dots, so the
+            // version line at the end is never hidden behind
+            // them — the old bar covered the card's bottom.
+            .padding(.bottom, 120)
         }
+    }
+
+    private func linkRow(systemImage: String, title: String, handle: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.body)
+                .foregroundStyle(.accentColor)
+                .frame(width: 30)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text(handle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "arrow.up.forward.app")
+                .font(.footnote)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
+        .contentShape(Rectangle())
     }
 }
 
 // MARK: - Page 2: Features
+//
+// The same 18 v7.0 features, now grouped into four glass
+// cards instead of one flat list — Tweaks & System, Files &
+// Data, Look & Feel, Setup & More. The rows themselves are
+// unchanged (emoji, title, one-line description), so every
+// existing translation key still applies; only the four
+// group headers are new keys.
 
 private struct FeaturesPage: View {
     @EnvironmentObject private var wtLang: WTLangStore
 
-    /// Every v7.0 feature, one short row each. Titles reuse the
-    /// app's existing translation keys where they exist; the
-    /// one-line descriptions are new Introducing keys.
-    private var features: [(emoji: String, title: String, desc: String)] {
+    /// Every v7.0 feature, one short row each, grouped by
+    /// what it does. Titles reuse the app's existing
+    /// translation keys where they exist; the one-line
+    /// descriptions are Introducing keys.
+    private var groups: [(title: String, features: [(emoji: String, title: String, desc: String)])] {
         [
-            ("🎛️", "Tweaks", "24 catalog tweaks — Dynamic Island, iPadOS Mode, custom region and more."),
-            ("🔓", "Sandbox Escape", "Reach system folders the sandbox normally hides."),
-            ("📁", "App Data", "Browse any app's container, edit files, and build portable patches."),
-            ("🖼️", "PosterBoard", "Make lock-screen wallpapers from your photos and videos."),
-            ("🧹", "Cache Data Cleaner", "Free space by cleaning app caches, safely."),
-            ("🛡️", "Splash Ad Cache Lock", "Lock ad splash-screen caches so apps open without the splash ad."),
-            ("💾", "Save Vault", "Back up an app's save data and restore it after a reinstall."),
-            ("🔋", "Battery & Thermal", "Battery health, cycle count and temperature — read-only."),
-            ("💥", "Jetsam & Crash", "See why apps were killed, with crash logs you can delete."),
-            ("📡", "Wi-Fi File Sharing", "Share files with your PC over Wi-Fi, protected by a PIN."),
-            ("🗃️", "SQLite / plist editor", "Edit app databases and preference files in place."),
-            ("📋", "Configuration Profiles", "List installed profiles, read-only — no fake supervision."),
-            ("🎙️", "Voice Memos & AI Cache", "Export voice memos and check Apple Intelligence cache size."),
-            ("✈️", "Airlift", "Flash passcode themes and wallet card skins over the pairing tunnel."),
-            ("🔑", "Get Pairing File", "Pair this iPhone on-device and unlock Airlift."),
-            ("💽", "Backup", "Snapshots of your tweaks, plus All Data Backup for photos and videos."),
-            ("📜", "Log", "Every action, logged — send it when something goes wrong."),
-            ("🌐", "Languages", "English, Indonesian, Chinese, Vietnamese and Russian — the UI follows you."),
+            ("Tweaks & System", [
+                ("🎛️", "Tweaks", "24 catalog tweaks — Dynamic Island, iPadOS Mode, custom region and more."),
+                ("🔓", "Sandbox Escape", "Reach system folders the sandbox normally hides."),
+                ("🔋", "Battery & Thermal", "Battery health, cycle count and temperature — read-only."),
+                ("💥", "Jetsam & Crash", "See why apps were killed, with crash logs you can delete."),
+                ("📋", "Configuration Profiles", "List installed profiles, read-only — no fake supervision."),
+            ]),
+            ("Files & Data", [
+                ("📁", "App Data", "Browse any app's container, edit files, and build portable patches."),
+                ("💾", "Save Vault", "Back up an app's save data and restore it after a reinstall."),
+                ("📡", "Wi-Fi File Sharing", "Share files with your PC over Wi-Fi, protected by a PIN."),
+                ("🗃️", "SQLite / plist editor", "Edit app databases and preference files in place."),
+                ("🎙️", "Voice Memos & AI Cache", "Export voice memos and check Apple Intelligence cache size."),
+                ("🧹", "Cache Data Cleaner", "Free space by cleaning app caches, safely."),
+            ]),
+            ("Look & Feel", [
+                ("🖼️", "PosterBoard", "Make lock-screen wallpapers from your photos and videos."),
+                ("🛡️", "Splash Ad Cache Lock", "Lock ad splash-screen caches so apps open without the splash ad."),
+            ]),
+            ("Setup & More", [
+                ("✈️", "Airlift", "Flash passcode themes and wallet card skins over the pairing tunnel."),
+                ("🔑", "Get Pairing File", "Pair this iPhone on-device and unlock Airlift."),
+                ("💽", "Backup", "Snapshots of your tweaks, plus All Data Backup for photos and videos."),
+                ("📜", "Log", "Every action, logged — send it when something goes wrong."),
+                ("🌐", "Languages", "English, Indonesian, Chinese, Vietnamese and Russian — the UI follows you."),
+            ]),
         ]
     }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("✨")
-                        .font(.largeTitle)
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text(wtLang.tr("Features"))
-                        .font(.title.weight(.bold))
+                        .font(.largeTitle.weight(.bold))
                     Text(wtLang.tr("Everything in WorkTweaks, at a glance."))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.horizontal, 16)
                 .padding(.top, 16)
 
-                WTSectionCard {
-                    VStack(alignment: .leading, spacing: 0) {
-                        ForEach(Array(features.enumerated()), id: \.offset) { index, feature in
-                            if index > 0 {
-                                Divider()
-                                    .padding(.leading, 14)
+                ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+                    WTSectionCard(header: wtLang.tr(group.title)) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(group.features.enumerated()), id: \.offset) { index, feature in
+                                if index > 0 {
+                                    Divider()
+                                        .padding(.leading, 14)
+                                }
+                                featureRow(emoji: feature.emoji, title: feature.title, desc: feature.desc)
                             }
-                            featureRow(emoji: feature.emoji, title: feature.title, desc: feature.desc)
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 0)
+            // Taller than the floating pill + dots, so the
+            // last group's bottom row is never hidden behind
+            // them.
+            .padding(.bottom, 120)
         }
     }
 
@@ -352,18 +420,16 @@ private struct CreditsPage: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("📜")
-                        .font(.largeTitle)
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text(wtLang.tr("License & Credits"))
-                        .font(.title.weight(.bold))
+                        .font(.largeTitle.weight(.bold))
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(wtLang.tr("A MobileGestalt tweak app for iOS 26/27, built on the open-source projects credited below. Use at your own risk — tweaks modify system files."))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.horizontal, 16)
                 .padding(.top, 16)
 
                 WTSectionCard(header: wtLang.tr("License"), footer: wtLang.tr("Free and open source — the projects below made it possible.")) {
@@ -379,7 +445,6 @@ private struct CreditsPage: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
 
                 WTSectionCard(header: wtLang.tr("Credits")) {
                     VStack(alignment: .leading, spacing: 0) {
@@ -393,7 +458,6 @@ private struct CreditsPage: View {
                     }
                     .padding(.vertical, 4)
                 }
-                .padding(.horizontal, 16)
 
                 WTSectionCard {
                     Button {
@@ -407,9 +471,11 @@ private struct CreditsPage: View {
                             .contentShape(Rectangle())
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
             }
+            .padding(.horizontal, 20)
+            // Taller than the floating pill + dots, so the
+            // full-license row is never hidden behind them.
+            .padding(.bottom, 120)
         }
     }
 
