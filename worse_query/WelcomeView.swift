@@ -252,7 +252,7 @@ private struct DeveloperPage: View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
                 .font(.body)
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
