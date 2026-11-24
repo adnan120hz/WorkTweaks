@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LogView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var console: Console
 
     var body: some View {
@@ -16,10 +17,10 @@ struct LogView: View {
                         .id("log-bottom")
                 }
                 .background(Color(.systemGroupedBackground))
-                .navigationTitle("Log")
+                .navigationTitle(wtLang.tr("Log"))
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Clear") {
+                        Button(wtLang.tr("Clear")) {
                             console.output = ""
                         }
                         .buttonStyle(.plain)

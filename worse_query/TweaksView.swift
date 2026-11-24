@@ -27,12 +27,12 @@ enum TweakSection: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .all: return "All"
+        case .all: return L("All")
         case .dynamicIsland: return "Dynamic Island"
-        case .tweaks: return "Tweaks"
+        case .tweaks: return L("Tweaks")
         case .appleIntelligence: return "Apple Intelligence"
-        case .addFeature: return "Add feature"
-        case .applyRevert: return "Apply/Revert"
+        case .addFeature: return L("Add feature")
+        case .applyRevert: return L("Apply/Revert")
         }
     }
 
@@ -95,6 +95,7 @@ struct TweaksView: View {
     // every tweak's read() — a self-sustaining lag/spam loop.
     let console: Console
     @ObservedObject var manager: GestaltManager
+    @EnvironmentObject private var wtLang: WTLangStore
     /// Switches the TabView to the Sandbox tab (RootView owns the
     /// selection); used by the locked state's button.
     var onOpenSandbox: () -> Void
@@ -145,8 +146,8 @@ struct TweaksView: View {
                             onInfo: showInfo(for:),
                             onRevert: { showRevertConfirm = true },
                             onSpoofingInfo: {
-                                infoTitle = "Device Spoofing Info"
-                                infoMessage = "Only spoof your device model if you want to download Apple Intelligence. This may break Face ID. If you decide to unspoof and want to keep Apple Intelligence, do NOT re-enter the Apple Intelligence & Siri menu in Settings."
+                                infoTitle = wtLang.tr("Device Spoofing Info")
+                                infoMessage = wtLang.tr("Only spoof your device model if you want to download Apple Intelligence. This may break Face ID. If you decide to unspoof and want to keep Apple Intelligence, do NOT re-enter the Apple Intelligence & Siri menu in Settings.")
                             }
                         )
                     } else {
@@ -166,9 +167,9 @@ struct TweaksView: View {
                         Button {
                             searchActive = true
                         } label: {
-                            Label("Search", systemImage: "magnifyingglass")
+                            Label(wtLang.tr("Search"), systemImage: "magnifyingglass")
                         }
-                        .accessibilityLabel("Search tweaks")
+                        .accessibilityLabel(wtLang.tr("Search tweaks"))
                     }
                 }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
@@ -179,56 +180,56 @@ struct TweaksView: View {
                     } label: {
                         Image(systemName: "book")
                     }
-                    .accessibilityLabel("Tutorials")
+                    .accessibilityLabel(wtLang.tr("Tutorials"))
                     NavigationLink {
                         LicenseView()
                     } label: {
                         Image(systemName: "doc.text")
                     }
-                    .accessibilityLabel("License & Credits")
+                    .accessibilityLabel(wtLang.tr("License & Credits"))
                 }
             }
             .fullScreenCover(isPresented: $searchActive) {
                 searchCover
             }
             .alert(infoTitle ?? "", isPresented: showInfo) {
-                Button("OK") { infoTitle = nil }
+                Button(wtLang.tr("OK")) { infoTitle = nil }
             } message: {
                 Text(infoMessage)
             }
-            .alert("Notice", isPresented: Binding(
+            .alert(wtLang.tr("Notice"), isPresented: Binding(
                 get: { manager.notice != nil },
                 set: { if !$0 { manager.notice = nil } }
             )) {
-                Button("OK") { manager.notice = nil }
+                Button(wtLang.tr("OK")) { manager.notice = nil }
             } message: {
                 Text(manager.notice ?? "")
             }
-            .confirmationDialog("Tweaks Applied", isPresented: $manager.showPostApplyChoice, titleVisibility: .visible) {
-                Button("Respring") { RespringCenter.shared.trigger() }
-                Button("Restart Device") { manager.presentManualRestartGuide() }
-                Button("Later", role: .cancel) { }
+            .confirmationDialog(wtLang.tr("Tweaks Applied"), isPresented: $manager.showPostApplyChoice, titleVisibility: .visible) {
+                Button(wtLang.tr("Respring")) { RespringCenter.shared.trigger() }
+                Button(wtLang.tr("Restart Device")) { manager.presentManualRestartGuide() }
+                Button(wtLang.tr("Later"), role: .cancel) { }
             } message: {
-                Text("Some tweaks — especially Apple Intelligence — only take effect after a full restart, not a respring.")
+                Text(wtLang.tr("Some tweaks — especially Apple Intelligence — only take effect after a full restart, not a respring."))
             }
-            .confirmationDialog("Restart Required", isPresented: $manager.showRestartRequired, titleVisibility: .visible) {
-                Button("Restart Device") { manager.presentManualRestartGuide() }
-                Button("Later", role: .cancel) { }
+            .confirmationDialog(wtLang.tr("Restart Required"), isPresented: $manager.showRestartRequired, titleVisibility: .visible) {
+                Button(wtLang.tr("Restart Device")) { manager.presentManualRestartGuide() }
+                Button(wtLang.tr("Later"), role: .cancel) { }
             } message: {
-                Text("Revert and restore changes only take effect after a full device restart — a respring is not enough. Choosing Later just postpones it; the changes stay pending until you restart.")
+                Text(wtLang.tr("Revert and restore changes only take effect after a full device restart — a respring is not enough. Choosing Later just postpones it; the changes stay pending until you restart."))
             }
             .alert(manager.restartAlertTitle ?? "", isPresented: Binding(
                 get: { manager.restartAlertTitle != nil },
                 set: { if !$0 { manager.restartAlertTitle = nil } }
             )) {
-                Button("OK") { manager.restartAlertTitle = nil }
+                Button(wtLang.tr("OK")) { manager.restartAlertTitle = nil }
             } message: {
                 Text(manager.restartAlertMessage)
             }
-            .confirmationDialog("Revert all tweaks?", isPresented: $showRevertConfirm) {
-                Button("Revert", role: .destructive) { manager.revert() }
+            .confirmationDialog(wtLang.tr("Revert all tweaks?"), isPresented: $showRevertConfirm) {
+                Button(wtLang.tr("Revert"), role: .destructive) { manager.revert() }
             } message: {
-                Text("This restores the MobileGestalt backup saved on first launch (SavedGestalt.plist).")
+                Text(wtLang.tr("This restores the MobileGestalt backup saved on first launch (SavedGestalt.plist)."))
             }
         }
     }
@@ -242,9 +243,9 @@ struct TweaksView: View {
                 .font(.system(size: 52))
                 .foregroundStyle(.secondary)
             VStack(spacing: 8) {
-                Text("Tweaks are locked")
+                Text(wtLang.tr("Tweaks are locked"))
                     .font(.title3.weight(.bold))
-                Text("Go to the Sandbox tab and turn on Start Tweaks Feature to unlock the Tweaks tab.")
+                Text(wtLang.tr("Go to the Sandbox tab and turn on Start Tweaks Feature to unlock the Tweaks tab."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -253,7 +254,7 @@ struct TweaksView: View {
             Button {
                 onOpenSandbox()
             } label: {
-                Label("Go to Sandbox Tab", systemImage: "shippingbox")
+                Label(wtLang.tr("Go to Sandbox Tab"), systemImage: "shippingbox")
                     .font(.headline)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
@@ -335,7 +336,7 @@ struct TweaksView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
-                    TextField("Search tweaks", text: $searchText)
+                    TextField(wtLang.tr("Search tweaks"), text: $searchText)
                         .autocorrectionDisabled()
                         .focused($searchFocused)
                     if !searchText.isEmpty {
@@ -346,14 +347,14 @@ struct TweaksView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Clear search")
+                        .accessibilityLabel(wtLang.tr("Clear search"))
                     }
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .wtGlassCard(cornerRadius: 999)
 
-                Button("Cancel") {
+                Button(wtLang.tr("Cancel")) {
                     closeSearch()
                 }
             }
@@ -375,7 +376,7 @@ struct TweaksView: View {
         // card's info button presents over the cover (the base
         // page's own alert sits underneath while searching).
         .alert(infoTitle ?? "", isPresented: showInfo) {
-            Button("OK") { infoTitle = nil }
+            Button(wtLang.tr("OK")) { infoTitle = nil }
         } message: {
             Text(infoMessage)
         }
@@ -403,7 +404,7 @@ struct TweaksView: View {
     @ViewBuilder
     private var searchResultCards: some View {
         if searchResults.isEmpty {
-            Text("No tweaks match \"\(searchText)\".")
+            Text(wtLang.tr("No tweaks match \"%@\".", searchText))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -431,7 +432,7 @@ struct TweaksView: View {
 
     private var sectionsCard: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Sections")
+            Text(wtLang.tr("Sections"))
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 10)
@@ -482,7 +483,7 @@ struct TweaksView: View {
         VStack(alignment: .leading, spacing: 3) {
             Text("WorkTweaks")
                 .font(.subheadline.weight(.semibold))
-            Text("Version \(appVersion)")
+            Text(wtLang.tr("Version %@", appVersion))
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(machineName())
@@ -503,15 +504,15 @@ struct TweaksView: View {
     // lives in the Sandbox tab's Utilities menu.
     private var menusCard: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Menus")
+            Text(wtLang.tr("Menus"))
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 10)
                 .padding(.bottom, 4)
 
-            menuRow(title: "App Data", systemImage: "folder") { onOpenSandbox() }
+            menuRow(title: wtLang.tr("App Data"), systemImage: "folder") { onOpenSandbox() }
             menuRow(title: "CacheExtra", systemImage: "key") { onOpenExtra() }
-            menuRow(title: "Backup", systemImage: "externaldrive.badge.timemachine") { onOpenBackup() }
+            menuRow(title: wtLang.tr("Backup"), systemImage: "externaldrive.badge.timemachine") { onOpenBackup() }
         }
         .padding(10)
         .wtGlassCard(cornerRadius: 16)
@@ -572,16 +573,16 @@ struct TweaksView: View {
     }
 
     private var statusTitle: String {
-        if manager.isEmpty { return "MobileGestalt is empty" }
-        if manager.isValid { return "MobileGestalt loaded" }
-        if manager.mgGranted == false { return "Sandbox access denied" }
-        return "Not loaded"
+        if manager.isEmpty { return wtLang.tr("MobileGestalt is empty") }
+        if manager.isValid { return wtLang.tr("MobileGestalt loaded") }
+        if manager.mgGranted == false { return wtLang.tr("Sandbox access denied") }
+        return wtLang.tr("Not loaded")
     }
 
     private var statusSubtitle: String {
         if let error = manager.lastError { return error }
-        if manager.isValid { return "Sandbox extension is ready (directory grant held)." }
-        return "Granting sandbox access…"
+        if manager.isValid { return wtLang.tr("Sandbox extension is ready (directory grant held).") }
+        return wtLang.tr("Granting sandbox access…")
     }
 
     // "Do not reboot!" warning card (shown when the loaded
@@ -589,13 +590,13 @@ struct TweaksView: View {
     private var warningCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             Label {
-                Text("Do not reboot! Your MobileGestalt.plist seems to be \(manager.isEmpty ? "empty" : "invalid").")
+                Text(wtLang.tr("Do not reboot! Your MobileGestalt.plist seems to be %@.", wtLang.tr(manager.isEmpty ? "empty" : "invalid")))
                     .font(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
             } icon: {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
             }
-            Text("Rebooting now might cause a bootloop. Try pressing 'Revert Tweaks'.")
+            Text(wtLang.tr("Rebooting now might cause a bootloop. Try pressing 'Revert Tweaks'."))
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -661,9 +662,9 @@ struct TweaksView: View {
             HStack(spacing: 8) {
                 RowIcon(systemImage: "text.bubble")
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Lock Screen Footnote")
+                    Text(wtLang.tr("Lock Screen Footnote"))
                         .font(.subheadline.weight(.semibold))
-                    Text("Custom text shown at the bottom of the Lock Screen.")
+                    Text(wtLang.tr("Custom text shown at the bottom of the Lock Screen."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -695,14 +696,14 @@ struct TweaksView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 RowIcon(systemImage: "capsule.fill")
-                Text("Subtype")
+                Text(wtLang.tr("Subtype"))
                     .font(.subheadline.weight(.semibold))
             }
-            Picker("Subtype", selection: $manager.selectedST) {
-                Text("Original (\(manager.ogST))").tag("og")
+            Picker(wtLang.tr("Subtype"), selection: $manager.selectedST) {
+                Text(wtLang.tr("Original (%d)", manager.ogST)).tag("og")
 
                 if isDeviceGoodForNoDynamicIsland() {
-                    Text("Disable Dynamic Island").tag("no_dynamic_island")
+                    Text(wtLang.tr("Disable Dynamic Island")).tag("no_dynamic_island")
                 }
 
                 Text("iPhone 14 Pro").tag("14p")
@@ -740,13 +741,13 @@ struct TweaksView: View {
             Toggle(isOn: $manager.enableDeviceName) {
                 HStack(spacing: 8) {
                     RowIcon(systemImage: "textformat")
-                    Text("Custom Device Name")
+                    Text(wtLang.tr("Custom Device Name"))
                         .font(.subheadline.weight(.semibold))
                 }
             }
             .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
             if manager.enableDeviceName {
-                TextField("Device Name", text: $manager.deviceName)
+                TextField(wtLang.tr("Device Name"), text: $manager.deviceName)
                     .autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder)
             }
@@ -765,17 +766,17 @@ struct TweaksView: View {
             Toggle(isOn: $manager.enableCustomRegion) {
                 HStack(spacing: 8) {
                     RowIcon(systemImage: "globe")
-                    Text("Custom Region Model")
+                    Text(wtLang.tr("Custom Region Model"))
                         .font(.subheadline.weight(.semibold))
                 }
             }
             .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
             if manager.enableCustomRegion {
-                TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
+                TextField(wtLang.tr("Region suffix (e.g. PA/A)"), text: $manager.customRegionSuffix)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.characters)
                     .textFieldStyle(.roundedBorder)
-                Text("Type the region suffix as shown in Settings > General > About, e.g. PA/A or LL/A. It changes the Model Number suffix after Apply.")
+                Text(wtLang.tr("Type the region suffix as shown in Settings > General > About, e.g. PA/A or LL/A. It changes the Model Number suffix after Apply."))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -789,19 +790,19 @@ struct TweaksView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 RowIcon(systemImage: "iphone.gen3")
-                Text("Spoofing")
+                Text(wtLang.tr("Spoofing"))
                     .font(.subheadline.weight(.semibold))
                 Spacer(minLength: 0)
                 Button {
-                    infoTitle = "Device Spoofing Info"
-                    infoMessage = "Only spoof your device model if you want to download Apple Intelligence. This may break Face ID. If you decide to unspoof and want to keep Apple Intelligence, do NOT re-enter the Apple Intelligence & Siri menu in Settings."
+                    infoTitle = wtLang.tr("Device Spoofing Info")
+                    infoMessage = wtLang.tr("Only spoof your device model if you want to download Apple Intelligence. This may break Face ID. If you decide to unspoof and want to keep Apple Intelligence, do NOT re-enter the Apple Intelligence & Siri menu in Settings.")
                 } label: {
                     Image(systemName: "info.circle")
                 }
                 .buttonStyle(.plain)
             }
-            Picker("Spoofing", selection: $manager.productType) {
-                Text("Default").tag(machineName())
+            Picker(wtLang.tr("Spoofing"), selection: $manager.productType) {
+                Text(wtLang.tr("Default")).tag(machineName())
                 if UIDevice.current.userInterfaceIdiom == .pad {
                     if doubleSystemVersion() >= 17.4 {
                         Text("iPad Pro 11-inch (M4)").tag("iPad16,3")
@@ -841,12 +842,12 @@ struct TweaksView: View {
             Toggle(isOn: $atomicWrite) {
                 HStack(spacing: 8) {
                     RowIcon(systemImage: "externaldrive.fill")
-                    Text("Persist after reboot")
+                    Text(wtLang.tr("Persist after reboot"))
                         .font(.subheadline.weight(.semibold))
                 }
             }
             .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-            Text("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead.")
+            Text(wtLang.tr("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead."))
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -859,22 +860,22 @@ struct TweaksView: View {
 
     private var actionsBlock: some View {
         VStack(spacing: 12) {
-            actionCardButton(title: "Apply Tweaks", systemImage: "checkmark.circle") {
+            actionCardButton(title: wtLang.tr("Apply Tweaks"), systemImage: "checkmark.circle") {
                 manager.apply()
                 console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
             }
             .disabled(!manager.isValid)
 
-            actionCardButton(title: "Respring", systemImage: "arrow.counterclockwise") {
+            actionCardButton(title: wtLang.tr("Respring"), systemImage: "arrow.counterclockwise") {
                 RespringCenter.shared.trigger()
             }
 
-            actionCardButton(title: "Revert Tweaks", systemImage: "arrow.uturn.backward", destructive: true) {
+            actionCardButton(title: wtLang.tr("Revert Tweaks"), systemImage: "arrow.uturn.backward", destructive: true) {
                 showRevertConfirm = true
             }
             .disabled(!manager.isValid)
 
-            Text("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores require a full device restart.")
+            Text(wtLang.tr("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores require a full device restart."))
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -904,18 +905,18 @@ struct TweaksView: View {
             NavigationLink {
                 TutorialsView()
             } label: {
-                footerLinkLabel(title: "Tutorials", systemImage: "book")
+                footerLinkLabel(title: wtLang.tr("Tutorials"), systemImage: "book")
             }
             .buttonStyle(.plain)
 
             NavigationLink {
                 LicenseView()
             } label: {
-                footerLinkLabel(title: "License & Credits", systemImage: "doc.text")
+                footerLinkLabel(title: wtLang.tr("License & Credits"), systemImage: "doc.text")
             }
             .buttonStyle(.plain)
 
-            Text("Built on the worse_query core system by ForceQuit OS, with CacheExtra key knowledge from mond by rooootdev (AGPL-3.0).")
+            Text(wtLang.tr("Built on the worse_query core system by ForceQuit OS, with CacheExtra key knowledge from mond by rooootdev (AGPL-3.0)."))
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -955,6 +956,7 @@ struct TweaksView: View {
 
 struct TweakCard: View {
     @ObservedObject var manager: GestaltManager
+    @EnvironmentObject private var wtLang: WTLangStore
     let tweak: GestaltTweak
     let onInfo: (GestaltTweak) -> Void
 
@@ -988,7 +990,7 @@ struct TweakCard: View {
                 // The status-bar fix guide lives next to the
                 // "On" line of the Dynamic Island card only.
                 if tweak.id == "enable_dynamic_island_capability", tweak.isOn(in: manager.dictNow) {
-                    Button("Fix Status Bar!") {
+                    Button(wtLang.tr("Fix Status Bar!")) {
                         SoundEffects.playTap()
                         showFixStatusBarGuide = true
                     }
@@ -999,7 +1001,7 @@ struct TweakCard: View {
                 // The Apple Intelligence fix guide lives next to
                 // the "On" line of the Apple Intelligence card only.
                 if tweak.id == "apple_intelligence", tweak.isOn(in: manager.dictNow) {
-                    Button("Fix Apple Intelligence Here!") {
+                    Button(wtLang.tr("Fix Apple Intelligence Here!")) {
                         SoundEffects.playTap()
                         showFixAppleIntelligenceGuide = true
                     }
@@ -1012,22 +1014,22 @@ struct TweakCard: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
-        .alert("Fix Status Bar", isPresented: $showFixStatusBarGuide) {
-            Button("OK") { }
+        .alert(wtLang.tr("Fix Status Bar"), isPresented: $showFixStatusBarGuide) {
+            Button(wtLang.tr("OK")) { }
         } message: {
-            Text("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional).")
+            Text(wtLang.tr("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional)."))
         }
-        .alert("Fix Apple Intelligence", isPresented: $showFixAppleIntelligenceGuide) {
-            Button("OK") { }
+        .alert(wtLang.tr("Fix Apple Intelligence"), isPresented: $showFixAppleIntelligenceGuide) {
+            Button(wtLang.tr("OK")) { }
         } message: {
-            Text("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading.")
+            Text(wtLang.tr("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading."))
         }
     }
 
     private var stateLine: String {
         if !tweak.supported(), let minv = tweak.minv {
-            return String(format: "Requires iOS %.1f+", minv)
+            return wtLang.tr("Requires iOS %.1f+", minv)
         }
-        return tweak.isOn(in: manager.dictNow) ? "On" : "Off"
+        return tweak.isOn(in: manager.dictNow) ? wtLang.tr("On") : wtLang.tr("Off")
     }
 }

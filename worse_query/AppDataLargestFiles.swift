@@ -84,6 +84,7 @@ enum AppDataLargestFiles {
 }
 
 struct AppDataLargestFilesView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let container: AppContainer
 
     @State private var files: [AppDataLargestFile] = []
@@ -96,14 +97,14 @@ struct AppDataLargestFilesView: View {
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "Largest files", footer: container.path) {
+            WTSectionCard(header: wtLang.tr("Largest files"), footer: container.path) {
                 if !done {
                     HStack(spacing: 10) {
                         ProgressView()
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("Scanning \(container.bundleID)…")
+                            Text(wtLang.tr("Scanning %@…", container.bundleID))
                                 .font(.subheadline)
-                            Text("\(examined) file(s) examined — the scan walks the whole container, so large apps take a while.")
+                            Text(wtLang.tr("%d file(s) examined — the scan walks the whole container, so large apps take a while.", examined))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -111,14 +112,14 @@ struct AppDataLargestFilesView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                 } else if files.isEmpty {
-                    Text("No regular files found in this container.")
+                    Text(wtLang.tr("No regular files found in this container."))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                 } else {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("\(files.count) largest file(s) — \(wtFormatSize(totalBytes)) in the top \(files.count).")
+                        Text(wtLang.tr("%d largest file(s) — %@ in the top %d.", files.count, wtFormatSize(totalBytes), files.count))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
@@ -150,7 +151,7 @@ struct AppDataLargestFilesView: View {
                 }
             }
         }
-        .navigationTitle("Largest Files")
+        .navigationTitle(wtLang.tr("Largest Files"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             AppDataLargestFiles.scan(

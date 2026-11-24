@@ -19,6 +19,7 @@ import UIKit
 struct OldTweaksView: View {
     let console: Console
     @ObservedObject var manager: GestaltManager
+    @EnvironmentObject private var wtLang: WTLangStore
     /// Shows the info alert (owned by TweaksView) for a tweak.
     let onInfo: (GestaltTweak) -> Void
     /// Shows the Revert confirmation (owned by TweaksView).
@@ -49,15 +50,15 @@ struct OldTweaksView: View {
             writeSettingsSection
             footerSection
         }
-        .alert("Fix Status Bar", isPresented: $showFixStatusBarGuide) {
-            Button("OK") { }
+        .alert(wtLang.tr("Fix Status Bar"), isPresented: $showFixStatusBarGuide) {
+            Button(wtLang.tr("OK")) { }
         } message: {
-            Text("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional).")
+            Text(wtLang.tr("1. Use the iPhone 16 Pro subtype.\n2. Settings > Appearance > Display Zoom > Large Text, then go Back and set Text Size to Small (optional)."))
         }
-        .alert("Fix Apple Intelligence", isPresented: $showFixAppleIntelligenceGuide) {
-            Button("OK") { }
+        .alert(wtLang.tr("Fix Apple Intelligence"), isPresented: $showFixAppleIntelligenceGuide) {
+            Button(wtLang.tr("OK")) { }
         } message: {
-            Text("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading.")
+            Text(wtLang.tr("1. Open the Translate app, delete the downloaded English (US) language, then download it again.\n2. Go to Settings > General > Language & Region, change the region from United States to another country, then change it back to United States.\n3. Turn off Low Power Mode (Settings > Battery).\n4. Connect to Wi-Fi (and keep your iPhone charging) while Apple Intelligence finishes downloading."))
         }
     }
 
@@ -94,30 +95,30 @@ struct OldTweaksView: View {
     }
 
     private var statusTitle: String {
-        if manager.isEmpty { return "MobileGestalt is empty" }
-        if manager.isValid { return "MobileGestalt loaded" }
-        if manager.mgGranted == false { return "Sandbox access denied" }
-        return "Not loaded"
+        if manager.isEmpty { return wtLang.tr("MobileGestalt is empty") }
+        if manager.isValid { return wtLang.tr("MobileGestalt loaded") }
+        if manager.mgGranted == false { return wtLang.tr("Sandbox access denied") }
+        return wtLang.tr("Not loaded")
     }
 
     private var statusSubtitle: String {
         if let error = manager.lastError { return error }
-        if manager.isValid { return "Sandbox extension is ready (directory grant held)." }
-        return "Granting sandbox access…"
+        if manager.isValid { return wtLang.tr("Sandbox extension is ready (directory grant held).") }
+        return wtLang.tr("Granting sandbox access…")
     }
 
     private var warningSection: some View {
         Section {
             Label {
-                Text("Do not reboot! Your MobileGestalt.plist seems to be \(manager.isEmpty ? "empty" : "invalid").")
+                Text(wtLang.tr("Do not reboot! Your MobileGestalt.plist seems to be %@.", wtLang.tr(manager.isEmpty ? "empty" : "invalid")))
                     .font(.subheadline)
             } icon: {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
             }
         } header: {
-            Label("Warning", systemImage: "exclamationmark.triangle")
+            Label(wtLang.tr("Warning"), systemImage: "exclamationmark.triangle")
         } footer: {
-            Text("Rebooting now might cause a bootloop. Try pressing 'Revert Tweaks'.")
+            Text(wtLang.tr("Rebooting now might cause a bootloop. Try pressing 'Revert Tweaks'."))
         }
     }
 
@@ -130,7 +131,7 @@ struct OldTweaksView: View {
                 manager.apply()
                 console.output += "\n(mg) Apply finished — see the Log for the write result.\n"
             } label: {
-                Label("Apply Tweaks", systemImage: "checkmark.circle.fill")
+                Label(wtLang.tr("Apply Tweaks"), systemImage: "checkmark.circle.fill")
             }
             .disabled(!manager.isValid)
 
@@ -138,18 +139,18 @@ struct OldTweaksView: View {
                 SoundEffects.playTap()
                 RespringCenter.shared.trigger()
             } label: {
-                Label("Respring", systemImage: "restart.circle")
+                Label(wtLang.tr("Respring"), systemImage: "restart.circle")
             }
 
             Button(role: .destructive) {
                 SoundEffects.playTap()
                 onRevert()
             } label: {
-                Label("Revert Tweaks", systemImage: "arrow.uturn.backward.circle")
+                Label(wtLang.tr("Revert Tweaks"), systemImage: "arrow.uturn.backward.circle")
             }
             .disabled(!manager.isValid)
         } footer: {
-            Text("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores require a full device restart.")
+            Text(wtLang.tr("WARNING: These tweaks can break features on your device or softbrick it if misused. After Apply you choose Respring or Restart; Revert and Backup restores require a full device restart."))
         }
     }
 
@@ -158,10 +159,10 @@ struct OldTweaksView: View {
     private var artworkSection: some View {
         Section {
             Picker(selection: $manager.selectedST) {
-                Text("Original (\(manager.ogST))").tag("og")
+                Text(wtLang.tr("Original (%d)", manager.ogST)).tag("og")
 
                 if isDeviceGoodForNoDynamicIsland() {
-                    Text("Disable Dynamic Island").tag("no_dynamic_island")
+                    Text(wtLang.tr("Disable Dynamic Island")).tag("no_dynamic_island")
                 }
 
                 Text("iPhone 14 Pro").tag("14p")
@@ -185,27 +186,27 @@ struct OldTweaksView: View {
                 Text("iPhone X Gestures").tag("x")
                 Text("iPhone SE").tag("se")
             } label: {
-                Text("Subtype")
+                Text(wtLang.tr("Subtype"))
             }
 
-            Toggle("Custom Device Name", isOn: $manager.enableDeviceName)
+            Toggle(wtLang.tr("Custom Device Name"), isOn: $manager.enableDeviceName)
                 .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
 
             if manager.enableDeviceName {
-                TextField("Device Name", text: $manager.deviceName)
+                TextField(wtLang.tr("Device Name"), text: $manager.deviceName)
                     .autocorrectionDisabled()
             }
 
-            Toggle("Custom Region Model", isOn: $manager.enableCustomRegion)
+            Toggle(wtLang.tr("Custom Region Model"), isOn: $manager.enableCustomRegion)
                 .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
 
             if manager.enableCustomRegion {
-                TextField("Region suffix (e.g. PA/A)", text: $manager.customRegionSuffix)
+                TextField(wtLang.tr("Region suffix (e.g. PA/A)"), text: $manager.customRegionSuffix)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.characters)
             }
         } header: {
-            Label("Device Artwork", systemImage: "paintbrush.pointed")
+            Label(wtLang.tr("Device Artwork"), systemImage: "paintbrush.pointed")
         }
     }
 
@@ -218,7 +219,7 @@ struct OldTweaksView: View {
             // Island toggle while it is on (same guide as the
             // New UI card's "Fix Status Bar!" button).
             if isDynamicIslandOn {
-                Button("Fix Status Bar!") {
+                Button(wtLang.tr("Fix Status Bar!")) {
                     SoundEffects.playTap()
                     showFixStatusBarGuide = true
                 }
@@ -233,7 +234,7 @@ struct OldTweaksView: View {
             OldTweakToggle(manager: manager, title: "Enable Liquid Glass Low-Performance Mode", onInfo: onInfo)
             OldTweakToggle(manager: manager, title: "Disable Liquid Glass Low-Performance Mode", onInfo: onInfo)
         } header: {
-            Label("Software-Oriented Features", systemImage: "gearshape")
+            Label(wtLang.tr("Software-Oriented Features"), systemImage: "gearshape")
         }
     }
 
@@ -259,7 +260,7 @@ struct OldTweaksView: View {
             }
             OldTweakToggle(manager: manager, title: "Pulse Width Modulation", onInfo: onInfo)
         } header: {
-            Label("Hardware-Oriented Features", systemImage: "iphone")
+            Label(wtLang.tr("Hardware-Oriented Features"), systemImage: "iphone")
         }
     }
 
@@ -273,7 +274,7 @@ struct OldTweaksView: View {
             // guide as the New UI card's
             // "Fix Apple Intelligence Here!" button).
             if isAppleIntelligenceOn {
-                Button("Fix Apple Intelligence Here!") {
+                Button(wtLang.tr("Fix Apple Intelligence Here!")) {
                     SoundEffects.playTap()
                     showFixAppleIntelligenceGuide = true
                 }
@@ -283,8 +284,8 @@ struct OldTweaksView: View {
             OldTweakToggle(manager: manager, title: "Siri AI Cache Patch", onInfo: onInfo)
 
             HStack(spacing: 10) {
-                Picker("Spoofing", selection: $manager.productType) {
-                    Text("Default").tag(machineName())
+                Picker(wtLang.tr("Spoofing"), selection: $manager.productType) {
+                    Text(wtLang.tr("Default")).tag(machineName())
                     if UIDevice.current.userInterfaceIdiom == .pad {
                         if doubleSystemVersion() >= 17.4 {
                             Text("iPad Pro 11-inch (M4)").tag("iPad16,3")
@@ -319,7 +320,7 @@ struct OldTweaksView: View {
                 .buttonStyle(.plain)
             }
         } header: {
-            Label("Eligibility", systemImage: "checklist")
+            Label(wtLang.tr("Eligibility"), systemImage: "checklist")
         }
     }
 
@@ -335,7 +336,7 @@ struct OldTweaksView: View {
             OldTweakToggle(manager: manager, title: "Enable iPadOS Mode", onInfo: onInfo)
                 .disabled(ipadOSModeLocked)
         } header: {
-            Label("iPadOS Features", systemImage: "ipad")
+            Label(wtLang.tr("iPadOS Features"), systemImage: "ipad")
         }
     }
 
@@ -352,7 +353,7 @@ struct OldTweaksView: View {
             OldTweakToggle(manager: manager, title: "Internal Features", onInfo: onInfo)
             OldTweakToggle(manager: manager, title: "Apple Internal Install", onInfo: onInfo)
         } header: {
-            Label("Internal", systemImage: "ant")
+            Label(wtLang.tr("Internal"), systemImage: "ant")
         }
     }
 
@@ -364,23 +365,23 @@ struct OldTweaksView: View {
             NavigationLink {
                 FootnoteView()
             } label: {
-                Label("Lock Screen Footnote", systemImage: "text.bubble")
+                Label(wtLang.tr("Lock Screen Footnote"), systemImage: "text.bubble")
             }
         } header: {
-            Label("Lock Screen Footnote", systemImage: "text.bubble")
+            Label(wtLang.tr("Lock Screen Footnote"), systemImage: "text.bubble")
         } footer: {
-            Text("Custom text shown at the bottom of the Lock Screen.")
+            Text(wtLang.tr("Custom text shown at the bottom of the Lock Screen."))
         }
     }
 
     private var writeSettingsSection: some View {
         Section {
-            Toggle("Persist after reboot", isOn: $atomicWrite)
+            Toggle(wtLang.tr("Persist after reboot"), isOn: $atomicWrite)
                 .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
         } header: {
-            Label("Write Method", systemImage: "pencil.and.outline")
+            Label(wtLang.tr("Write Method"), systemImage: "pencil.and.outline")
         } footer: {
-            Text("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead.")
+            Text(wtLang.tr("When enabled, MobileGestalt is written in-place on the same inode, which (hopefully) prevents iOS from regenerating the cache on reboot. Disable to use atomic file replacement instead."))
         }
     }
 
@@ -389,10 +390,10 @@ struct OldTweaksView: View {
             NavigationLink {
                 LicenseView()
             } label: {
-                Label("License & Credits", systemImage: "doc.text")
+                Label(wtLang.tr("License & Credits"), systemImage: "doc.text")
             }
 
-            Text("Built on the worse_query core system by ForceQuit OS, with CacheExtra key knowledge from mond by rooootdev (AGPL-3.0).")
+            Text(wtLang.tr("Built on the worse_query core system by ForceQuit OS, with CacheExtra key knowledge from mond by rooootdev (AGPL-3.0)."))
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
@@ -402,6 +403,7 @@ struct OldTweaksView: View {
 
 struct OldTweakToggle: View {
     @ObservedObject var manager: GestaltManager
+    @EnvironmentObject private var wtLang: WTLangStore
     let title: String
     let onInfo: (GestaltTweak) -> Void
 
@@ -412,7 +414,7 @@ struct OldTweakToggle: View {
                     Text(tweak.title)
                         .font(.subheadline.weight(.medium))
                     if !tweak.supported(), let minv = tweak.minv {
-                        Text("Requires iOS \(minv, specifier: "%.1f")+")
+                        Text(wtLang.tr("Requires iOS %.1f+", minv))
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }

@@ -14,6 +14,8 @@ import SwiftUI
 // like every other page — the content and buttons are unchanged.
 
 struct WelcomeView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
+
     /// Called when the user taps "Get Started" — the parent marks
     /// the welcome as seen and moves on to the support check.
     var onStart: () -> Void
@@ -41,7 +43,7 @@ struct WelcomeView: View {
                 Button {
                     showLicense = true
                 } label: {
-                    Label("View Full License & Credits", systemImage: "doc.text")
+                    Label(wtLang.tr("View Full License & Credits"), systemImage: "doc.text")
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 14)
@@ -61,7 +63,7 @@ struct WelcomeView: View {
                     onStart()
                 } label: {
                     HStack(spacing: 8) {
-                        Text("Get Started")
+                        Text(wtLang.tr("Get Started"))
                         Image(systemName: "arrow.right")
                             .font(.headline)
                     }
@@ -74,7 +76,7 @@ struct WelcomeView: View {
                 Button {
                     showTutorials = true
                 } label: {
-                    Label("Tutorials", systemImage: "book")
+                    Label(wtLang.tr("Tutorials"), systemImage: "book")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 13)
@@ -92,7 +94,7 @@ struct WelcomeView: View {
                 TutorialsView()
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Close") { showTutorials = false }
+                            Button(wtLang.tr("Close")) { showTutorials = false }
                         }
                     }
             }
@@ -102,7 +104,7 @@ struct WelcomeView: View {
                 LicenseView()
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Close") { showLicense = false }
+                            Button(wtLang.tr("Close")) { showLicense = false }
                         }
                     }
             }
@@ -127,10 +129,10 @@ struct WelcomeView: View {
                 .accessibilityLabel("WorkTweaks")
 
             VStack(spacing: 8) {
-                Text("Welcome to WorkTweaks")
+                Text(wtLang.tr("Welcome to WorkTweaks"))
                     .font(.title.weight(.bold))
                     .multilineTextAlignment(.center)
-                Text("A MobileGestalt tweak tool for iOS 26 & 27 — unlock your device's hidden features without a jailbreak, powered by the worse_query sandbox escape.")
+                Text(wtLang.tr("A MobileGestalt tweak tool for iOS 26 & 27 — unlock your device's hidden features without a jailbreak, powered by the worse_query sandbox escape."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -139,8 +141,8 @@ struct WelcomeView: View {
 
             HStack(spacing: 8) {
                 chip(icon: "checkmark.shield", text: "iOS 18.0 – 27.3 Beta")
-                chip(icon: "iphone", text: "No Jailbreak")
-                chip(icon: "lock.open", text: "Open Source")
+                chip(icon: "iphone", text: wtLang.tr("No Jailbreak"))
+                chip(icon: "lock.open", text: wtLang.tr("Open Source"))
             }
         }
     }
@@ -156,14 +158,14 @@ struct WelcomeView: View {
     // MARK: Sections
 
     private var installSection: some View {
-        WTSectionCard(header: "Installation") {
+        WTSectionCard(header: wtLang.tr("Installation")) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Please Install It the Right Way")
+                Text(wtLang.tr("Please Install It the Right Way"))
                     .font(.subheadline.weight(.semibold))
-                Text("WorkTweaks must be installed with iLoader, or by signing the IPA with Signed Apps, so that its App Group works correctly.")
+                Text(wtLang.tr("WorkTweaks must be installed with iLoader, or by signing the IPA with Signed Apps, so that its App Group works correctly."))
                     .font(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Installed any other way, the signed profile leaves the App Group out — and without it, the tweaks can't run. Tap Tutorials below for both step-by-step guides.")
+                Text(wtLang.tr("Installed any other way, the signed profile leaves the App Group out — and without it, the tweaks can't run. Tap Tutorials below for both step-by-step guides."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -174,7 +176,7 @@ struct WelcomeView: View {
     }
 
     private var developerSection: some View {
-        WTSectionCard(header: "Developer") {
+        WTSectionCard(header: wtLang.tr("Developer")) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 12) {
                     ZStack {
@@ -188,7 +190,7 @@ struct WelcomeView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Adnan")
                             .font(.headline)
-                        Text("Developer")
+                        Text(wtLang.tr("Developer"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -223,26 +225,26 @@ struct WelcomeView: View {
     }
 
     private var creditsSection: some View {
-        WTSectionCard(header: "Credits & License", footer: "This app is free software under the GNU AGPL v3 license, following the licenses of the projects above.") {
+        WTSectionCard(header: wtLang.tr("Credits & License"), footer: wtLang.tr("This app is free software under the GNU AGPL v3 license, following the licenses of the projects above.")) {
             VStack(alignment: .leading, spacing: 0) {
-                creditRow(icon: "terminal", name: "ForceQuit OS", role: "worse_query — the core system (sandbox escape)")
+                creditRow(icon: "terminal", name: "ForceQuit OS", role: wtLang.tr("worse_query — the core system (sandbox escape)"))
                 Divider().padding(.leading, 14)
-                creditRow(icon: "slider.horizontal.3", name: "mond — rooootdev", role: "the CacheExtra key knowledge behind the tweak catalog")
+                creditRow(icon: "slider.horizontal.3", name: "mond — rooootdev", role: wtLang.tr("the CacheExtra key knowledge behind the tweak catalog"))
                 Divider().padding(.leading, 14)
-                creditRow(icon: "cube", name: "Nugget — leminlimez", role: "the file-based CacheData method (iPadOS Mode)")
+                creditRow(icon: "cube", name: "Nugget — leminlimez", role: wtLang.tr("the file-based CacheData method (iPadOS Mode)"))
                 Divider().padding(.leading, 14)
-                creditRow(icon: "arrow.counterclockwise", name: "@neonmodder123 & @skadz108", role: "the respring technique (jailbreak.party)")
+                creditRow(icon: "arrow.counterclockwise", name: "@neonmodder123 & @skadz108", role: wtLang.tr("the respring technique (jailbreak.party)"))
             }
             .padding(.vertical, 4)
         }
     }
 
     private var compatibilitySection: some View {
-        WTSectionCard(header: "Compatibility") {
+        WTSectionCard(header: wtLang.tr("Compatibility")) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("iOS 18.0 Beta 1 (22A5282m) — iOS 27.3 Beta 1 (24C5037i)")
                     .font(.subheadline.weight(.semibold))
-                Text("v3.0 checks your device's build at launch and only opens on the supported builds. The full version & build list lives in License & Credits.")
+                Text(wtLang.tr("v3.0 checks your device's build at launch and only opens on the supported builds. The full version & build list lives in License & Credits."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

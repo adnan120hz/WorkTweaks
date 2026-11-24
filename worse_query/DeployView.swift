@@ -34,6 +34,7 @@ private func deployPackageContentTypes() -> [UTType] {
 }
 
 struct DeployView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var appDataManager: AppDataManager
     @StateObject private var deployManager = DeployManager()
 
@@ -50,9 +51,9 @@ struct DeployView: View {
                 onImportError: { importError = $0 }
             )
 
-            WTSectionCard(header: "Deploy Package") {
+            WTSectionCard(header: wtLang.tr("Deploy Package")) {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("A Deploy package replaces files inside exactly one app — the app named by its bundle ID. It cannot touch any other app: every target path is relative to that app's container, and packages with absolute or \"..\" paths are rejected whole.")
+                    Text(wtLang.tr("A Deploy package replaces files inside exactly one app — the app named by its bundle ID. It cannot touch any other app: every target path is relative to that app's container, and packages with absolute or \"..\" paths are rejected whole."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
@@ -64,7 +65,7 @@ struct DeployView: View {
                     Button {
                         showImporter = true
                     } label: {
-                        Label(package == nil ? "Choose Package…" : "Choose a Different Package…", systemImage: "shippingbox")
+                        Label(package == nil ? wtLang.tr("Choose Package…") : wtLang.tr("Choose a Different Package…"), systemImage: "shippingbox")
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -74,9 +75,9 @@ struct DeployView: View {
             }
 
             if let importError {
-                WTSectionCard(footer: "Nothing was written.") {
+                WTSectionCard(footer: wtLang.tr("Nothing was written.")) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Label("This package was rejected", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("This package was rejected"), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(importError)
                             .font(.caption)
@@ -94,9 +95,9 @@ struct DeployView: View {
                 resolveRequest: $resolveRequest
             )
 
-            WTSectionCard(header: "Package Format") {
+            WTSectionCard(header: wtLang.tr("Package Format")) {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("A package is ONE .zip file containing a manifest.json at its top level plus the payload files it names. The Package Builder exports that zip (save it in Files); Deploy imports it, resolves the target itself from the manifest, and applies it — no location picking, the destinations come from the zip.")
+                    Text(wtLang.tr("A package is ONE .zip file containing a manifest.json at its top level plus the payload files it names. The Package Builder exports that zip (save it in Files); Deploy imports it, resolves the target itself from the manifest, and applies it — no location picking, the destinations come from the zip."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Text("""
@@ -111,7 +112,7 @@ struct DeployView: View {
                     }
                     """)
                     .font(.system(.caption, design: .monospaced))
-                    Text("Single-file shorthand: instead of \"files\", give \"relativePath\" and \"file\". \"scope\" is Application (bundleID = the app's bundle ID), AppGroup (bundleID = the group identifier, e.g. group.com.example) or InternalDaemon. ZIP archives may use stored or deflated entries; encrypted and ZIP64 archives are not supported. Older .deploy archives and plain folders still import.")
+                    Text(wtLang.tr("Single-file shorthand: instead of \"files\", give \"relativePath\" and \"file\". \"scope\" is Application (bundleID = the app's bundle ID), AppGroup (bundleID = the group identifier, e.g. group.com.example) or InternalDaemon. ZIP archives may use stored or deflated entries; encrypted and ZIP64 archives are not supported. Older .deploy archives and plain folders still import."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -119,7 +120,7 @@ struct DeployView: View {
                 .padding(.vertical, 10)
             }
         }
-        .navigationTitle("Deploy")
+        .navigationTitle(wtLang.tr("Deploy"))
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: deployPackageContentTypes()) { result in
             switch result {
@@ -163,6 +164,7 @@ struct DeployView: View {
 // shows it in its own preview flow.
 
 struct DeployStoreSection: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var appDataManager: AppDataManager
     /// A stored package's Deploy action, after the package
     /// loaded successfully.
@@ -185,10 +187,10 @@ struct DeployStoreSection: View {
 
     var body: some View {
         Group {
-            WTSectionCard(header: "My Packages", footer: "Packages you build or import are stored on this device, in WorkTweaks' own container. Tap a package to edit it. Deploy runs it through the same preview, resolve and backup flow as a picked package.") {
+            WTSectionCard(header: wtLang.tr("My Packages"), footer: wtLang.tr("Packages you build or import are stored on this device, in WorkTweaks' own container. Tap a package to edit it. Deploy runs it through the same preview, resolve and backup flow as a picked package.")) {
                 VStack(alignment: .leading, spacing: 0) {
                     if storedPackages.isEmpty {
-                        Text("No stored packages yet. Build one with New Package, or import an existing .deploy / .zip / folder package to edit it here.")
+                        Text(wtLang.tr("No stored packages yet. Build one with New Package, or import an existing .deploy / .zip / folder package to edit it here."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
@@ -208,7 +210,7 @@ struct DeployStoreSection: View {
                     Button {
                         newPackageTapped()
                     } label: {
-                        Label("New Package", systemImage: "plus")
+                        Label(wtLang.tr("New Package"), systemImage: "plus")
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -221,7 +223,7 @@ struct DeployStoreSection: View {
                     Button {
                         showImporter = true
                     } label: {
-                        Label("Import Package…", systemImage: "square.and.arrow.down")
+                        Label(wtLang.tr("Import Package…"), systemImage: "square.and.arrow.down")
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -233,7 +235,7 @@ struct DeployStoreSection: View {
             if let storeError {
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 3) {
-                        Label("Something went wrong", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("Something went wrong"), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(storeError)
                             .font(.caption)
@@ -270,24 +272,24 @@ struct DeployStoreSection: View {
             DeployShareSheet(items: [item.url])
         }
         .confirmationDialog(
-            "Delete Package",
+            wtLang.tr("Delete Package"),
             isPresented: Binding(
                 get: { packageToDelete != nil },
                 set: { if !$0 { packageToDelete = nil } }
             ),
             presenting: packageToDelete
         ) { stored in
-            Button("Delete \"\(stored.displayName)\"", role: .destructive) {
+            Button(wtLang.tr("Delete \"%@\"", stored.displayName), role: .destructive) {
                 if DeployManager.deleteStoredPackage(stored) {
                     storedPackages = DeployManager.loadStoredPackages()
                 }
                 packageToDelete = nil
             }
-            Button("Cancel", role: .cancel) {
+            Button(wtLang.tr("Cancel"), role: .cancel) {
                 packageToDelete = nil
             }
         } message: { _ in
-            Text("The stored package is removed. Files it already deployed, and its Deploy History receipts, are not touched.")
+            Text(wtLang.tr("The stored package is removed. Files it already deployed, and its Deploy History receipts, are not touched."))
         }
     }
 
@@ -299,7 +301,7 @@ struct DeployStoreSection: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(stored.displayName)
                         .font(.subheadline.weight(.semibold))
-                    Text("\(stored.bundleID) • \(stored.scope) • \(stored.files.count) file\(stored.files.count == 1 ? "" : "s")")
+                    Text(wtLang.tr(stored.files.count == 1 ? "%@ • %@ • %d file" : "%@ • %@ • %d files", stored.bundleID, stored.scope, stored.files.count))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -312,22 +314,22 @@ struct DeployStoreSection: View {
                 Button {
                     editorSession = DeployEditorSession(package: stored, isNew: false)
                 } label: {
-                    Label("Edit", systemImage: "pencil")
+                    Label(wtLang.tr("Edit"), systemImage: "pencil")
                 }
                 Button {
                     deployStoredPackage(stored)
                 } label: {
-                    Label("Deploy", systemImage: "shippingbox")
+                    Label(wtLang.tr("Deploy"), systemImage: "shippingbox")
                 }
                 Button {
                     exportStoredPackage(stored)
                 } label: {
-                    Label("Export ZIP", systemImage: "square.and.arrow.up")
+                    Label(wtLang.tr("Export ZIP"), systemImage: "square.and.arrow.up")
                 }
                 Button(role: .destructive) {
                     packageToDelete = stored
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label(wtLang.tr("Delete"), systemImage: "trash")
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
@@ -342,7 +344,7 @@ struct DeployStoreSection: View {
         if let draft = DeployManager.makeNewStoredPackage() {
             editorSession = DeployEditorSession(package: draft, isNew: true)
         } else {
-            storeError = "The package store is unavailable (the App Group container did not resolve)."
+            storeError = wtLang.tr("The package store is unavailable (the App Group container did not resolve).")
         }
     }
 
@@ -364,7 +366,7 @@ struct DeployStoreSection: View {
             storeError = nil
             exportItem = DeployExportItem(url: url)
         } else {
-            storeError = "The package could not be exported."
+            storeError = wtLang.tr("The package could not be exported.")
         }
     }
 }
@@ -378,6 +380,7 @@ struct DeployStoreSection: View {
 // host's state, so both pages drive the one preview.
 
 struct DeployPreviewSection: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var appDataManager: AppDataManager
     @Binding var package: LoadedDeployPackage?
     @ObservedObject var deployManager: DeployManager
@@ -403,27 +406,27 @@ struct DeployPreviewSection: View {
     var body: some View {
         Group {
             if let package {
-                WTSectionCard(header: "Manifest") {
+                WTSectionCard(header: wtLang.tr("Manifest")) {
                     VStack(alignment: .leading, spacing: 0) {
                         if let name = package.name {
-                            LabeledContent("Name", value: name)
+                            LabeledContent(wtLang.tr("Name"), value: name)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 9)
                             Divider()
                                 .padding(.leading, 14)
                         }
-                        LabeledContent("Bundle ID", value: package.bundleID)
+                        LabeledContent(wtLang.tr("Bundle ID"), value: package.bundleID)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                         Divider()
                             .padding(.leading, 14)
-                        LabeledContent("Scope", value: package.scope)
+                        LabeledContent(wtLang.tr("Scope"), value: package.scope)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                     }
                 }
 
-                WTSectionCard(header: "Files (\(package.files.count))") {
+                WTSectionCard(header: wtLang.tr("Files (%d)", package.files.count)) {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(package.files.enumerated()), id: \.element.relativePath) { index, file in
                             if index > 0 {
@@ -433,7 +436,7 @@ struct DeployPreviewSection: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(file.relativePath)
                                     .font(.subheadline)
-                                Text("\(wtFormatSize(Int64(file.data.count))) — from \(file.source)")
+                                Text(wtLang.tr("%@ — from %@", wtFormatSize(Int64(file.data.count)), file.source))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -443,15 +446,15 @@ struct DeployPreviewSection: View {
                     }
                 }
 
-                WTSectionCard(header: "Target", footer: "Before anything is written, every file that already exists is backed up (see Deploy History). Existing files are then replaced in place; new files are created.") {
+                WTSectionCard(header: wtLang.tr("Target"), footer: wtLang.tr("Before anything is written, every file that already exists is backed up (see Deploy History). Existing files are then replaced in place; new files are created.")) {
                     VStack(alignment: .leading, spacing: 0) {
                         if isResolving {
                             HStack(spacing: 10) {
                                 ProgressView()
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("Resolving the target container…")
+                                    Text(wtLang.tr("Resolving the target container…"))
                                         .font(.subheadline)
-                                    Text(package.scope == "Application" ? appDataManager.scanPhase : "Enumerating containers with pathleak — this can take a while.")
+                                    Text(package.scope == "Application" ? appDataManager.scanPhase : wtLang.tr("Enumerating containers with pathleak — this can take a while."))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -460,7 +463,7 @@ struct DeployPreviewSection: View {
                             .padding(.vertical, 10)
                         } else if let resolved = deployManager.resolvedContainerPath {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("Target container")
+                                Text(wtLang.tr("Target container"))
                                     .font(.subheadline.weight(.semibold))
                                 Text(resolved)
                                     .font(.caption)
@@ -479,10 +482,10 @@ struct DeployPreviewSection: View {
                                     if deployManager.isDeploying {
                                         HStack(spacing: 8) {
                                             ProgressView()
-                                            Text("Applying…")
+                                            Text(wtLang.tr("Applying…"))
                                         }
                                     } else {
-                                        Text("Apply")
+                                        Text(wtLang.tr("Apply"))
                                             .fontWeight(.semibold)
                                     }
                                 }
@@ -496,7 +499,7 @@ struct DeployPreviewSection: View {
                             Button {
                                 autoResolve()
                             } label: {
-                                Text("Resolve Target")
+                                Text(wtLang.tr("Resolve Target"))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 11)
@@ -515,7 +518,7 @@ struct DeployPreviewSection: View {
             }
 
             if let result = deployManager.lastResult {
-                WTSectionCard(header: "Result — \(result.succeeded) succeeded, \(result.failed) failed", footer: result.receiptFolderName.map { "Backup and receipt saved under DeployBackups/\($0) — restore it any time from Deploy History." }) {
+                WTSectionCard(header: wtLang.tr("Result — %d succeeded, %d failed", result.succeeded, result.failed), footer: result.receiptFolderName.map { wtLang.tr("Backup and receipt saved under DeployBackups/%@ — restore it any time from Deploy History.", $0) }) {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(result.lines.enumerated()), id: \.element.id) { index, line in
                             if index > 0 {
@@ -591,6 +594,7 @@ struct DeployPreviewSection: View {
 // deleted again.
 
 struct DeployHistoryView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var appDataManager: AppDataManager
     @StateObject private var deployManager = DeployManager()
     @State private var entries: [DeployHistoryEntry] = []
@@ -599,7 +603,7 @@ struct DeployHistoryView: View {
     var body: some View {
         WTGlassPage {
             if let result = deployManager.restoreResult {
-                WTSectionCard(header: "Restore Result — \(result.succeeded) succeeded, \(result.failed) failed") {
+                WTSectionCard(header: wtLang.tr("Restore Result — %d succeeded, %d failed", result.succeeded, result.failed)) {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(result.lines.enumerated()), id: \.element.id) { index, line in
                             if index > 0 {
@@ -629,14 +633,14 @@ struct DeployHistoryView: View {
 
             if entries.isEmpty {
                 WTSectionCard {
-                    Text("No deploys yet. When a package is deployed, the files it replaced are backed up here with a receipt, ready to restore.")
+                    Text(wtLang.tr("No deploys yet. When a package is deployed, the files it replaced are backed up here with a receipt, ready to restore."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                 }
             } else {
-                WTSectionCard(header: "Deploys", footer: "Restoring writes each backed-up file back in place. Files the deploy created (they did not exist before) are deleted again.") {
+                WTSectionCard(header: wtLang.tr("Deploys"), footer: wtLang.tr("Restoring writes each backed-up file back in place. Files the deploy created (they did not exist before) are deleted again.")) {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                             if index > 0 {
@@ -646,7 +650,7 @@ struct DeployHistoryView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(entry.receipt.name ?? entry.receipt.bundleID)
                                     .font(.subheadline.weight(.semibold))
-                                Text("\(entry.receipt.bundleID) • \(entry.receipt.scope) • \( Self.displayDate(entry.receipt)) • \(entry.receipt.files.count) file\(entry.receipt.files.count == 1 ? "" : "s")")
+                                Text(wtLang.tr(entry.receipt.files.count == 1 ? "%@ • %@ • %@ • %d file" : "%@ • %@ • %@ • %d files", entry.receipt.bundleID, entry.receipt.scope, Self.displayDate(entry.receipt), entry.receipt.files.count))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                 Button {
@@ -656,10 +660,10 @@ struct DeployHistoryView: View {
                                     if deployManager.isRestoring && restoringID == entry.id {
                                         HStack(spacing: 8) {
                                             ProgressView()
-                                            Text("Restoring…")
+                                            Text(wtLang.tr("Restoring…"))
                                         }
                                     } else {
-                                        Text("Restore")
+                                        Text(wtLang.tr("Restore"))
                                     }
                                 }
                                 .disabled(deployManager.isRestoring)
@@ -671,11 +675,11 @@ struct DeployHistoryView: View {
                 }
             }
         }
-        .navigationTitle("Deploy History")
+        .navigationTitle(wtLang.tr("Deploy History"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Refresh") {
+                Button(wtLang.tr("Refresh")) {
                     entries = DeployManager.loadHistory()
                 }
             }

@@ -15,19 +15,20 @@ import SwiftUI
 // silently. Keep this page open while transferring.
 
 struct WiFiShareView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var server = WiFiShareServer()
     @State private var backgroundObserver: NSObjectProtocol?
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "Server", footer: "The server shares this app's Documents folder only — SaveVaultBackups, staged vaults and uploads. Nothing outside it is ever served. Keep this page open while transferring: the server stops when you leave the page or the app goes to the background.") {
+            WTSectionCard(header: wtLang.tr("Server"), footer: wtLang.tr("The server shares this app's Documents folder only — SaveVaultBackups, staged vaults and uploads. Nothing outside it is ever served. Keep this page open while transferring: the server stops when you leave the page or the app goes to the background.")) {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 10) {
                         RowIcon(systemImage: server.isRunning ? "wifi" : "wifi.slash")
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(server.isRunning ? "Running" : "Stopped")
+                            Text(server.isRunning ? wtLang.tr("Running") : wtLang.tr("Stopped"))
                                 .font(.subheadline.weight(.semibold))
-                            Text(server.isRunning ? server.addressText : "Start the server to get its address.")
+                            Text(server.isRunning ? server.addressText : wtLang.tr("Start the server to get its address."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .textSelection(.enabled)
@@ -48,7 +49,7 @@ struct WiFiShareView: View {
                         }
                         SoundEffects.playTap()
                     } label: {
-                        Text(server.isRunning ? "Stop Server" : "Start Server")
+                        Text(server.isRunning ? wtLang.tr("Stop Server") : wtLang.tr("Start Server"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -58,19 +59,19 @@ struct WiFiShareView: View {
             }
 
             if server.isRunning {
-                WTSectionCard(header: "Sign In", footer: "The browser asks for these credentials once, then remembers them for the session.") {
+                WTSectionCard(header: wtLang.tr("Sign In"), footer: wtLang.tr("The browser asks for these credentials once, then remembers them for the session.")) {
                     VStack(alignment: .leading, spacing: 0) {
-                        LabeledContent("Address", value: server.addressText)
+                        LabeledContent(wtLang.tr("Address"), value: server.addressText)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                         Divider()
                             .padding(.leading, 14)
-                        LabeledContent("Username", value: WiFiShareServer.username)
+                        LabeledContent(wtLang.tr("Username"), value: WiFiShareServer.username)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                         Divider()
                             .padding(.leading, 14)
-                        LabeledContent("PIN", value: server.pin)
+                        LabeledContent(wtLang.tr("PIN"), value: server.pin)
                             .font(.system(.body, design: .monospaced))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
@@ -88,7 +89,7 @@ struct WiFiShareView: View {
                 }
 
                 if !server.requestLog.isEmpty {
-                    WTSectionCard(header: "Recent Requests") {
+                    WTSectionCard(header: wtLang.tr("Recent Requests")) {
                         VStack(alignment: .leading, spacing: 3) {
                             ForEach(server.requestLog, id: \.self) { line in
                                 Text(line)
@@ -102,7 +103,7 @@ struct WiFiShareView: View {
                 }
             }
         }
-        .navigationTitle("Wi-Fi File Sharing")
+        .navigationTitle(wtLang.tr("Wi-Fi File Sharing"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             backgroundObserver = NotificationCenter.default.addObserver(

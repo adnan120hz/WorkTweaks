@@ -9,6 +9,7 @@ import SwiftUI
 // MobileGestalt/CacheExtra tweak system. Only for iOS 27.
 
 struct SpringBoardView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let console: Console
 
     @State private var showBatteryPercentage = false
@@ -50,9 +51,9 @@ struct SpringBoardView: View {
             .navigationTitle("SpringBoard")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear { transport = TransportGate.check() }
-            .alert("Apply — read this first", isPresented: $showRisk) {
-                Button("Cancel", role: .cancel) { }
-                Button("Apply Anyway", role: .destructive) {
+            .alert(wtLang.tr("Apply — read this first"), isPresented: $showRisk) {
+                Button(wtLang.tr("Cancel"), role: .cancel) { }
+                Button(wtLang.tr("Apply Anyway"), role: .destructive) {
                     runApply()
                 }
             } message: {
@@ -74,7 +75,7 @@ struct SpringBoardView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("SpringBoard")
                     .font(.headline)
-                Text("SpringBoard options — battery percentage and Dynamic Island. iOS 27 only. A separate system from the Tweaks tab. LiveContainer is not recommended for this — use a direct install (Signed Apps) instead.")
+                Text(wtLang.tr("SpringBoard options — battery percentage and Dynamic Island. iOS 27 only. A separate system from the Tweaks tab. LiveContainer is not recommended for this — use a direct install (Signed Apps) instead."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -87,11 +88,11 @@ struct SpringBoardView: View {
     // MARK: Battery percentage
 
     private var batteryCard: some View {
-        WTSectionCard(header: "Battery") {
+        WTSectionCard(header: wtLang.tr("Battery")) {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Battery Percentage", isOn: $showBatteryPercentage)
+                Toggle(wtLang.tr("Battery Percentage"), isOn: $showBatteryPercentage)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-                Text("Shows the battery percentage in the status bar. Key: SBShowBatteryPercentage in com.apple.springboard.plist.")
+                Text(wtLang.tr("Shows the battery percentage in the status bar. Key: SBShowBatteryPercentage in com.apple.springboard.plist."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -104,11 +105,11 @@ struct SpringBoardView: View {
     // MARK: Dynamic Island
 
     private var dynamicIslandCard: some View {
-        WTSectionCard(header: "Dynamic Island") {
+        WTSectionCard(header: wtLang.tr("Dynamic Island")) {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Disable Dynamic Island System", isOn: $disableDynamicIsland)
+                Toggle(wtLang.tr("Disable Dynamic Island System"), isOn: $disableDynamicIsland)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-                Text("Disables the Dynamic Island system completely — not just hiding it. Key: SBSuppressDynamicIslandCompletely in the managed com.apple.springboard.plist (set = 1).")
+                Text(wtLang.tr("Disables the Dynamic Island system completely — not just hiding it. Key: SBSuppressDynamicIslandCompletely in the managed com.apple.springboard.plist (set = 1)."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -121,9 +122,9 @@ struct SpringBoardView: View {
     // MARK: Photo backup & restore (its own menu)
 
     private var photoBackupCard: some View {
-        WTSectionCard(header: "Photos & Videos") {
+        WTSectionCard(header: wtLang.tr("Photos & Videos")) {
             VStack(alignment: .leading, spacing: 0) {
-                Text("A partial restore can affect photos and videos. Back them up first — optional, you can skip it.")
+                Text(wtLang.tr("A partial restore can affect photos and videos. Back them up first — optional, you can skip it."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -138,7 +139,7 @@ struct SpringBoardView: View {
                     HStack {
                         Image(systemName: "photo.badge.plus")
                             .foregroundStyle(.secondary)
-                        Text("Backup Your Photos & Videos Here!")
+                        Text(wtLang.tr("Backup Your Photos & Videos Here!"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Image(systemName: "chevron.right")
                             .font(.caption)
@@ -158,7 +159,7 @@ struct SpringBoardView: View {
                     HStack {
                         Image(systemName: "photo.on.rectangle")
                             .foregroundStyle(.secondary)
-                        Text("Your All BackUP Files Here!")
+                        Text(wtLang.tr("Your All BackUP Files Here!"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Image(systemName: "chevron.right")
                             .font(.caption)
@@ -176,7 +177,7 @@ struct SpringBoardView: View {
     // MARK: Apply (iOS 26 partial restore)
 
     private var applyCard: some View {
-        WTSectionCard(header: "Apply") {
+        WTSectionCard(header: wtLang.tr("Apply")) {
             VStack(alignment: .leading, spacing: 12) {
                 Button {
                     SoundEffects.playTap()
@@ -184,7 +185,7 @@ struct SpringBoardView: View {
                 } label: {
                     HStack {
                         Image(systemName: "checkmark.circle")
-                        Text(isApplying ? "Applying…" : "Apply SpringBoard")
+                        Text(isApplying ? wtLang.tr("Applying…") : wtLang.tr("Apply SpringBoard"))
                             .font(.subheadline.weight(.semibold))
                         Spacer(minLength: 0)
                     }

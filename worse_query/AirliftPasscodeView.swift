@@ -20,6 +20,7 @@ import UniformTypeIdentifiers
 import PhotosUI
 
 struct AirliftPasscodeView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var engine = AirliftPasscodeEngine.shared
 
     @State private var showThemeImporter = false
@@ -52,7 +53,7 @@ struct AirliftPasscodeView: View {
             // is not hidden behind it.
             Color.clear.frame(height: 60)
         }
-        .navigationTitle("Passcode Theme")
+        .navigationTitle(wtLang.tr("Passcode Theme"))
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(
             isPresented: $showThemeImporter,
@@ -104,26 +105,26 @@ struct AirliftPasscodeView: View {
             }
         }
         .confirmationDialog(
-            "Choose Key \(keyPickerDigit ?? "") Image Source",
+            wtLang.tr("Choose Key %@ Image Source", keyPickerDigit ?? ""),
             isPresented: $showKeySourceDialog,
             titleVisibility: .visible
         ) {
             Button {
                 showKeyPhotosPicker = true
             } label: {
-                Label("Photo Library", systemImage: "photo.on.rectangle")
+                Label(wtLang.tr("Photo Library"), systemImage: "photo.on.rectangle")
             }
             Button {
                 showKeyFileImporter = true
             } label: {
-                Label("Choose from Files…", systemImage: "folder")
+                Label(wtLang.tr("Choose from Files…"), systemImage: "folder")
             }
-            Button("Cancel", role: .cancel) {
+            Button(wtLang.tr("Cancel"), role: .cancel) {
                 keyPickerDigit = nil
             }
         }
-        .alert("Passcode theme applied", isPresented: $engine.showSuccessAlert) {
-            Button("OK", role: .cancel) { }
+        .alert(wtLang.tr("Passcode theme applied"), isPresented: $engine.showSuccessAlert) {
+            Button(wtLang.tr("OK"), role: .cancel) { }
         } message: {
             Text(engine.successAlertMessage)
         }
@@ -151,7 +152,7 @@ struct AirliftPasscodeView: View {
 
     private var modeCard: some View {
         WTSectionCard {
-            Picker("Mode", selection: $engine.passcodeMode) {
+            Picker(wtLang.tr("Mode"), selection: $engine.passcodeMode) {
                 ForEach(CreatorMode.allCases) { mode in
                     Text(mode.rawValue).tag(mode)
                 }
@@ -181,9 +182,9 @@ struct AirliftPasscodeView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Blocked — pairing / VPN not ready")
+                    Text(wtLang.tr("Blocked — pairing / VPN not ready"))
                         .font(.subheadline.weight(.semibold))
-                    Text("Flashing needs a pairing file and the VPN tunnel. Pair first and connect the VPN in Sandbox → Utilities → Get Pairing File + VPN Status, then come back here.")
+                    Text(wtLang.tr("Flashing needs a pairing file and the VPN tunnel. Pair first and connect the VPN in Sandbox → Utilities → Get Pairing File + VPN Status, then come back here."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -198,13 +199,13 @@ struct AirliftPasscodeView: View {
 
     private var applySection: some View {
         Group {
-            WTSectionCard(header: "Browse Files") {
+            WTSectionCard(header: wtLang.tr("Browse Files")) {
                 HStack {
                     Button {
                         showThemeImporter = true
                     } label: {
                         Label(
-                            engine.loadedTheme == nil ? "Choose .passthm from Files…" : "Change .passthm…",
+                            engine.loadedTheme == nil ? wtLang.tr("Choose .passthm from Files…") : wtLang.tr("Change .passthm…"),
                             systemImage: "doc.badge.plus"
                         )
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -212,7 +213,7 @@ struct AirliftPasscodeView: View {
                     .buttonStyle(.bordered)
 
                     if engine.loadedTheme != nil {
-                        Button("Clear") {
+                        Button(wtLang.tr("Clear")) {
                             engine.clearLoadedTheme()
                         }
                         .font(.caption.bold())
@@ -225,16 +226,16 @@ struct AirliftPasscodeView: View {
             }
 
             if let theme = engine.loadedTheme {
-                WTSectionCard(header: "Lock Screen Preview") {
+                WTSectionCard(header: wtLang.tr("Lock Screen Preview")) {
                     KeypadPreviewGrid(keys: theme.keysPreview)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                 }
 
-                WTSectionCard(header: "Theme Information") {
+                WTSectionCard(header: wtLang.tr("Theme Information")) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Files in theme")
+                            Text(wtLang.tr("Files in theme"))
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Text("\(theme.fileCount)")
@@ -242,17 +243,17 @@ struct AirliftPasscodeView: View {
                         }
                         .font(.subheadline)
                         HStack {
-                            Text("Digits styled")
+                            Text(wtLang.tr("Digits styled"))
                                 .foregroundStyle(.secondary)
                             Spacer()
-                            Text("\(theme.keysPreview.count) keys")
+                            Text(wtLang.tr("%d keys", theme.keysPreview.count))
                                 .font(.system(.subheadline, design: .monospaced))
                         }
                         .font(.subheadline)
                         Button {
                             engine.adoptThemeIntoCreator()
                         } label: {
-                            Label("Edit in Theme Creator", systemImage: "pencil")
+                            Label(wtLang.tr("Edit in Theme Creator"), systemImage: "pencil")
                                 .frame(maxWidth: .infinity, alignment: .center)
                         }
                         .buttonStyle(.bordered)
@@ -268,9 +269,9 @@ struct AirliftPasscodeView: View {
 
     private var creatorSection: some View {
         Group {
-            WTSectionCard(header: "Individual Keys") {
+            WTSectionCard(header: wtLang.tr("Individual Keys")) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Tap a key to assign a custom image.")
+                    Text(wtLang.tr("Tap a key to assign a custom image."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.bottom, 6)
@@ -294,7 +295,7 @@ struct AirliftPasscodeView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Key \(btn.digit)")
+                                Text(wtLang.tr("Key %@", btn.digit))
                                     .font(.subheadline.weight(.medium))
                                 if !btn.letters.isEmpty {
                                     Text(btn.letters)
@@ -336,7 +337,7 @@ struct AirliftPasscodeView: View {
                 .padding(.vertical, 10)
             }
 
-            WTSectionCard(header: "Lock Screen Preview") {
+            WTSectionCard(header: wtLang.tr("Lock Screen Preview")) {
                 KeypadPreviewGrid(keys: engine.effectiveKeys)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
@@ -351,7 +352,7 @@ struct AirliftPasscodeView: View {
                             HStack(spacing: 8) {
                                 Spacer()
                                 Image(systemName: "square.and.arrow.up")
-                                Text("Save .passthm")
+                                Text(wtLang.tr("Save .passthm"))
                                 Spacer()
                             }
                             .font(.headline)
@@ -365,7 +366,7 @@ struct AirliftPasscodeView: View {
                                 HStack(spacing: 8) {
                                     Spacer()
                                     Image(systemName: "square.and.arrow.up.on.square")
-                                    Text("Share \(url.lastPathComponent)")
+                                    Text(wtLang.tr("Share %@", url.lastPathComponent))
                                     Spacer()
                                 }
                                 .font(.subheadline.weight(.semibold))
@@ -381,7 +382,7 @@ struct AirliftPasscodeView: View {
                             HStack(spacing: 8) {
                                 Spacer()
                                 Image(systemName: "trash")
-                                Text("Clear All")
+                                Text(wtLang.tr("Clear All"))
                                 Spacer()
                             }
                             .font(.headline)
@@ -401,13 +402,13 @@ struct AirliftPasscodeView: View {
     // MARK: - Target
 
     private var targetCard: some View {
-        WTSectionCard(header: "Flash & Language Target") {
+        WTSectionCard(header: wtLang.tr("Flash & Language Target")) {
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("System Caches")
+                    Text(wtLang.tr("System Caches"))
                         .font(.caption.bold())
                         .foregroundStyle(.secondary)
-                    Picker("System Caches", selection: $engine.targetTelephonyVersion) {
+                    Picker(wtLang.tr("System Caches"), selection: $engine.targetTelephonyVersion) {
                         Text("TelephonyUI-10 (iOS 18+)").tag("TelephonyUI-10")
                         Text("TelephonyUI-9 (iOS 16–17)").tag("TelephonyUI-9")
                         Text("TelephonyUI-8 (iOS 14–15)").tag("TelephonyUI-8")
@@ -420,10 +421,10 @@ struct AirliftPasscodeView: View {
                 Divider()
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("System Language")
+                    Text(wtLang.tr("System Language"))
                         .font(.caption.bold())
                         .foregroundStyle(.secondary)
-                    Picker("System Language", selection: $engine.passcodeLanguageTarget) {
+                    Picker(wtLang.tr("System Language"), selection: $engine.passcodeLanguageTarget) {
                         ForEach(PasscodeLanguageTarget.allCases) { item in
                             Text(item.rawValue).tag(item)
                         }
@@ -435,10 +436,10 @@ struct AirliftPasscodeView: View {
                 Divider()
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Font Weight / Style")
+                    Text(wtLang.tr("Font Weight / Style"))
                         .font(.caption.bold())
                         .foregroundStyle(.secondary)
-                    Picker("Font Weight / Style", selection: $engine.passcodeBoldTarget) {
+                    Picker(wtLang.tr("Font Weight / Style"), selection: $engine.passcodeBoldTarget) {
                         ForEach(PasscodeBoldTarget.allCases) { item in
                             Text(item.rawValue).tag(item)
                         }
@@ -454,12 +455,12 @@ struct AirliftPasscodeView: View {
                         .padding(.top, 1)
 
                     if engine.passcodeLanguageTarget == .all && engine.passcodeBoldTarget == .both {
-                        Text("Universal mode flashes ~600 files for all languages & Bold text. Selecting a specific language (e.g. Ukrainian) speeds up flashing dramatically.")
+                        Text(wtLang.tr("Universal mode flashes ~600 files for all languages & Bold text. Selecting a specific language (e.g. Ukrainian) speeds up flashing dramatically."))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
-                        Text("Fast mode selected: only targets \(engine.passcodeLanguageTarget.rawValue) with \(engine.passcodeBoldTarget.rawValue).")
+                        Text(wtLang.tr("Fast mode selected: only targets %@ with %@.", engine.passcodeLanguageTarget.rawValue, engine.passcodeBoldTarget.rawValue))
                             .font(.caption2)
                             .foregroundStyle(.primary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -486,7 +487,7 @@ struct AirliftPasscodeView: View {
                             HStack(spacing: 8) {
                                 Spacer()
                                 Image(systemName: "trash")
-                                Text("Remove / Unload Theme")
+                                Text(wtLang.tr("Remove / Unload Theme"))
                                 Spacer()
                             }
                             .font(.headline)
@@ -502,7 +503,7 @@ struct AirliftPasscodeView: View {
             }
 
             if !engine.flashLog.isEmpty {
-                WTSectionCard(header: "Flash Log (\(engine.flashLog.count) lines)") {
+                WTSectionCard(header: wtLang.tr("Flash Log (%d lines)", engine.flashLog.count)) {
                     PasscodeFlashLogView(
                         lines: engine.flashLog,
                         onClear: { engine.flashLog.removeAll() }
@@ -520,7 +521,7 @@ struct AirliftPasscodeView: View {
             HStack(spacing: 10) {
                 ProgressView()
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Flashing Theme…").font(.subheadline.bold())
+                    Text(wtLang.tr("Flashing Theme…")).font(.subheadline.bold())
                     ProgressView(value: engine.flashProgress)
                 }
             }
@@ -532,7 +533,7 @@ struct AirliftPasscodeView: View {
                 HStack(spacing: 8) {
                     Spacer()
                     Image(systemName: "arrow.clockwise")
-                    Text("Retry Flash Theme")
+                    Text(wtLang.tr("Retry Flash Theme"))
                     Spacer()
                 }
                 .font(.headline)
@@ -549,7 +550,7 @@ struct AirliftPasscodeView: View {
                 HStack(spacing: 8) {
                     Spacer()
                     Image(systemName: "bolt.fill")
-                    Text("Flash Theme to iPhone")
+                    Text(wtLang.tr("Flash Theme to iPhone"))
                     Spacer()
                 }
                 .font(.headline)
@@ -617,6 +618,7 @@ struct KeypadPreviewGrid: View {
 // MARK: - Flash log (scrolling, auto-follows, copy + clear)
 
 struct PasscodeFlashLogView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let lines: [String]
     var onClear: (() -> Void)? = nil
     @State private var copied: Bool = false
@@ -643,7 +645,7 @@ struct PasscodeFlashLogView: View {
                     HStack(spacing: 4) {
                         Image(systemName: copied ? "checkmark" : "doc.on.doc")
                             .font(.system(size: 11, weight: .bold))
-                        Text(copied ? "Copied" : "Copy")
+                        Text(copied ? wtLang.tr("Copied") : wtLang.tr("Copy"))
                             .font(.system(size: 11, weight: .bold))
                     }
                     .foregroundStyle(copied ? .green : .blue)

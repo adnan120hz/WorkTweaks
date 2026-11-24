@@ -53,6 +53,7 @@ enum PhotoBackupStore {
 /// "Backup Your Photos & Videos Here!" — pick photos and videos,
 /// then Save copies them into `BackUP_Data`.
 struct PhotoBackupView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @Environment(\.dismiss) private var dismiss
     @State private var showPicker = false
     @State private var picked: [PHPickerResult] = []
@@ -68,9 +69,9 @@ struct PhotoBackupView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     WTSectionCard {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Backup Your Photos & Videos Here!")
+                            Text(wtLang.tr("Backup Your Photos & Videos Here!"))
                                 .font(.headline)
-                            Text("Pick the photos and videos you want to keep, then Save. They are copied into the BackUP_Data folder inside the app. Optional — you can skip this.")
+                            Text(wtLang.tr("Pick the photos and videos you want to keep, then Save. They are copied into the BackUP_Data folder inside the app. Optional — you can skip this."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -81,7 +82,7 @@ struct PhotoBackupView: View {
 
                     WTSectionCard {
                         VStack(alignment: .leading, spacing: 12) {
-                            Button("Choose Photos & Videos") {
+                            Button(wtLang.tr("Choose Photos & Videos")) {
                                 SoundEffects.playTap()
                                 showPicker = true
                             }
@@ -89,18 +90,18 @@ struct PhotoBackupView: View {
                             .disabled(isSaving)
 
                             if totalCount > 0 {
-                                Text("\(picked.count) selected")
+                                Text(wtLang.tr("%d selected", picked.count))
                                     .font(.subheadline)
                             }
 
                             if isSaving {
                                 ProgressView(value: progress)
-                                Text("Saving \(savedCount) of \(totalCount) (\(Int(progress * 100))%)")
+                                Text(wtLang.tr("Saving %d of %d (%d%%)", savedCount, totalCount, Int(progress * 100)))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
 
-                            Button("Save") {
+                            Button(wtLang.tr("Save")) {
                                 SoundEffects.playTap()
                                 savePicked()
                             }
@@ -120,9 +121,9 @@ struct PhotoBackupView: View {
 
                     WTSectionCard {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Where it goes")
+                            Text(wtLang.tr("Where it goes"))
                                 .font(.subheadline.weight(.semibold))
-                            Text("BackUP_Data folder, inside the WorkTweaks folder (Documents). You can browse it in the Files app.")
+                            Text(wtLang.tr("BackUP_Data folder, inside the WorkTweaks folder (Documents). You can browse it in the Files app."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -134,11 +135,11 @@ struct PhotoBackupView: View {
                 .padding(16)
             }
             .scrollIndicators(.hidden)
-            .navigationTitle("Backup Photos & Videos")
+            .navigationTitle(wtLang.tr("Backup Photos & Videos"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
+                    Button(wtLang.tr("Done")) { dismiss() }
                 }
             }
             .sheet(isPresented: $showPicker) {
@@ -169,7 +170,7 @@ struct PhotoBackupView: View {
             }
             await MainActor.run {
                 isSaving = false
-                statusMessage = "Saved \(saved) of \(totalCount) to BackUP_Data."
+                statusMessage = wtLang.tr("Saved %d of %d to BackUP_Data.", saved, totalCount)
                 picked = []
                 totalCount = 0
             }
@@ -248,6 +249,7 @@ private struct PhotoPicker: UIViewControllerRepresentable {
 /// from `BackUP_Data`, select some, Restore opens the share
 /// sheet, then Save to Photos.
 struct PhotoRestoreView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @Environment(\.dismiss) private var dismiss
     @State private var files: [URL] = []
     @State private var selected: Set<URL> = []
@@ -260,9 +262,9 @@ struct PhotoRestoreView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     WTSectionCard {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Your All BackUP Files Here!")
+                            Text(wtLang.tr("Your All BackUP Files Here!"))
                                 .font(.headline)
-                            Text("These are the photos and videos in the BackUP_Data folder. Select the ones to restore, then Restore opens the share sheet — tap Save to Photos there.")
+                            Text(wtLang.tr("These are the photos and videos in the BackUP_Data folder. Select the ones to restore, then Restore opens the share sheet — tap Save to Photos there."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -273,7 +275,7 @@ struct PhotoRestoreView: View {
 
                     if files.isEmpty {
                         WTSectionCard {
-                            Text("No backed-up photos or videos yet. Use \"Backup Your Photos & Videos Here!\" first.")
+                            Text(wtLang.tr("No backed-up photos or videos yet. Use \"Backup Your Photos & Videos Here!\" first."))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
                                 .font(.caption)
@@ -310,7 +312,7 @@ struct PhotoRestoreView: View {
                                 .padding(.vertical, 10)
                         }
 
-                        Button("Restore (\(selected.count))") {
+                        Button(wtLang.tr("Restore (%d)", selected.count)) {
                             SoundEffects.playTap()
                             showShare = true
                         }
@@ -329,11 +331,11 @@ struct PhotoRestoreView: View {
                 .padding(16)
             }
             .scrollIndicators(.hidden)
-            .navigationTitle("All BackUP Files")
+            .navigationTitle(wtLang.tr("All BackUP Files"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
+                    Button(wtLang.tr("Done")) { dismiss() }
                 }
             }
             .onAppear { reload() }
@@ -347,9 +349,9 @@ struct PhotoRestoreView: View {
         files = PhotoBackupStore.backedUpFiles().filter { PhotoBackupStore.isImageOrVideo($0) }
         selected = selected.intersection(files)
         if files.isEmpty {
-            statusMessage = "BackUP_Data is empty."
+            statusMessage = wtLang.tr("BackUP_Data is empty.")
         } else {
-            statusMessage = "\(files.count) file(s) in BackUP_Data."
+            statusMessage = wtLang.tr("%d file(s) in BackUP_Data.", files.count)
         }
     }
 }

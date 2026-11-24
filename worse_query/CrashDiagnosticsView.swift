@@ -8,28 +8,29 @@ import SwiftUI
 // strings are English, like the rest of the app.
 
 struct CrashDiagnosticsView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var manager = CrashDiagnostics()
     @State private var selected: CrashReport?
     @State private var showCleanConfirm = false
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "About this feature", footer: "Only the listed .ips / .crash / .panic files under DiagnosticReports (and Retired) are ever deleted. The folders themselves are kept, and nothing else is touched.") {
-                Text("Jetsam & Crash lists the reports iOS writes when it kills an app for memory (Jetsam, bug_type 298), when an app crashes (309), or on a watchdog / kernel panic (210). Open a report to see why it died, share the full file, or clean all reports to free space.")
+            WTSectionCard(header: wtLang.tr("About this feature"), footer: wtLang.tr("Only the listed .ips / .crash / .panic files under DiagnosticReports (and Retired) are ever deleted. The folders themselves are kept, and nothing else is touched.")) {
+                Text(wtLang.tr("Jetsam & Crash lists the reports iOS writes when it kills an app for memory (Jetsam, bug_type 298), when an app crashes (309), or on a watchdog / kernel panic (210). Open a report to see why it died, share the full file, or clean all reports to free space."))
                     .font(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
             }
 
-            WTSectionCard(header: "Reports (\(manager.reports.count))") {
+            WTSectionCard(header: wtLang.tr("Reports (%d)", manager.reports.count)) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 10) {
                         Button {
                             SoundEffects.playTap()
                             manager.load()
                         } label: {
-                            Label(manager.isLoading ? "Loading…" : "Refresh", systemImage: "arrow.clockwise")
+                            Label(manager.isLoading ? wtLang.tr("Loading…") : wtLang.tr("Refresh"), systemImage: "arrow.clockwise")
                                 .font(.subheadline.weight(.semibold))
                         }
                         .buttonStyle(.bordered)
@@ -41,23 +42,23 @@ struct CrashDiagnosticsView: View {
                     }
                     switch manager.state {
                     case .idle:
-                        Text("Tap Refresh to list the diagnostic reports.")
+                        Text(wtLang.tr("Tap Refresh to list the diagnostic reports."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     case .loading:
-                        Text("Listing reports…")
+                        Text(wtLang.tr("Listing reports…"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     case .ready:
                         if !manager.canWrite {
-                            Text("Read-only mode — the grant did not include write access, so Clean All is disabled.")
+                            Text(wtLang.tr("Read-only mode — the grant did not include write access, so Clean All is disabled."))
                                 .font(.caption)
                                 .foregroundStyle(.orange)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
-                            Text("Write access available — Clean All can delete the listed reports.")
+                            Text(wtLang.tr("Write access available — Clean All can delete the listed reports."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -80,12 +81,12 @@ struct CrashDiagnosticsView: View {
             }
 
             if case .ready = manager.state, !manager.reports.isEmpty {
-                WTSectionCard(header: "Clean up") {
+                WTSectionCard(header: wtLang.tr("Clean up")) {
                     Button {
                         SoundEffects.playTap()
                         showCleanConfirm = true
                     } label: {
-                        Label(manager.isCleaning ? "Cleaning…" : "Clean All Reports", systemImage: "trash")
+                        Label(manager.isCleaning ? wtLang.tr("Cleaning…") : wtLang.tr("Clean All Reports"), systemImage: "trash")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.red)
                     }
@@ -94,16 +95,16 @@ struct CrashDiagnosticsView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                 }
-                .alert("Clean all reports?", isPresented: $showCleanConfirm) {
-                    Button("Delete \(manager.reports.count) report(s)", role: .destructive) {
+                .alert(wtLang.tr("Clean all reports?"), isPresented: $showCleanConfirm) {
+                    Button(wtLang.tr("Delete %d report(s)", manager.reports.count), role: .destructive) {
                         manager.cleanAll { _ in }
                     }
-                    Button("Cancel", role: .cancel) {}
+                    Button(wtLang.tr("Cancel"), role: .cancel) {}
                 } message: {
-                    Text("This deletes only the listed .ips / .crash / .panic files. The folders are kept.")
+                    Text(wtLang.tr("This deletes only the listed .ips / .crash / .panic files. The folders are kept."))
                 }
 
-                WTSectionCard(header: "Reports") {
+                WTSectionCard(header: wtLang.tr("Reports")) {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(manager.reports.enumerated()), id: \.element.id) { index, report in
                             Button {
@@ -152,7 +153,7 @@ struct CrashDiagnosticsView: View {
                 }
             } else if case .ready = manager.state {
                 WTSectionCard {
-                    Text("No diagnostic reports found — nothing has been killed or crashed recently, or the reports were already cleaned.")
+                    Text(wtLang.tr("No diagnostic reports found — nothing has been killed or crashed recently, or the reports were already cleaned."))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -161,7 +162,7 @@ struct CrashDiagnosticsView: View {
                 }
             }
         }
-        .navigationTitle("Jetsam & Crash")
+        .navigationTitle(wtLang.tr("Jetsam & Crash"))
         .sheet(item: $selected) { report in
             CrashReportDetailView(report: report, manager: manager)
         }
@@ -174,6 +175,7 @@ struct CrashDiagnosticsView: View {
 }
 
 private struct CrashReportDetailView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let report: CrashReport
     let manager: CrashDiagnostics
     @Environment(\.dismiss) private var dismiss
@@ -184,7 +186,7 @@ private struct CrashReportDetailView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    WTSectionCard(header: "Report") {
+                    WTSectionCard(header: wtLang.tr("Report")) {
                         VStack(alignment: .leading, spacing: 6) {
                             detailRow("File", report.fileName)
                             detailRow("Kind", report.kind.rawValue)
@@ -206,8 +208,8 @@ private struct CrashReportDetailView: View {
                         .padding(.vertical, 10)
                     }
 
-                    WTSectionCard(header: "Preview (first 128 KB)") {
-                        Text(preview)
+                    WTSectionCard(header: wtLang.tr("Preview (first 128 KB)")) {
+                        Text(wtLang.tr(preview))
                             .font(.system(.caption, design: .monospaced))
                             .textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)
@@ -218,7 +220,7 @@ private struct CrashReportDetailView: View {
 
                     if let url = shareURL {
                         ShareLink(item: url) {
-                            Label("Share Full Report", systemImage: "square.and.arrow.up")
+                            Label(wtLang.tr("Share Full Report"), systemImage: "square.and.arrow.up")
                                 .font(.subheadline.weight(.semibold))
                         }
                         .buttonStyle(.borderedProminent)
@@ -230,7 +232,7 @@ private struct CrashReportDetailView: View {
                                 shareURL = url
                             }
                         } label: {
-                            Label("Prepare Share", systemImage: "square.and.arrow.up")
+                            Label(wtLang.tr("Prepare Share"), systemImage: "square.and.arrow.up")
                                 .font(.subheadline.weight(.semibold))
                         }
                         .buttonStyle(.bordered)
@@ -244,7 +246,7 @@ private struct CrashReportDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                    Button(wtLang.tr("Close")) { dismiss() }
                 }
             }
             .onAppear {
@@ -257,7 +259,7 @@ private struct CrashReportDetailView: View {
 
     private func detailRow(_ label: String, _ value: String) -> some View {
         HStack(alignment: .top) {
-            Text(label)
+            Text(label == "bug_type" ? label : wtLang.tr(label))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(width: 80, alignment: .leading)

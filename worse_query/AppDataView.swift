@@ -15,6 +15,7 @@ import SwiftUI
 // presentation only; browsing and editing behave as before.
 
 struct AppDataView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     // The shared, session-persistent manager: its completed
     // scan stays cached across navigation for the whole app
     // session (a per-view manager would forget it on every
@@ -23,7 +24,7 @@ struct AppDataView: View {
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "Containers", footer: "Containers are enumerated with the fork's pathleak scan — the kernel refuses a grant on the container root itself, so there is no faster way to list them.") {
+            WTSectionCard(header: wtLang.tr("Containers"), footer: wtLang.tr("Containers are enumerated with the fork's pathleak scan — the kernel refuses a grant on the container root itself, so there is no faster way to list them.")) {
                 Group {
                     if manager.isScanning {
                         HStack(spacing: 10) {
@@ -31,7 +32,7 @@ struct AppDataView: View {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(manager.scanPhase)
                                     .font(.subheadline)
-                                Text("The pathleak scan reads inodes one by one — this can take a few minutes.")
+                                Text(wtLang.tr("The pathleak scan reads inodes one by one — this can take a few minutes."))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -41,13 +42,13 @@ struct AppDataView: View {
                             Text(summary)
                                 .font(.subheadline)
                             if manager.containers.isEmpty {
-                                Text("The scan of \(AppDataManager.rootPath) found no containers. The scan's baseline and counts are in the Log.")
+                                Text(wtLang.tr("The scan of %@ found no containers. The scan's baseline and counts are in the Log.", AppDataManager.rootPath))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                         }
                     } else {
-                        Text("Preparing the container scan…")
+                        Text(wtLang.tr("Preparing the container scan…"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -96,11 +97,11 @@ struct AppDataView: View {
                 }
             }
         }
-        .navigationTitle("App Data")
+        .navigationTitle(wtLang.tr("App Data"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Rescan") {
+                Button(wtLang.tr("Rescan")) {
                     manager.rescan()
                 }
                 .disabled(manager.isScanning)
@@ -110,17 +111,17 @@ struct AppDataView: View {
                     NavigationLink {
                         DeployView(appDataManager: manager)
                     } label: {
-                        Label("Deploy Package…", systemImage: "shippingbox")
+                        Label(wtLang.tr("Deploy Package…"), systemImage: "shippingbox")
                     }
                     NavigationLink {
                         PackageBuilderView(appDataManager: manager)
                     } label: {
-                        Label("Package Builder", systemImage: "hammer")
+                        Label(wtLang.tr("Package Builder"), systemImage: "hammer")
                     }
                     NavigationLink {
                         DeployHistoryView(appDataManager: manager)
                     } label: {
-                        Label("Deploy History", systemImage: "clock.arrow.circlepath")
+                        Label(wtLang.tr("Deploy History"), systemImage: "clock.arrow.circlepath")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -140,7 +141,7 @@ struct AppDataView: View {
             parts.append(container.directoryName)
         }
         if let count = container.itemCount {
-            parts.append("\(count) item\(count == 1 ? "" : "s")")
+            parts.append(wtLang.tr(count == 1 ? "%d item" : "%d items", count))
         }
         return parts.joined(separator: " • ")
     }
@@ -153,6 +154,7 @@ struct AppDataView: View {
 // the same view; files push the file view.
 
 struct AppDataDirectoryView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var manager: AppDataManager
     let container: AppContainer
     let path: String
@@ -170,9 +172,9 @@ struct AppDataDirectoryView: View {
             if grantFailed {
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 3) {
-                        Label("Couldn't open this container", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("Couldn't open this container"), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
-                        Text("The sandbox extension for this container's directory was refused — the result code is in the Log.")
+                        Text(wtLang.tr("The sandbox extension for this container's directory was refused — the result code is in the Log."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -180,7 +182,7 @@ struct AppDataDirectoryView: View {
                     .padding(.vertical, 10)
                 }
             } else {
-                WTSectionCard(header: "Contents", footer: path) {
+                WTSectionCard(header: wtLang.tr("Contents"), footer: path) {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                             if index > 0 {
@@ -228,19 +230,19 @@ struct AppDataDirectoryView: View {
                         newName = ""
                         showAddFile = true
                     } label: {
-                        Label("Add File", systemImage: "doc.badge.plus")
+                        Label(wtLang.tr("Add File"), systemImage: "doc.badge.plus")
                     }
                     Button {
                         newName = ""
                         showAddFolder = true
                     } label: {
-                        Label("Add Folder", systemImage: "folder.badge.plus")
+                        Label(wtLang.tr("Add Folder"), systemImage: "folder.badge.plus")
                     }
                     Divider()
                     NavigationLink {
                         AppDataLargestFilesView(container: container)
                     } label: {
-                        Label("Largest Files", systemImage: "arrow.down.circle")
+                        Label(wtLang.tr("Largest Files"), systemImage: "arrow.down.circle")
                     }
                 } label: {
                     Image(systemName: "plus")
@@ -248,31 +250,31 @@ struct AppDataDirectoryView: View {
                 .disabled(grantFailed)
             }
         }
-        .alert("Add File", isPresented: $showAddFile) {
-            TextField("Filename", text: $newName)
+        .alert(wtLang.tr("Add File"), isPresented: $showAddFile) {
+            TextField(wtLang.tr("Filename"), text: $newName)
                 .disableAutocorrection(true)
                 .textInputAutocapitalization(.never)
-            Button("Create") {
+            Button(wtLang.tr("Create")) {
                 let name = newName.trimmingCharacters(in: .whitespaces)
                 guard isValidName(name) else { return }
                 newFilePath = (path as NSString).appendingPathComponent(name)
             }
-            Button("Cancel", role: .cancel) { }
+            Button(wtLang.tr("Cancel"), role: .cancel) { }
         } message: {
-            Text("Opens an empty editor; the file is created when you save.")
+            Text(wtLang.tr("Opens an empty editor; the file is created when you save."))
         }
-        .alert("Add Folder", isPresented: $showAddFolder) {
-            TextField("Folder name", text: $newName)
+        .alert(wtLang.tr("Add Folder"), isPresented: $showAddFolder) {
+            TextField(wtLang.tr("Folder name"), text: $newName)
                 .disableAutocorrection(true)
                 .textInputAutocapitalization(.never)
-            Button("Create") {
+            Button(wtLang.tr("Create")) {
                 let name = newName.trimmingCharacters(in: .whitespaces)
                 guard isValidName(name) else { return }
                 if manager.createFolder(path: (path as NSString).appendingPathComponent(name)) {
                     reload()
                 }
             }
-            Button("Cancel", role: .cancel) { }
+            Button(wtLang.tr("Cancel"), role: .cancel) { }
         }
         .navigationDestination(item: $newFilePath) { filePath in
             AppDataFileView(
@@ -334,6 +336,7 @@ struct AppDataDirectoryView: View {
 // through Add File starts empty and is created on save.
 
 struct AppDataFileView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var manager: AppDataManager
     let path: String
     let name: String
@@ -362,7 +365,7 @@ struct AppDataFileView: View {
                 WTSectionCard {
                     HStack(spacing: 10) {
                         ProgressView()
-                        Text("Reading…")
+                        Text(wtLang.tr("Reading…"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -370,15 +373,15 @@ struct AppDataFileView: View {
                     .padding(.vertical, 10)
                 }
             } else if readFailed {
-                WTSectionCard(header: "File", footer: path) {
+                WTSectionCard(header: wtLang.tr("File"), footer: path) {
                     VStack(alignment: .leading, spacing: 0) {
-                        LabeledContent("Name", value: name)
+                        LabeledContent(wtLang.tr("Name"), value: name)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                         if knownSize > 0 {
                             Divider()
                                 .padding(.leading, 14)
-                            LabeledContent("Size", value: wtFormatSize(knownSize))
+                            LabeledContent(wtLang.tr("Size"), value: wtFormatSize(knownSize))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 9)
                         }
@@ -387,7 +390,7 @@ struct AppDataFileView: View {
 
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 6) {
-                        Label("Couldn't read this file.", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("Couldn't read this file."), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(readFailureNote)
                             .font(.caption)
@@ -397,7 +400,7 @@ struct AppDataFileView: View {
                     .padding(.vertical, 10)
                 }
             } else if isText {
-                WTSectionCard(header: "Contents", footer: path) {
+                WTSectionCard(header: wtLang.tr("Contents"), footer: path) {
                     TextEditor(text: $text)
                         .font(.system(.body, design: .monospaced))
                         .frame(minHeight: 280)
@@ -408,12 +411,12 @@ struct AppDataFileView: View {
                 }
 
                 if isPlistFile {
-                    WTSectionCard(footer: "Opens the property list as an editable key/type/value table, with a backup taken before the first save.") {
+                    WTSectionCard(footer: wtLang.tr("Opens the property list as an editable key/type/value table, with a backup taken before the first save.")) {
                         NavigationLink {
                             PlistEditorView(manager: manager, path: path, name: name)
                         } label: {
                             HStack(spacing: 12) {
-                                Text("Open as Property List")
+                                Text(wtLang.tr("Open as Property List"))
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption.weight(.semibold))
@@ -427,7 +430,7 @@ struct AppDataFileView: View {
                     }
                 }
 
-                WTSectionCard(footer: "Saving writes the file in place, under the container's sandbox extension.") {
+                WTSectionCard(footer: wtLang.tr("Saving writes the file in place, under the container's sandbox extension.")) {
                     Button {
                         if manager.saveText(path: path, text: text, isNew: !fileExists) {
                             fileExists = true
@@ -436,28 +439,28 @@ struct AppDataFileView: View {
                             saveFailed = true
                         }
                     } label: {
-                        Text(saved ? "Saved" : "Save")
+                        Text(saved ? wtLang.tr("Saved") : wtLang.tr("Save"))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
                             .contentShape(Rectangle())
                     }
                 }
             } else {
-                WTSectionCard(header: "File", footer: path) {
+                WTSectionCard(header: wtLang.tr("File"), footer: path) {
                     VStack(alignment: .leading, spacing: 0) {
-                        LabeledContent("Name", value: name)
+                        LabeledContent(wtLang.tr("Name"), value: name)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                         Divider()
                             .padding(.leading, 14)
-                        LabeledContent("Size", value: wtFormatSize(size))
+                        LabeledContent(wtLang.tr("Size"), value: wtFormatSize(size))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                     }
                 }
 
                 if !hexPreview.isEmpty {
-                    WTSectionCard(header: "First Bytes") {
+                    WTSectionCard(header: wtLang.tr("First Bytes")) {
                         Text(hexPreview)
                             .font(.system(.caption, design: .monospaced))
                             .padding(.horizontal, 14)
@@ -467,8 +470,8 @@ struct AppDataFileView: View {
 
                 WTSectionCard {
                     Text(size <= 1_048_576
-                         ? "This file isn't UTF-8 text, so it can't be edited as text. It can be edited byte-by-byte in the hex editor below."
-                         : "This file isn't UTF-8 text, so it can't be edited here. Nothing is ever written to it from this page.")
+                         ? wtLang.tr("This file isn't UTF-8 text, so it can't be edited as text. It can be edited byte-by-byte in the hex editor below.")
+                         : wtLang.tr("This file isn't UTF-8 text, so it can't be edited here. Nothing is ever written to it from this page."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
@@ -476,12 +479,12 @@ struct AppDataFileView: View {
                 }
 
                 if size <= 1_048_576 {
-                    WTSectionCard(footer: "Edits replace byte values only — the file's length never changes. A backup of the original is saved before the first edit.") {
+                    WTSectionCard(footer: wtLang.tr("Edits replace byte values only — the file's length never changes. A backup of the original is saved before the first edit.")) {
                         NavigationLink {
                             AppDataHexEditorView(manager: manager, path: path, name: name)
                         } label: {
                             HStack(spacing: 12) {
-                                Text("Edit Bytes")
+                                Text(wtLang.tr("Edit Bytes"))
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption.weight(.semibold))
@@ -496,12 +499,12 @@ struct AppDataFileView: View {
                 }
 
                 if isSQLiteFile {
-                    WTSectionCard(footer: "Opens the database as editable tables, with a backup taken before the first save. Close the owning app before editing.") {
+                    WTSectionCard(footer: wtLang.tr("Opens the database as editable tables, with a backup taken before the first save. Close the owning app before editing.")) {
                         NavigationLink {
                             SQLiteEditorView(manager: manager, path: path, name: name)
                         } label: {
                             HStack(spacing: 12) {
-                                Text("Open as SQLite Database")
+                                Text(wtLang.tr("Open as SQLite Database"))
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption.weight(.semibold))
@@ -516,12 +519,12 @@ struct AppDataFileView: View {
                 }
 
                 if isPlistFile {
-                    WTSectionCard(footer: "Opens the property list as an editable key/type/value table, with a backup taken before the first save.") {
+                    WTSectionCard(footer: wtLang.tr("Opens the property list as an editable key/type/value table, with a backup taken before the first save.")) {
                         NavigationLink {
                             PlistEditorView(manager: manager, path: path, name: name)
                         } label: {
                             HStack(spacing: 12) {
-                                Text("Open as Property List")
+                                Text(wtLang.tr("Open as Property List"))
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption.weight(.semibold))
@@ -536,11 +539,11 @@ struct AppDataFileView: View {
                 }
 
                 if hasBackup {
-                    WTSectionCard(footer: "Copies the backup taken before the first byte edit back over this file, in place.") {
+                    WTSectionCard(footer: wtLang.tr("Copies the backup taken before the first byte edit back over this file, in place.")) {
                         Button(role: .destructive) {
                             showRestoreConfirm = true
                         } label: {
-                            Text("Restore Backup")
+                            Text(wtLang.tr("Restore Backup"))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
@@ -552,13 +555,13 @@ struct AppDataFileView: View {
         }
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Couldn't Save", isPresented: $saveFailed) {
-            Button("OK") { }
+        .alert(wtLang.tr("Couldn't Save"), isPresented: $saveFailed) {
+            Button(wtLang.tr("OK")) { }
         } message: {
-            Text("Writing the file failed — the details are in the Log.")
+            Text(wtLang.tr("Writing the file failed — the details are in the Log."))
         }
-        .confirmationDialog("Restore the backup?", isPresented: $showRestoreConfirm) {
-            Button("Restore Backup", role: .destructive) {
+        .confirmationDialog(wtLang.tr("Restore the backup?"), isPresented: $showRestoreConfirm) {
+            Button(wtLang.tr("Restore Backup"), role: .destructive) {
                 if manager.restoreHexBackup(path: path) {
                     loaded = false
                     load()
@@ -567,12 +570,12 @@ struct AppDataFileView: View {
                 }
             }
         } message: {
-            Text("The current file is overwritten in place with the backup taken before the first byte edit.")
+            Text(wtLang.tr("The current file is overwritten in place with the backup taken before the first byte edit."))
         }
-        .alert("Couldn't Restore", isPresented: $restoreFailed) {
-            Button("OK") { }
+        .alert(wtLang.tr("Couldn't Restore"), isPresented: $restoreFailed) {
+            Button(wtLang.tr("OK")) { }
         } message: {
-            Text("Restoring the backup failed — the details are in the Log.")
+            Text(wtLang.tr("Restoring the backup failed — the details are in the Log."))
         }
         .onAppear {
             load()
@@ -598,9 +601,9 @@ struct AppDataFileView: View {
     /// other processes read its contents at all.
     private var readFailureNote: String {
         if name == ".com.apple.mobile_container_manager.metadata.plist" {
-            return "This is the container's system-managed metadata file. iOS doesn't allow other processes to read its contents, so it can't be opened or edited here."
+            return wtLang.tr("This is the container's system-managed metadata file. iOS doesn't allow other processes to read its contents, so it can't be opened or edited here.")
         }
-        return "The file couldn't be read under the container's sandbox extension — the details are in the Log. Nothing was written to it."
+        return wtLang.tr("The file couldn't be read under the container's sandbox extension — the details are in the Log. Nothing was written to it.")
     }
 
     private func load() {
@@ -648,6 +651,7 @@ struct AppDataFileView: View {
 // re-reading. Same 1 MB ceiling as the text editor.
 
 struct AppDataHexEditorView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var manager: AppDataManager
     let path: String
     let name: String
@@ -671,7 +675,7 @@ struct AppDataHexEditorView: View {
                 WTSectionCard {
                     HStack(spacing: 10) {
                         ProgressView()
-                        Text("Reading…")
+                        Text(wtLang.tr("Reading…"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -680,18 +684,18 @@ struct AppDataHexEditorView: View {
                 }
             } else if loadFailed {
                 WTSectionCard {
-                    Label("Couldn't read this file.", systemImage: "exclamationmark.triangle.fill")
+                    Label(wtLang.tr("Couldn't read this file."), systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                 }
             } else {
-                WTSectionCard(header: "Hex Editor", footer: path) {
+                WTSectionCard(header: wtLang.tr("Hex Editor"), footer: path) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("\(bytes.count) bytes — length-preserving edits only: byte values can change, the file's length never does.")
+                        Text(wtLang.tr("%d bytes — length-preserving edits only: byte values can change, the file's length never does.", bytes.count))
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text("Warning: raw byte edits have no structure validation — a wrong byte can corrupt this file or the owning app's data. A backup of the original is saved before the first edit.")
+                        Text(wtLang.tr("Warning: raw byte edits have no structure validation — a wrong byte can corrupt this file or the owning app's data. A backup of the original is saved before the first edit."))
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }
@@ -700,7 +704,7 @@ struct AppDataHexEditorView: View {
                 }
 
                 if let selectedOffset {
-                    WTSectionCard(header: "Byte") {
+                    WTSectionCard(header: wtLang.tr("Byte")) {
                         HStack(spacing: 12) {
                             Text(String(format: "0x%08X", selectedOffset))
                                 .font(.system(.subheadline, design: .monospaced))
@@ -713,7 +717,7 @@ struct AppDataHexEditorView: View {
                                     applyEditHex(newValue, at: selectedOffset)
                                 }
                             Spacer()
-                            Button("Done") {
+                            Button(wtLang.tr("Done")) {
                                 self.selectedOffset = nil
                             }
                         }
@@ -734,11 +738,11 @@ struct AppDataHexEditorView: View {
                     }
                 }
 
-                WTSectionCard(footer: "Saving writes the file in place and verifies the result by re-reading it.") {
+                WTSectionCard(footer: wtLang.tr("Saving writes the file in place and verifies the result by re-reading it.")) {
                     Button {
                         save()
                     } label: {
-                        Text(saved && !isDirty ? "Saved" : "Save")
+                        Text(saved && !isDirty ? wtLang.tr("Saved") : wtLang.tr("Save"))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
                             .contentShape(Rectangle())
@@ -749,8 +753,8 @@ struct AppDataHexEditorView: View {
         }
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Couldn't Save", isPresented: $saveFailed) {
-            Button("OK") { }
+        .alert(wtLang.tr("Couldn't Save"), isPresented: $saveFailed) {
+            Button(wtLang.tr("OK")) { }
         } message: {
             Text(failureMessage)
         }
@@ -840,7 +844,7 @@ struct AppDataHexEditorView: View {
     private func save() {
         guard isDirty else { return }
         guard manager.makeHexBackupIfNeeded(path: path) else {
-            failureMessage = "The backup of the original file couldn't be written, so nothing was saved."
+            failureMessage = wtLang.tr("The backup of the original file couldn't be written, so nothing was saved.")
             saveFailed = true
             return
         }
@@ -848,7 +852,7 @@ struct AppDataHexEditorView: View {
             original = bytes
             saved = true
         } else {
-            failureMessage = "Writing or verifying the file failed — the details are in the Log."
+            failureMessage = wtLang.tr("Writing or verifying the file failed — the details are in the Log.")
             saveFailed = true
         }
     }

@@ -16,9 +16,12 @@ import SwiftUI
 
 struct SandboxView: View {
     @ObservedObject var console: Console
+    @EnvironmentObject private var lang: WTLangStore
     @State private var path = "/private/var/mobile/Containers/Shared/AppGroup/"
     @State private var sandboxHandle: Int64?
     @State private var groupText = AppGroupResolver.configuredGroup
+    /// Language picker sheet (v7.0 flag-themed UI).
+    @State private var showLanguagePicker = false
 
     /// Master switch for the Tweaks tab (v2.0): the Tweaks tab
     /// stays locked until this is turned on. Shared with the
@@ -39,11 +42,33 @@ struct SandboxView: View {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
     }
 
+    /// Translated support line under the app name, e.g.
+    /// "Supported iOS • iOS 27.0.1 (24A446)".
+    private var supportLine: String {
+        if SupportInfo.isPartiallySupported {
+            return lang.tr("Partially Supported iOS • %@", SupportInfo.deviceSummary)
+        }
+        if SupportInfo.isSupported {
+            return lang.tr("Supported iOS • %@", SupportInfo.deviceSummary)
+        }
+        return lang.tr("Unsupported iOS • %@", SupportInfo.deviceSummary)
+    }
+
+    /// Translated support value for the device-details rows.
+    private var supportValue: String {
+        if SupportInfo.isPartiallySupported { return lang.tr("Partially Supported") }
+        if SupportInfo.isSupported { return lang.tr("Supported") }
+        return lang.tr("Unsupported")
+    }
+
     var body: some View {
         NavigationStack {
             WTGlassPage {
                 // Front door identity: app icon, name, and this
-                // device's support status.
+                // device's support status — v7.0 flag-themed
+                // header: flag + "{Language} Version" under the
+                // name, version in the theme color, and the
+                // language picker row at the bottom.
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 14) {
@@ -52,22 +77,32 @@ struct SandboxView: View {
                                 .scaledToFit()
                                 .frame(width: 52, height: 52)
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                // Tinted with the language theme
+                                // (the home-screen icon itself is
+                                // swapped via alternate icons).
+                                .overlay(
+                                    lang.theme.gradient.opacity(0.28).blendMode(.overlay),
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                )
                             VStack(alignment: .leading, spacing: 3) {
                                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                                     Text("WorkTweaks")
                                         .font(.headline)
                                     Text("v\(appVersion)")
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(lang.theme.accent)
                                 }
+                                HStack(spacing: 5) {
+                                    WTFlagView(language: lang.language)
+                                        .frame(width: 22, height: 15)
+                                    Text(lang.language.versionLabel)
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                                 HStack(spacing: 5) {
                                     Image(systemName: SupportInfo.isSupported ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                                         .foregroundStyle(SupportInfo.isSupported ? Color.accentColor : .orange)
-                                    Text(SupportInfo.isPartiallySupported
-                                         ? "Partially Supported iOS • \(SupportInfo.deviceSummary)"
-                                         : SupportInfo.isSupported
-                                         ? "Supported iOS • \(SupportInfo.deviceSummary)"
-                                         : "Unsupported iOS • \(SupportInfo.deviceSummary)")
+                                    Text(supportLine)
                                 }
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -82,23 +117,54 @@ struct SandboxView: View {
                         // Compact device details, from the same data
                         // the support gate already computes.
                         VStack(alignment: .leading, spacing: 6) {
-                            deviceInfoRow("Model", machineName())
-                            deviceInfoRow("iOS Version", SupportInfo.deviceVersion)
-                            deviceInfoRow("Build", SupportInfo.deviceBuild)
-                            deviceInfoRow("Support", SupportInfo.isPartiallySupported ? "Partially Supported" : SupportInfo.isSupported ? "Supported" : "Unsupported")
+                            deviceInfoRow(lang.tr("Model"), machineName())
+                            deviceInfoRow(lang.tr("iOS Version"), SupportInfo.deviceVersion)
+                            deviceInfoRow(lang.tr("Build"), SupportInfo.deviceBuild)
+                            deviceInfoRow(lang.tr("Support"), supportValue)
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
+
+                        Divider()
+                            .padding(.leading, 14)
+
+                        // Language picker row: flag + language
+                        // name; tapping opens the 4-language sheet.
+                        Button {
+                            showLanguagePicker = true
+                        } label: {
+                            HStack(spacing: 10) {
+                                WTFlagView(language: lang.language)
+                                    .frame(width: 26, height: 18)
+                                Text(lang.tr("Language"))
+                                    .font(.subheadline)
+                                Spacer(minLength: 0)
+                                Text(lang.language.displayName)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                     }
+                }
+                .sheet(isPresented: $showLanguagePicker) {
+                    LanguagePickerSheet()
                 }
 
                 // Master switch for the Tweaks feature.
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 6) {
-                        Toggle("Start Tweaks Feature", isOn: $tweaksEnabled)
+                        Toggle(lang.tr("Start Tweaks Feature"), isOn: $tweaksEnabled)
                             .font(.subheadline.weight(.semibold))
                             .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-                        Text("Unlocks the Tweaks tab. Turn this on to start using tweaks.")
+                        Text(lang.tr("Unlocks the Tweaks tab. Turn this on to start using tweaks."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
@@ -109,14 +175,14 @@ struct SandboxView: View {
                         // two-column layout, Old UI is the v1 list
                         // layout. Applies to the Tweaks tab only.
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Tweaks UI")
+                            Text(lang.tr("Tweaks UI"))
                                 .font(.subheadline.weight(.semibold))
-                            Picker("Tweaks UI", selection: $tweaksUIVersion) {
-                                Text("New UI").tag("new")
-                                Text("Old UI").tag("old")
+                            Picker(lang.tr("Tweaks UI"), selection: $tweaksUIVersion) {
+                                Text(lang.tr("New UI")).tag("new")
+                                Text(lang.tr("Old UI")).tag("old")
                             }
                             .pickerStyle(.segmented)
-                            Text("Applies to the Tweaks tab only.")
+                            Text(lang.tr("Applies to the Tweaks tab only."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -127,10 +193,10 @@ struct SandboxView: View {
                         // UI sounds — soft tap on menus and
                         // features, soft swipe on tab switches.
                         VStack(alignment: .leading, spacing: 6) {
-                            Toggle("Sound Effects", isOn: $soundEffectsEnabled)
+                            Toggle(lang.tr("Sound Effects"), isOn: $soundEffectsEnabled)
                                 .font(.subheadline.weight(.semibold))
                                 .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-                            Text("Plays a soft sound when you tap menus and features. Respects the silent switch.")
+                            Text(lang.tr("Plays a soft sound when you tap menus and features. Respects the silent switch."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -140,40 +206,10 @@ struct SandboxView: View {
                 }
 
                 // Utility menus — each opens its own page.
-                WTSectionCard(header: "Utilities") {
+                // v7.0: grouped into labeled sections instead
+                // of one long list; every row is still here.
+                WTSectionCard(header: lang.tr("Diagnostics")) {
                     VStack(alignment: .leading, spacing: 0) {
-                        utilityRow("Sandbox Escape", systemImage: "lock.open") {
-                            SandboxEscapePage(path: $path, sandboxHandle: $sandboxHandle)
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("Path Enumeration", systemImage: "list.bullet.indent") {
-                            PathEnumerationPage(path: path)
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("App Group", systemImage: "person.2") {
-                            AppGroupPage(groupText: $groupText)
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("App Data", systemImage: "folder") {
-                            AppDataView()
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("PosterBoard", systemImage: "photo") {
-                            PosterBoardView()
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("Cache Data Cleaner", systemImage: "trash") {
-                            CacheCleanerView()
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("Splash Ad Cache Lock", systemImage: "megaphone.slash") {
-                            AdCacheBlockerView()
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("Save Vault", systemImage: "archivebox") {
-                            SaveVaultView()
-                        }
-                        Divider().padding(.leading, 14)
                         utilityRow("Battery & Thermal", systemImage: "battery.100") {
                             BatteryDiagnosticsView()
                         }
@@ -182,19 +218,67 @@ struct SandboxView: View {
                             CrashDiagnosticsView()
                         }
                         Divider().padding(.leading, 14)
-                        utilityRow("Wi-Fi File Sharing", systemImage: "wifi") {
-                            WiFiShareView()
+                        utilityRow(lang.tr("Configuration Profiles"), systemImage: "person.badge.key") {
+                            ProfileViewerView()
+                        }
+                    }
+                }
+
+                WTSectionCard(header: lang.tr("Files & Sharing")) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        utilityRow(lang.tr("App Data"), systemImage: "folder") {
+                            AppDataView()
                         }
                         Divider().padding(.leading, 14)
-                        utilityRow("Configuration Profiles", systemImage: "person.badge.key") {
-                            ProfileViewerView()
+                        utilityRow("Save Vault", systemImage: "archivebox") {
+                            SaveVaultView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Wi-Fi File Sharing", systemImage: "wifi") {
+                            WiFiShareView()
                         }
                         Divider().padding(.leading, 14)
                         utilityRow("Voice Memos & AI Cache", systemImage: "waveform") {
                             VoiceMemosAIView()
                         }
+                    }
+                }
+
+                WTSectionCard(header: lang.tr("System")) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        utilityRow("Sandbox Escape", systemImage: "lock.open") {
+                            SandboxEscapePage(path: $path, sandboxHandle: $sandboxHandle)
+                        }
                         Divider().padding(.leading, 14)
-                        utilityRow("Get Pairing File + VPN Status", systemImage: "key.fill") {
+                        utilityRow(lang.tr("Path Enumeration"), systemImage: "list.bullet.indent") {
+                            PathEnumerationPage(path: path)
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("App Group", systemImage: "person.2") {
+                            AppGroupPage(groupText: $groupText)
+                        }
+                    }
+                }
+
+                WTSectionCard(header: lang.tr("Media")) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        utilityRow("PosterBoard", systemImage: "photo") {
+                            PosterBoardView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow(lang.tr("Cache Data Cleaner"), systemImage: "trash") {
+                            CacheCleanerView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Splash Ad Cache Lock", systemImage: "megaphone.slash") {
+                            AdCacheBlockerView()
+                        }
+                    }
+                }
+
+                WTSectionCard(header: lang.tr("Pairing & Airlift")) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        utilityRow(lang.tr("Get Pairing File + VPN Status"), systemImage: "key.fill") {
                             PairingView()
                         }
                         Divider().padding(.leading, 14)
@@ -202,7 +286,7 @@ struct SandboxView: View {
                             AirliftView()
                         }
                         Divider().padding(.leading, 14)
-                        utilityRow("All data changed", systemImage: "clock.arrow.circlepath") {
+                        utilityRow(lang.tr("All data changed"), systemImage: "clock.arrow.circlepath") {
                             AllDataChangedView()
                         }
                     }
@@ -236,7 +320,7 @@ struct SandboxView: View {
                         Button {
                             console.output = ""
                         } label: {
-                            Text("Clear")
+                            Text(lang.tr("Clear"))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
@@ -291,6 +375,7 @@ struct SandboxView: View {
 // Share Contents, which acts on the same target path.
 
 struct SandboxEscapePage: View {
+    @EnvironmentObject private var lang: WTLangStore
     @Binding var path: String
     @Binding var sandboxHandle: Int64?
 
@@ -300,8 +385,8 @@ struct SandboxEscapePage: View {
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "Target Path") {
-                TextField("Target", text: $path)
+            WTSectionCard(header: lang.tr("Target Path")) {
+                TextField(lang.tr("Target"), text: $path)
                     .disabled(isConsumed)
                     .disableAutocorrection(true)
                     .textInputAutocapitalization(.never)
@@ -309,12 +394,12 @@ struct SandboxEscapePage: View {
                     .padding(.vertical, 11)
             }
 
-            WTSectionCard(header: "Escape") {
+            WTSectionCard(header: lang.tr("Escape")) {
                 VStack(alignment: .leading, spacing: 0) {
                     Button {
                         sandboxHandle = consumeExtension(path)
                     } label: {
-                        Text("Consume Sandbox Extension")
+                        Text(lang.tr("Consume Sandbox Extension"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -331,7 +416,7 @@ struct SandboxEscapePage: View {
                         }
                         sandboxHandle = nil
                     } label: {
-                        Text("Release Sandbox Extension")
+                        Text(lang.tr("Release Sandbox Extension"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -341,9 +426,9 @@ struct SandboxEscapePage: View {
                 }
             }
 
-            WTSectionCard(header: "Utilities") {
+            WTSectionCard(header: lang.tr("Utilities")) {
                 ShareLink(item: URL(fileURLWithPath: path)) {
-                    Label("Share Contents", systemImage: "square.and.arrow.up")
+                    Label(lang.tr("Share Contents"), systemImage: "square.and.arrow.up")
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 11)
@@ -362,11 +447,12 @@ struct SandboxEscapePage: View {
 // Enumerates the paths under the Sandbox tab's target path.
 
 struct PathEnumerationPage: View {
+    @EnvironmentObject private var lang: WTLangStore
     let path: String
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "Enumeration") {
+            WTSectionCard(header: lang.tr("Enumeration")) {
                 VStack(alignment: .leading, spacing: 0) {
                     // Reliable, but insanely slow
                     Button {
@@ -397,7 +483,7 @@ struct PathEnumerationPage: View {
                 .disabled(path.isEmpty)
             }
         }
-        .navigationTitle("Path Enumeration")
+        .navigationTitle(lang.tr("Path Enumeration"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -408,11 +494,12 @@ struct PathEnumerationPage: View {
 // of what error -1 means.
 
 struct AppGroupPage: View {
+    @EnvironmentObject private var lang: WTLangStore
     @Binding var groupText: String
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "App Group", footer: "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.") {
+            WTSectionCard(header: "App Group", footer: lang.tr("Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.")) {
                 VStack(alignment: .leading, spacing: 0) {
                     TextField("App Group ID", text: $groupText)
                         .disableAutocorrection(true)
@@ -428,7 +515,7 @@ struct AppGroupPage: View {
                         print("[AppGroup] configured group set to: \(groupText)")
                         AppGroupResolver.logDiagnostics()
                     } label: {
-                        Text("Save App Group ID")
+                        Text(lang.tr("Save App Group ID"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -441,7 +528,7 @@ struct AppGroupPage: View {
                     Button {
                         AppGroupResolver.logDiagnostics()
                     } label: {
-                        Text("App Group Diagnostics")
+                        Text(lang.tr("App Group Diagnostics"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -452,5 +539,49 @@ struct AppGroupPage: View {
         }
         .navigationTitle("App Group")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Language picker sheet (v7.0)
+//
+// The four languages with their drawn flags. Tapping one
+// switches the language immediately — the whole app
+// re-translates and re-themes with no restart.
+
+struct LanguagePickerSheet: View {
+    @EnvironmentObject private var lang: WTLangStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(WTLanguage.allCases) { language in
+                    Button {
+                        lang.setLanguage(language.rawValue)
+                        SoundEffects.playTap()
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 12) {
+                            WTFlagView(language: language)
+                                .frame(width: 32, height: 22)
+                            Text(language.displayName)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if lang.language == language {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(lang.theme.accent)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle(lang.tr("Language"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(lang.tr("Done")) { dismiss() }
+                }
+            }
+        }
     }
 }

@@ -11,6 +11,7 @@ import SwiftUI
 // read-only; the editor never lets a binary value be typed.
 
 struct SQLiteEditorView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var manager: AppDataManager
     let path: String
     let name: String
@@ -26,7 +27,7 @@ struct SQLiteEditorView: View {
                 WTSectionCard {
                     HStack(spacing: 10) {
                         ProgressView()
-                        Text("Opening the database…")
+                        Text(wtLang.tr("Opening the database…"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -36,7 +37,7 @@ struct SQLiteEditorView: View {
             case .blocked(let message):
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 6) {
-                        Label("Couldn't open this database.", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("Couldn't open this database."), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(message)
                             .font(.caption)
@@ -47,8 +48,8 @@ struct SQLiteEditorView: View {
                 }
             case .ready:
                 if editor.tables.count > 1 {
-                    WTSectionCard(header: "Table") {
-                        Picker("Table", selection: Binding(
+                    WTSectionCard(header: wtLang.tr("Table")) {
+                        Picker(wtLang.tr("Table"), selection: Binding(
                             get: { editor.selectedTable ?? "" },
                             set: { editor.selectTable($0) }
                         )) {
@@ -64,7 +65,7 @@ struct SQLiteEditorView: View {
 
                 if editor.columns.isEmpty {
                     WTSectionCard {
-                        Text("This table has no columns to edit.")
+                        Text(wtLang.tr("This table has no columns to edit."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
@@ -74,8 +75,8 @@ struct SQLiteEditorView: View {
                     WTSectionCard(
                         header: editor.selectedTable ?? "",
                         footer: editor.totalRowCount > Int64(SQLiteDatabaseEditor.rowLimit)
-                            ? "Showing the first \(SQLiteDatabaseEditor.rowLimit) of \(editor.totalRowCount) rows — the editor is for targeted edits, not bulk dumps."
-                            : "\(editor.rows.count) row(s)."
+                            ? wtLang.tr("Showing the first %@ of %@ rows — the editor is for targeted edits, not bulk dumps.", "\(SQLiteDatabaseEditor.rowLimit)", "\(editor.totalRowCount)")
+                            : wtLang.tr("%d row(s).", editor.rows.count)
                     ) {
                         ScrollView(.horizontal, showsIndicators: false) {
                             VStack(alignment: .leading, spacing: 0) {
@@ -109,12 +110,12 @@ struct SQLiteEditorView: View {
                     }
                 }
 
-                WTSectionCard(footer: "Saving applies the edits to the database through SQLite, takes a backup of the original first, then writes the edited file back in place. Close the owning app before saving — a running app can overwrite your edits.") {
+                WTSectionCard(footer: wtLang.tr("Saving applies the edits to the database through SQLite, takes a backup of the original first, then writes the edited file back in place. Close the owning app before saving — a running app can overwrite your edits.")) {
                     VStack(alignment: .leading, spacing: 0) {
                         Button {
                             editor.addRow()
                         } label: {
-                            Label("Add Row", systemImage: "plus")
+                            Label(wtLang.tr("Add Row"), systemImage: "plus")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
@@ -125,7 +126,7 @@ struct SQLiteEditorView: View {
                         Button {
                             editor.save(manager: manager)
                         } label: {
-                            Text(editor.isSaving ? "Saving…" : (editor.isDirty ? "Save" : "Saved"))
+                            Text(editor.isSaving ? wtLang.tr("Saving…") : (editor.isDirty ? wtLang.tr("Save") : wtLang.tr("Saved")))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 11)
                                 .contentShape(Rectangle())
@@ -150,19 +151,19 @@ struct SQLiteEditorView: View {
         .sheet(item: $editingCell) { ref in
             SQLiteCellEditSheet(editor: editor, ref: ref)
         }
-        .confirmationDialog("Delete this row?", isPresented: Binding(
+        .confirmationDialog(wtLang.tr("Delete this row?"), isPresented: Binding(
             get: { showDeleteConfirm != nil },
             set: { if !$0 { showDeleteConfirm = nil } }
         )) {
-            Button("Delete Row", role: .destructive) {
+            Button(wtLang.tr("Delete Row"), role: .destructive) {
                 if let row = showDeleteConfirm {
                     editor.deleteRow(row)
                 }
                 showDeleteConfirm = nil
             }
-            Button("Cancel", role: .cancel) { showDeleteConfirm = nil }
+            Button(wtLang.tr("Cancel"), role: .cancel) { showDeleteConfirm = nil }
         } message: {
-            Text("The row is deleted from the database on the next Save.")
+            Text(wtLang.tr("The row is deleted from the database on the next Save."))
         }
         .onAppear {
             if case .idle = editor.state {
@@ -232,6 +233,7 @@ private struct SQLiteCellRef: Identifiable {
 // MARK: - Cell edit sheet
 
 private struct SQLiteCellEditSheet: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var editor: SQLiteDatabaseEditor
     let ref: SQLiteCellRef
 
@@ -245,7 +247,7 @@ private struct SQLiteCellEditSheet: View {
     var body: some View {
         NavigationStack {
             WTGlassPage {
-                WTSectionCard(header: column.name, footer: "Type: \(column.type.isEmpty ? "—" : column.type) (\(column.affinity.lowercased())). \(column.affinity == "INTEGER" ? "Whole numbers only." : column.affinity == "REAL" ? "Numbers only." : "Stored as text.")") {
+                WTSectionCard(header: column.name, footer: wtLang.tr("Type: %@ (%@). %@", column.type.isEmpty ? "—" : column.type, column.affinity.lowercased(), column.affinity == "INTEGER" ? wtLang.tr("Whole numbers only.") : column.affinity == "REAL" ? wtLang.tr("Numbers only.") : wtLang.tr("Stored as text."))) {
                     VStack(alignment: .leading, spacing: 0) {
                         if isNull {
                             Text("NULL")
@@ -254,7 +256,7 @@ private struct SQLiteCellEditSheet: View {
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
                         } else {
-                            TextField("Value", text: $text)
+                            TextField(wtLang.tr("Value"), text: $text)
                                 .font(.system(.body, design: .monospaced))
                                 .disableAutocorrection(true)
                                 .textInputAutocapitalization(.never)
@@ -267,7 +269,7 @@ private struct SQLiteCellEditSheet: View {
                             isNull.toggle()
                             if !isNull, text.isEmpty { text = current.text ?? "" }
                         } label: {
-                            Text(isNull ? "Clear NULL (edit a value)" : "Set NULL")
+                            Text(isNull ? wtLang.tr("Clear NULL (edit a value)") : wtLang.tr("Set NULL"))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
@@ -281,7 +283,7 @@ private struct SQLiteCellEditSheet: View {
                         editor.rows[ref.rowIndex].values[ref.colIndex] = SQLiteCell(text: isNull ? nil : text)
                         dismiss()
                     } label: {
-                        Text("Apply Edit")
+                        Text(wtLang.tr("Apply Edit"))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
                             .contentShape(Rectangle())
@@ -289,11 +291,11 @@ private struct SQLiteCellEditSheet: View {
                     .disabled(!isNull && text == (current.text ?? ""))
                 }
             }
-            .navigationTitle("Edit Cell")
+            .navigationTitle(wtLang.tr("Edit Cell"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(wtLang.tr("Cancel")) { dismiss() }
                 }
             }
         }

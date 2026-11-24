@@ -14,11 +14,12 @@ import SwiftUI
 // WTSectionCard), like every other page since v3.8.
 
 struct CacheCleanerView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject private var appData = AppDataManager.shared
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "Cache Data Cleaner", footer: "Cache lives in two places inside an app's data container: Library/Caches and tmp. Only the contents of those two folders are deleted — the folders themselves stay, and Documents and the rest of Library are never touched.") {
+            WTSectionCard(header: wtLang.tr("Cache Data Cleaner"), footer: wtLang.tr("Cache lives in two places inside an app's data container: Library/Caches and tmp. Only the contents of those two folders are deleted — the folders themselves stay, and Documents and the rest of Library are never touched.")) {
                 Group {
                     if appData.isScanning {
                         HStack(spacing: 10) {
@@ -26,7 +27,7 @@ struct CacheCleanerView: View {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(appData.scanPhase)
                                     .font(.subheadline)
-                                Text("The container scan is shared with App Data and runs once per app session.")
+                                Text(wtLang.tr("The container scan is shared with App Data and runs once per app session."))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -36,17 +37,17 @@ struct CacheCleanerView: View {
                             Text(summary)
                                 .font(.subheadline)
                             if appData.containers.isEmpty {
-                                Text("No containers were found, so there is nothing to clean.")
+                                Text(wtLang.tr("No containers were found, so there is nothing to clean."))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             } else {
-                                Text("Pick an app to see its cache and clean it.")
+                                Text(wtLang.tr("Pick an app to see its cache and clean it."))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                         }
                     } else {
-                        Text("Preparing the container scan…")
+                        Text(wtLang.tr("Preparing the container scan…"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -56,7 +57,7 @@ struct CacheCleanerView: View {
             }
 
             if !appData.containers.isEmpty {
-                WTSectionCard(header: "Apps") {
+                WTSectionCard(header: wtLang.tr("Apps")) {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(appData.containers.enumerated()), id: \.element.id) { index, container in
                             if index > 0 {
@@ -92,11 +93,11 @@ struct CacheCleanerView: View {
                 }
             }
         }
-        .navigationTitle("Cache Data Cleaner")
+        .navigationTitle(wtLang.tr("Cache Data Cleaner"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Rescan") {
+                Button(wtLang.tr("Rescan")) {
                     appData.rescan()
                 }
                 .disabled(appData.isScanning)
@@ -111,6 +112,7 @@ struct CacheCleanerView: View {
 // MARK: - One app's cache
 
 struct CacheCleanerDetailView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let container: AppContainer
     @StateObject private var manager = CacheCleanerManager()
 
@@ -119,7 +121,7 @@ struct CacheCleanerDetailView: View {
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "App") {
+            WTSectionCard(header: wtLang.tr("App")) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(container.bundleID)
                         .font(.subheadline.weight(.semibold))
@@ -143,7 +145,7 @@ struct CacheCleanerDetailView: View {
                 }
             }
 
-            WTSectionCard(header: "Cache Locations", footer: "Sizes are measured by walking each folder. An app recreates cache as it runs, so the size grows back over time.") {
+            WTSectionCard(header: wtLang.tr("Cache Locations"), footer: wtLang.tr("Sizes are measured by walking each folder. An app recreates cache as it runs, so the size grows back over time.")) {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(CacheLocation.allCases.enumerated()), id: \.element.id) { index, location in
                         if index > 0 {
@@ -157,11 +159,13 @@ struct CacheCleanerDetailView: View {
             }
 
             if let result = manager.lastResult {
-                WTSectionCard(header: "Last Clean") {
+                WTSectionCard(header: wtLang.tr("Last Clean")) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Freed \(wtFormatSize(result.freedBytes))")
+                        Text(wtLang.tr("Freed %@", wtFormatSize(result.freedBytes)))
                             .font(.subheadline.weight(.semibold))
-                        Text("\(result.removedCount) item(s) removed\(result.failedCount > 0 ? ", \(result.failedCount) could not be removed (in use or protected)" : "").")
+                        Text(result.failedCount > 0
+                            ? wtLang.tr("%d item(s) removed, %d could not be removed (in use or protected).", result.removedCount, result.failedCount)
+                            : wtLang.tr("%d item(s) removed.", result.removedCount))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -171,12 +175,12 @@ struct CacheCleanerDetailView: View {
                 }
             }
 
-            WTSectionCard(header: "Clean", footer: "Cleaning is permanent — cache is not backed up. The app itself, its documents, and its settings are not affected.") {
+            WTSectionCard(header: wtLang.tr("Clean"), footer: wtLang.tr("Cleaning is permanent — cache is not backed up. The app itself, its documents, and its settings are not affected.")) {
                 Button {
                     pendingLocations = CacheLocation.allCases
                 } label: {
                     HStack(spacing: 10) {
-                        Label("Clean All Cache", systemImage: "trash")
+                        Label(wtLang.tr("Clean All Cache"), systemImage: "trash")
                             .font(.subheadline)
                         Spacer(minLength: 0)
                         if manager.didMeasure {
@@ -196,7 +200,7 @@ struct CacheCleanerDetailView: View {
                 WTSectionCard {
                     HStack(spacing: 10) {
                         ProgressView()
-                        Text(manager.isCleaning ? "Cleaning…" : "Measuring cache…")
+                        Text(manager.isCleaning ? wtLang.tr("Cleaning…") : wtLang.tr("Measuring cache…"))
                             .font(.subheadline)
                     }
                     .padding(.horizontal, 14)
@@ -204,31 +208,31 @@ struct CacheCleanerDetailView: View {
                 }
             }
         }
-        .navigationTitle("Cache")
+        .navigationTitle(wtLang.tr("Cache"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             manager.measureIfNeeded(container: container)
         }
         .confirmationDialog(
-            "Clean cache?",
+            wtLang.tr("Clean cache?"),
             isPresented: Binding(
                 get: { pendingLocations != nil },
                 set: { if !$0 { pendingLocations = nil } }
             ),
             titleVisibility: .visible
         ) {
-            Button("Clean", role: .destructive) {
+            Button(wtLang.tr("Clean"), role: .destructive) {
                 if let locations = pendingLocations {
                     manager.clean(container: container, locations: locations)
                 }
                 pendingLocations = nil
             }
-            Button("Cancel", role: .cancel) {
+            Button(wtLang.tr("Cancel"), role: .cancel) {
                 pendingLocations = nil
             }
         } message: {
             if let locations = pendingLocations {
-                Text("This permanently deletes the contents of \(locations.map { $0.displayName }.joined(separator: " and ")) in \(container.bundleID) (\(wtFormatSize(manager.totalSize(locations: locations)))). The folders themselves stay in place.")
+                Text(wtLang.tr("This permanently deletes the contents of %@ in %@ (%@). The folders themselves stay in place.", locations.map { $0.displayName }.joined(separator: wtLang.tr(" and ")), container.bundleID, wtFormatSize(manager.totalSize(locations: locations))))
             }
         }
     }
@@ -245,7 +249,7 @@ struct CacheCleanerDetailView: View {
             }
             Spacer(minLength: 0)
             if let stat, stat.exists, stat.size > 0 {
-                Button("Clean") {
+                Button(wtLang.tr("Clean")) {
                     pendingLocations = [location]
                 }
                 .font(.subheadline)
@@ -257,10 +261,10 @@ struct CacheCleanerDetailView: View {
     }
 
     private func statText(_ stat: CacheFolderStat?) -> String {
-        if manager.isMeasuring { return "Measuring…" }
-        guard let stat else { return "Not measured yet" }
-        if !stat.exists { return "Not present in this app" }
-        if stat.fileCount == 0 { return "Empty" }
-        return "\(wtFormatSize(stat.size)) — \(stat.fileCount) file(s)"
+        if manager.isMeasuring { return wtLang.tr("Measuring…") }
+        guard let stat else { return wtLang.tr("Not measured yet") }
+        if !stat.exists { return wtLang.tr("Not present in this app") }
+        if stat.fileCount == 0 { return wtLang.tr("Empty") }
+        return wtLang.tr("%@ — %d file(s)", wtFormatSize(stat.size), stat.fileCount)
     }
 }

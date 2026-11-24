@@ -15,6 +15,7 @@ import UniformTypeIdentifiers
 import UIKit
 
 struct AirliftWalletView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var engine = AirliftWalletEngine.shared
 
     @State private var showAddSheet = false
@@ -41,7 +42,7 @@ struct AirliftWalletView: View {
 
             flashCard
         }
-        .navigationTitle("Wallet Cards")
+        .navigationTitle(wtLang.tr("Wallet Cards"))
         .sheet(isPresented: $showAddSheet) {
             AddWalletCardSheet(hashText: $newHashText) {
                 engine.addCardHash(newHashText)
@@ -49,18 +50,18 @@ struct AirliftWalletView: View {
                 showAddSheet = false
             }
         }
-        .confirmationDialog("Choose Image Source", isPresented: $showSourceDialog, titleVisibility: .visible) {
+        .confirmationDialog(wtLang.tr("Choose Image Source"), isPresented: $showSourceDialog, titleVisibility: .visible) {
             Button {
                 showPhotoPicker = true
             } label: {
-                Label("Photo Library", systemImage: "photo.on.rectangle")
+                Label(wtLang.tr("Photo Library"), systemImage: "photo.on.rectangle")
             }
             Button {
                 showFileImporter = true
             } label: {
-                Label("Choose from Files…", systemImage: "folder")
+                Label(wtLang.tr("Choose from Files…"), systemImage: "folder")
             }
-            Button("Cancel", role: .cancel) {
+            Button(wtLang.tr("Cancel"), role: .cancel) {
                 activeTarget = nil
             }
         }
@@ -109,10 +110,10 @@ struct AirliftWalletView: View {
                 activeTarget = nil
             }
         }
-        .alert("Couldn't Load Photo", isPresented: $loadFailed) {
-            Button("OK", role: .cancel) { }
+        .alert(wtLang.tr("Couldn't Load Photo"), isPresented: $loadFailed) {
+            Button(wtLang.tr("OK"), role: .cancel) { }
         } message: {
-            Text("Choose another image or try downloading the photo to your iPhone first.")
+            Text(wtLang.tr("Choose another image or try downloading the photo to your iPhone first."))
         }
     }
 
@@ -140,24 +141,24 @@ struct AirliftWalletView: View {
     // MARK: - Sections
 
     private var introCard: some View {
-        WTSectionCard(header: "Wallet Cards") {
+        WTSectionCard(header: wtLang.tr("Wallet Cards")) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Apply custom card art to your Apple Wallet cards on-device. Scan for your cards, attach a skin image to each one, then flash.")
+                Text(wtLang.tr("Apply custom card art to your Apple Wallet cards on-device. Scan for your cards, attach a skin image to each one, then flash."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text("Apple Card uses dynamic Metal GPU rendering and cannot have custom static artwork applied.")
+                Text(wtLang.tr("Apple Card uses dynamic Metal GPU rendering and cannot have custom static artwork applied."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("Works on iOS 18.0 – 27.2 beta 2 (iOS 27.2 beta 3 and later patched the exploit).")
+                Text(wtLang.tr("Works on iOS 18.0 – 27.2 beta 2 (iOS 27.2 beta 3 and later patched the exploit)."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if !engine.hasPairingFile {
-                    Text("No pairing file yet. Pair this iPhone first in Sandbox → Utilities → Get Pairing File — scanning and flashing need it.")
+                    Text(wtLang.tr("No pairing file yet. Pair this iPhone first in Sandbox → Utilities → Get Pairing File — scanning and flashing need it."))
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
                 if !engine.hasVPN {
-                    Text("VPN tunnel is off. Open the Local Dev VPN app and connect — flashing needs it.")
+                    Text(wtLang.tr("VPN tunnel is off. Open the Local Dev VPN app and connect — flashing needs it."))
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
@@ -168,7 +169,7 @@ struct AirliftWalletView: View {
     }
 
     private var scannerCard: some View {
-        WTSectionCard(header: "Live Scanner") {
+        WTSectionCard(header: wtLang.tr("Live Scanner")) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Button {
@@ -176,7 +177,7 @@ struct AirliftWalletView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: engine.isScanningCards ? "stop.circle.fill" : "wave.3.left.circle")
-                            Text(engine.isScanningCards ? "Stop Scan" : "Scan Cards")
+                            Text(engine.isScanningCards ? wtLang.tr("Stop Scan") : wtLang.tr("Scan Cards"))
                         }
                         .font(.subheadline.bold())
                     }
@@ -187,7 +188,7 @@ struct AirliftWalletView: View {
                         ProgressView()
                     }
                     Spacer()
-                    Text("\(engine.cards.count) card\(engine.cards.count == 1 ? "" : "s")")
+                    Text(engine.cards.count == 1 ? wtLang.tr("1 card") : wtLang.tr("%d cards", engine.cards.count))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -209,12 +210,12 @@ struct AirliftWalletView: View {
                 Image(systemName: "creditcard.viewfinder")
                     .font(.system(size: 44))
                     .foregroundStyle(.blue.opacity(0.8))
-                Text("No Cards Detected Yet")
+                Text(wtLang.tr("No Cards Detected Yet"))
                     .font(.headline)
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("1. Tap Scan Cards above.")
-                    Text("2. On this iPhone, double-click the Side button (Apple Pay), authenticate with Face ID, and tap your card.")
-                    Text("3. Your card will appear here automatically!")
+                    Text(wtLang.tr("1. Tap Scan Cards above."))
+                    Text(wtLang.tr("2. On this iPhone, double-click the Side button (Apple Pay), authenticate with Face ID, and tap your card."))
+                    Text(wtLang.tr("3. Your card will appear here automatically!"))
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -223,7 +224,7 @@ struct AirliftWalletView: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "plus")
-                        Text("Add Card Manually")
+                        Text(wtLang.tr("Add Card Manually"))
                     }
                     .font(.subheadline.bold())
                 }
@@ -236,7 +237,7 @@ struct AirliftWalletView: View {
     }
 
     private var cardsCard: some View {
-        WTSectionCard(header: "Cards (\(engine.cards.count))") {
+        WTSectionCard(header: wtLang.tr("Cards (%d)", engine.cards.count)) {
             VStack(spacing: 0) {
                 ForEach(engine.cards) { card in
                     WalletCardRow(
@@ -257,12 +258,12 @@ struct AirliftWalletView: View {
     }
 
     private var actionsCard: some View {
-        WTSectionCard(header: "Actions") {
+        WTSectionCard(header: wtLang.tr("Actions")) {
             VStack(spacing: 0) {
                 Button {
                     showAddSheet = true
                 } label: {
-                    Label("Add Card Manually", systemImage: "plus")
+                    Label(wtLang.tr("Add Card Manually"), systemImage: "plus")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.horizontal, 14)
@@ -273,7 +274,7 @@ struct AirliftWalletView: View {
                 Button {
                     pickSkin(for: .bulkAll)
                 } label: {
-                    Label("Set Skin for All Cards…", systemImage: "photo.on.rectangle.angled")
+                    Label(wtLang.tr("Set Skin for All Cards…"), systemImage: "photo.on.rectangle.angled")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.horizontal, 14)
@@ -284,7 +285,7 @@ struct AirliftWalletView: View {
                 Button {
                     engine.selectAllCards(true)
                 } label: {
-                    Label("Select All", systemImage: "checkmark.circle")
+                    Label(wtLang.tr("Select All"), systemImage: "checkmark.circle")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.horizontal, 14)
@@ -295,7 +296,7 @@ struct AirliftWalletView: View {
                 Button {
                     engine.selectAllCards(false)
                 } label: {
-                    Label("Deselect All", systemImage: "circle")
+                    Label(wtLang.tr("Deselect All"), systemImage: "circle")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.horizontal, 14)
@@ -306,7 +307,7 @@ struct AirliftWalletView: View {
                 Button(role: .destructive) {
                     engine.clearAllCards()
                 } label: {
-                    Label("Clear All Cards", systemImage: "trash")
+                    Label(wtLang.tr("Clear All Cards"), systemImage: "trash")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.horizontal, 14)
@@ -317,8 +318,8 @@ struct AirliftWalletView: View {
 
     private var flashCard: some View {
         WTSectionCard(
-            header: "Flash",
-            footer: "Force-close the Wallet app from the App Switcher after flashing to see the new card art."
+            header: wtLang.tr("Flash"),
+            footer: wtLang.tr("Force-close the Wallet app from the App Switcher after flashing to see the new card art.")
         ) {
             VStack(alignment: .leading, spacing: 10) {
                 Button {
@@ -329,13 +330,13 @@ struct AirliftWalletView: View {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 .scaleEffect(0.75)
-                            Text("Flashing…")
+                            Text(wtLang.tr("Flashing…"))
                         } else if engine.flashPhase == .done(ok: false) {
                             Image(systemName: "arrow.clockwise")
-                            Text("Retry Flash")
+                            Text(wtLang.tr("Retry Flash"))
                         } else {
                             Image(systemName: "bolt.fill")
-                            Text("Flash Selected Cards")
+                            Text(wtLang.tr("Flash Selected Cards"))
                         }
                     }
                     .font(.subheadline.bold())
@@ -346,15 +347,15 @@ struct AirliftWalletView: View {
                 .disabled(!engine.canFlashCards || engine.flashPhase == .running)
 
                 if !engine.hasPairingFile {
-                    Text("Flashing needs a pairing file. Pair this iPhone first in Sandbox → Utilities → Get Pairing File.")
+                    Text(wtLang.tr("Flashing needs a pairing file. Pair this iPhone first in Sandbox → Utilities → Get Pairing File."))
                         .font(.caption)
                         .foregroundStyle(.orange)
                 } else if !engine.hasVPN {
-                    Text("Flashing needs the VPN tunnel. Open the Local Dev VPN app and connect first.")
+                    Text(wtLang.tr("Flashing needs the VPN tunnel. Open the Local Dev VPN app and connect first."))
                         .font(.caption)
                         .foregroundStyle(.orange)
                 } else if !engine.cards.contains(where: { $0.isSelected && ($0.skinImage != nil || $0.skinData != nil) }) {
-                    Text("Select at least one card and attach a skin image to it before flashing.")
+                    Text(wtLang.tr("Select at least one card and attach a skin image to it before flashing."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -398,6 +399,7 @@ struct WalletCropRequest: Identifiable {
 // MARK: - Add card sheet
 
 struct AddWalletCardSheet: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @Binding var hashText: String
     let onAdd: () -> Void
     @Environment(\.dismiss) private var dismiss
@@ -405,26 +407,26 @@ struct AddWalletCardSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Card Hash") {
-                    TextField("Paste card hash", text: $hashText, axis: .vertical)
+                Section(wtLang.tr("Card Hash")) {
+                    TextField(wtLang.tr("Paste card hash"), text: $hashText, axis: .vertical)
                         .font(.system(.body, design: .monospaced))
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .lineLimit(4...8)
                 }
                 Section {
-                    Text("You can add multiple hashes at once — separate them with spaces, commas, or newlines.")
+                    Text(wtLang.tr("You can add multiple hashes at once — separate them with spaces, commas, or newlines."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
-            .navigationTitle("Add Card")
+            .navigationTitle(wtLang.tr("Add Card"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(wtLang.tr("Cancel")) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") { onAdd() }
+                    Button(wtLang.tr("Add")) { onAdd() }
                         .disabled(hashText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -435,17 +437,18 @@ struct AddWalletCardSheet: View {
 // MARK: - Flash log
 
 struct WalletFlashLogView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let lines: [String]
     let onClear: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Flash Log (\(lines.count) lines)")
+                Text(wtLang.tr("Flash Log (%d lines)", lines.count))
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("Clear") { onClear() }
+                Button(wtLang.tr("Clear")) { onClear() }
                     .font(.caption)
             }
             ScrollViewReader { proxy in
@@ -479,6 +482,7 @@ struct WalletFlashLogView: View {
 // MARK: - Card row
 
 struct WalletCardRow: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let card: WalletCard
     let onToggleSelected: (Bool) -> Void
     let onPickImage: () -> Void
@@ -545,7 +549,7 @@ struct WalletCardRow: View {
                                 Image(systemName: "photo.on.rectangle")
                                     .font(.title2)
                                     .foregroundStyle(.secondary)
-                                Text("No skin — tap Set Skin below")
+                                Text(wtLang.tr("No skin — tap Set Skin below"))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -585,7 +589,7 @@ struct WalletCardRow: View {
                 .foregroundStyle(copied ? Color.green : Color.secondary)
             }
 
-            TextField("Card name (optional)", text: $renameText, onCommit: {
+            TextField(wtLang.tr("Card name (optional)"), text: $renameText, onCommit: {
                 onRename(renameText)
             })
             .font(.subheadline)
@@ -595,7 +599,7 @@ struct WalletCardRow: View {
                 Button {
                     onPickImage()
                 } label: {
-                    Label("Set Skin", systemImage: "photo")
+                    Label(wtLang.tr("Set Skin"), systemImage: "photo")
                         .font(.caption.bold())
                 }
                 .buttonStyle(.bordered)
@@ -605,7 +609,7 @@ struct WalletCardRow: View {
                 Button(role: .destructive) {
                     onDelete()
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label(wtLang.tr("Delete"), systemImage: "trash")
                         .font(.caption.bold())
                 }
                 .buttonStyle(.bordered)
@@ -624,6 +628,7 @@ struct WalletCardRow: View {
 // render exactly 1536x969. No rotation, no aspect change.
 
 struct WalletCardCropView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let image: UIImage
     let onCrop: (UIImage) -> Void
     @Environment(\.dismiss) private var dismiss
@@ -662,12 +667,12 @@ struct WalletCardCropView: View {
                         .stroke(Color.secondary.opacity(0.4), lineWidth: 1)
                 )
 
-                Text("Drag to move, pinch to zoom. The skin is saved at 1536×969.")
+                Text(wtLang.tr("Drag to move, pinch to zoom. The skin is saved at 1536×969."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 12) {
-                    Button("Reset") {
+                    Button(wtLang.tr("Reset")) {
                         scale = 1.0
                         lastScale = 1.0
                         offset = .zero
@@ -675,7 +680,7 @@ struct WalletCardCropView: View {
                     }
                     .buttonStyle(.bordered)
 
-                    Button("Use Skin") {
+                    Button(wtLang.tr("Use Skin")) {
                         if let cropped = renderCropped() {
                             onCrop(cropped)
                         } else if let fallback = WalletImageEngine.prepareCardImage(from: image),
@@ -688,11 +693,11 @@ struct WalletCardCropView: View {
                 }
             }
             .padding(16)
-            .navigationTitle("Crop Card Skin")
+            .navigationTitle(wtLang.tr("Crop Card Skin"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(wtLang.tr("Cancel")) { dismiss() }
                 }
             }
         }

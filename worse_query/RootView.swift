@@ -12,6 +12,10 @@ struct RootView: View {
     @StateObject private var console = Console()
     @StateObject private var gestalt = GestaltManager.shared
     @StateObject private var respringCenter = RespringCenter.shared
+    /// Language store (v7.0): drives the flag theme and every
+    /// translated string. Shared singleton, also injected into
+    /// the environment by WorkTweaksApp.
+    @StateObject private var langStore = WTLangStore.shared
     /// Persists across launches: the v2.0 Welcome is shown only
     /// until the user taps "Get Started" once (and again only after
     /// a reinstall, which wipes the app's defaults). A new key for
@@ -32,7 +36,12 @@ struct RootView: View {
                 UnsupportedView()
             }
         }
-        .tint(Color("AccentColor"))
+        // The tint follows the language's flag theme (blue for
+        // English, red for Indonesian/Chinese/Vietnamese) — it
+        // drives toggles, the selected tab, the segmented
+        // picker and links app-wide.
+        .tint(langStore.theme.accent)
+        .environmentObject(langStore)
         // mond: root overlay presenting the respring web view.
         .overlay {
             if respringCenter.show {
@@ -44,10 +53,10 @@ struct RootView: View {
                     if respringCenter.canDismiss {
                         VStack {
                             Spacer()
-                            Text("Respring did not trigger on this device.")
+                            Text(langStore.tr("Respring did not trigger on this device."))
                                 .font(.footnote)
                                 .foregroundStyle(.white)
-                            Button("Close — reboot manually instead") {
+                            Button(langStore.tr("Close — reboot manually instead")) {
                                 respringCenter.dismiss()
                             }
                             .buttonStyle(.borderedProminent)
@@ -73,11 +82,11 @@ struct RootView: View {
                 .tag(AppTab.tweaks)
 
             CacheExtraView(manager: gestalt)
-                .tabItem { Label("Extra", systemImage: "key") }
+                .tabItem { Label(langStore.tr("Extra"), systemImage: "key") }
                 .tag(AppTab.extra)
 
             BackupView(manager: gestalt)
-                .tabItem { Label("Backup", systemImage: "externaldrive.badge.timemachine") }
+                .tabItem { Label(langStore.tr("Backup"), systemImage: "externaldrive.badge.timemachine") }
                 .tag(AppTab.backup)
 
             SpringBoardView(console: console)
@@ -85,7 +94,7 @@ struct RootView: View {
                 .tag(AppTab.springboard)
 
             StatusBarView(console: console)
-                .tabItem { Label("Status Bar", systemImage: "cellularbars") }
+                .tabItem { Label(langStore.tr("Status Bar"), systemImage: "cellularbars") }
                 .tag(AppTab.statusbar)
 
             LogView(console: console)

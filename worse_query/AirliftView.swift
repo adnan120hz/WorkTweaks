@@ -6,6 +6,7 @@ import SwiftUI
 /// file (Sandbox → Utilities → Get Pairing File) and a loopback VPN
 /// is strongly recommended while they run.
 struct AirliftView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @State private var transport = TransportGate.check()
 
     var body: some View {
@@ -15,15 +16,15 @@ struct AirliftView: View {
                     transport = TransportGate.check()
                 }
             }
-            WTSectionCard(header: "Airlift — from Aircard") {
+            WTSectionCard(header: wtLang.tr("Airlift — from Aircard")) {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Custom passcode keypad themes and Apple Wallet card art, flashed on-device through the Airlift exploit (iOS 18.0 – 27.2 beta 2).")
+                    Text(wtLang.tr("Custom passcode keypad themes and Apple Wallet card art, flashed on-device through the Airlift exploit (iOS 18.0 – 27.2 beta 2)."))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                     Divider().padding(.leading, 14)
-                    Text("Both need a pairing file first: Sandbox → Utilities → Get Pairing File. A loopback VPN (Local Dev VPN) is strongly recommended while flashing.")
+                    Text(wtLang.tr("Both need a pairing file first: Sandbox → Utilities → Get Pairing File. A loopback VPN (Local Dev VPN) is strongly recommended while flashing."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
@@ -31,15 +32,15 @@ struct AirliftView: View {
                 }
             }
 
-            WTSectionCard(header: "Menus") {
+            WTSectionCard(header: wtLang.tr("Menus")) {
                 VStack(alignment: .leading, spacing: 0) {
-                    menuRow("Passcode Themes", systemImage: "lock.circle.fill") {
+                    menuRow(wtLang.tr("Passcode Themes"), systemImage: "lock.circle.fill") {
                         AirliftPasscodeView()
                     }
                     .disabled(!transport.isReady)
                     .opacity(transport.isReady ? 1 : 0.5)
                     Divider().padding(.leading, 14)
-                    menuRow("Wallet Cards", systemImage: "creditcard.fill") {
+                    menuRow(wtLang.tr("Wallet Cards"), systemImage: "creditcard.fill") {
                         AirliftWalletView()
                     }
                     .disabled(!transport.isReady)

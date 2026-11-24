@@ -55,7 +55,12 @@ extension View {
 
 /// The scrolling page shell: a stack of section cards over the
 /// system grouped background, with the Tweaks page's margins.
+/// The background carries the flag theme: the language's flag
+/// drawn large and faint at the top-right with the Apple logo
+/// watermark over it (WTThemeBackground), so every page is
+/// re-themed the moment the language changes.
 struct WTGlassPage<Content: View>: View {
+    @EnvironmentObject private var lang: WTLangStore
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -66,7 +71,9 @@ struct WTGlassPage<Content: View>: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color(.systemGroupedBackground))
+        .background {
+            WTThemeBackground()
+        }
     }
 }
 

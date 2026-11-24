@@ -11,85 +11,87 @@ import SwiftUI
 // like every other page — the guides' text is unchanged.
 
 struct TutorialsView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
+
     var body: some View {
         WTGlassPage {
             WTSectionCard {
-                Text("WorkTweaks only works when its App Group is part of the signing profile. Guides A and B make sure that happens — pick the one that fits you. Guide C turns on the new Siri AI.")
+                Text(wtLang.tr("WorkTweaks only works when its App Group is part of the signing profile. Guides A and B make sure that happens — pick the one that fits you. Guide C turns on the new Siri AI."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
             }
 
-            WTSectionCard(header: "Guide A — Install with iLoader (Desktop)", footer: "Free Apple ID installs expire after about 7 days — reinstall with iLoader to renew.") {
+            WTSectionCard(header: wtLang.tr("Guide A — Install with iLoader (Desktop)"), footer: wtLang.tr("Free Apple ID installs expire after about 7 days — reinstall with iLoader to renew.")) {
                 VStack(alignment: .leading, spacing: 0) {
-                    step(1, "Download the latest WorkTweaks IPA from the GitHub Releases page.")
+                    step(1, wtLang.tr("Download the latest WorkTweaks IPA from the GitHub Releases page."))
                     Divider().padding(.leading, 14)
-                    step(2, "On a computer, download iLoader from iloader.app — the official site only — and open it.")
+                    step(2, wtLang.tr("On a computer, download iLoader from iloader.app — the official site only — and open it."))
                     Divider().padding(.leading, 14)
-                    step(3, "Connect your iPhone by USB, then sign in with your Apple ID in iLoader.")
+                    step(3, wtLang.tr("Connect your iPhone by USB, then sign in with your Apple ID in iLoader."))
                     Divider().padding(.leading, 14)
-                    step(4, "Choose the WorkTweaks IPA and install it.")
+                    step(4, wtLang.tr("Choose the WorkTweaks IPA and install it."))
                     Divider().padding(.leading, 14)
-                    step(5, "If iOS asks, enable Developer Mode (Settings → Privacy & Security → Developer Mode) and trust the developer profile.")
+                    step(5, wtLang.tr("If iOS asks, enable Developer Mode (Settings → Privacy & Security → Developer Mode) and trust the developer profile."))
                     Divider().padding(.leading, 14)
-                    step(6, "Open WorkTweaks and you're done.")
+                    step(6, wtLang.tr("Open WorkTweaks and you're done."))
                 }
                 .padding(.vertical, 4)
             }
 
-            WTSectionCard(header: "Guide B — Sign with Signed Apps (Mobile)") {
+            WTSectionCard(header: wtLang.tr("Guide B — Sign with Signed Apps (Mobile)")) {
                 VStack(alignment: .leading, spacing: 0) {
-                    step(1, "Download the WorkTweaks IPA from GitHub.")
+                    step(1, wtLang.tr("Download the WorkTweaks IPA from GitHub."))
                     Divider().padding(.leading, 14)
-                    step(2, "Open Signed Apps and sign in with your Apple ID.")
+                    step(2, wtLang.tr("Open Signed Apps and sign in with your Apple ID."))
                     Divider().padding(.leading, 14)
-                    step(3, "Certificates tab: create your certificate if needed. A free team can hold only one active development certificate — if creation fails with error 7460, revoke an old unused certificate there first.")
+                    step(3, wtLang.tr("Certificates tab: create your certificate if needed. A free team can hold only one active development certificate — if creation fails with error 7460, revoke an old unused certificate there first."))
                     Divider().padding(.leading, 14)
-                    step(4, "Install tab → Provisioning: fill in the fields below, tap Provision, and wait for \"profile OK\". Your Team ID is shown in the app's Certificates tab.") {
+                    step(4, wtLang.tr("Install tab → Provisioning: fill in the fields below, tap Provision, and wait for \"profile OK\". Your Team ID is shown in the app's Certificates tab.")) {
                         monoLine("Bundle ID: cc.forcequit.worse-query.<Your Team ID>")
                         monoLine("App name: WorkTweaks")
                         monoLine("App Group ID: group.cc.forcequit.worse-query.<Your Team ID>")
                     }
                     Divider().padding(.leading, 14)
-                    step(5, "Pick the WorkTweaks IPA, set the Signing Bundle ID field to the same identifier, then tap Sign IPA.")
+                    step(5, wtLang.tr("Pick the WorkTweaks IPA, set the Signing Bundle ID field to the same identifier, then tap Sign IPA."))
                     Divider().padding(.leading, 14)
-                    step(6, "Export the signed IPA and install it with ESign (or any IPA installer).")
+                    step(6, wtLang.tr("Export the signed IPA and install it with ESign (or any IPA installer)."))
                     Divider().padding(.leading, 14)
-                    step(7, "Open WorkTweaks and you're done.")
+                    step(7, wtLang.tr("Open WorkTweaks and you're done."))
                 }
                 .padding(.vertical, 4)
             }
 
-            WTSectionCard(header: "Guide C — Turn On New Siri AI", footer: "This only makes the Join Waitlist button appear. The Siri AI model may still refuse to download — that part is not solved by this method yet.") {
+            WTSectionCard(header: wtLang.tr("Guide C — Turn On New Siri AI"), footer: wtLang.tr("This only makes the Join Waitlist button appear. The Siri AI model may still refuse to download — that part is not solved by this method yet.")) {
                 VStack(alignment: .leading, spacing: 0) {
-                    step(1, "In the Tweaks tab, Apple Intelligence section, turn on Apple Intelligence and Siri AI Cache Patch. The cache patch is the Filza line-104 edit (one CacheData byte, 0x00 to 0x02) — done here, no Filza needed.")
+                    step(1, wtLang.tr("In the Tweaks tab, Apple Intelligence section, turn on Apple Intelligence and Siri AI Cache Patch. The cache patch is the Filza line-104 edit (one CacheData byte, 0x00 to 0x02) — done here, no Filza needed."))
                     Divider().padding(.leading, 14)
-                    step(2, "Set the Spoofing picker (under Apple Intelligence) to iPhone 17 Pro (iPhone18,1).")
+                    step(2, wtLang.tr("Set the Spoofing picker (under Apple Intelligence) to iPhone 17 Pro (iPhone18,1)."))
                     Divider().padding(.leading, 14)
-                    step(3, "Turn on the Charge Limit Menu toggle (Add feature section).")
+                    step(3, wtLang.tr("Turn on the Charge Limit Menu toggle (Add feature section)."))
                     Divider().padding(.leading, 14)
-                    step(4, "Go to the Apply/Revert section and tap Apply, then Respring. When the respring finishes, restart your iPhone.")
+                    step(4, wtLang.tr("Go to the Apply/Revert section and tap Apply, then Respring. When the respring finishes, restart your iPhone."))
                     Divider().padding(.leading, 14)
-                    step(5, "Open Settings → Apple Intelligence & Siri and tap Join Waitlist. Wait about 15 minutes for it to be accepted.")
+                    step(5, wtLang.tr("Open Settings → Apple Intelligence & Siri and tap Join Waitlist. Wait about 15 minutes for it to be accepted."))
                     Divider().padding(.leading, 14)
-                    step(6, "Connect your iPhone to power, connect to Wi-Fi, and leave the Settings → General → iPhone Storage tab open for about 1 hour while the model downloads.")
+                    step(6, wtLang.tr("Connect your iPhone to power, connect to Wi-Fi, and leave the Settings → General → iPhone Storage tab open for about 1 hour while the model downloads."))
                 }
                 .padding(.vertical, 4)
             }
 
-            WTSectionCard(header: "Good to Know") {
+            WTSectionCard(header: wtLang.tr("Good to Know")) {
                 VStack(alignment: .leading, spacing: 0) {
-                    note("The original identifiers are already registered to another developer account, which is why the Team ID suffix is required.")
+                    note(wtLang.tr("The original identifiers are already registered to another developer account, which is why the Team ID suffix is required."))
                     Divider().padding(.leading, 14)
-                    note("Never share your certificate .p12 file with anyone — it contains your private signing key.")
+                    note(wtLang.tr("Never share your certificate .p12 file with anyone — it contains your private signing key."))
                     Divider().padding(.leading, 14)
-                    note("A signed IPA only works on the device registered in its profile.")
+                    note(wtLang.tr("A signed IPA only works on the device registered in its profile."))
                 }
                 .padding(.vertical, 4)
             }
         }
-        .navigationTitle("Tutorials")
+        .navigationTitle(wtLang.tr("Tutorials"))
         .navigationBarTitleDisplayMode(.inline)
     }
 

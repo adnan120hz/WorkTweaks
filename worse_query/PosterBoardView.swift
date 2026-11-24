@@ -17,6 +17,7 @@ import UniformTypeIdentifiers
 // WTSectionCard), like every other page since v3.8.
 
 struct PosterBoardView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var manager = PosterBoardManager()
     @ObservedObject private var appData = AppDataManager.shared
 
@@ -51,12 +52,12 @@ struct PosterBoardView: View {
             }
 
             if case .ready = manager.state {
-                WTSectionCard(header: "Import", footer: "Each wallpaper in the package is copied into PosterBoard's data store under a fresh identifier, so it can never clash with an existing wallpaper. A respring is required before a new wallpaper appears in the gallery.") {
+                WTSectionCard(header: wtLang.tr("Import"), footer: wtLang.tr("Each wallpaper in the package is copied into PosterBoard's data store under a fresh identifier, so it can never clash with an existing wallpaper. A respring is required before a new wallpaper appears in the gallery.")) {
                     Button {
                         showImporter = true
                     } label: {
                         HStack(spacing: 10) {
-                            Label("Import .tendies Package…", systemImage: "shippingbox")
+                            Label(wtLang.tr("Import .tendies Package…"), systemImage: "shippingbox")
                                 .font(.subheadline)
                             Spacer(minLength: 0)
                             if manager.isBusy {
@@ -71,12 +72,12 @@ struct PosterBoardView: View {
                     .disabled(manager.isBusy)
                 }
 
-                WTSectionCard(header: "Create", footer: "Builds a PosterBoard wallpaper on-device from your photo or video — the same descriptor format as an imported .tendies package, installed and listed exactly like one.") {
+                WTSectionCard(header: wtLang.tr("Create"), footer: wtLang.tr("Builds a PosterBoard wallpaper on-device from your photo or video — the same descriptor format as an imported .tendies package, installed and listed exactly like one.")) {
                     NavigationLink {
                         PosterBoardMakerView(manager: manager)
                     } label: {
                         HStack(spacing: 10) {
-                            Label("Create Wallpaper…", systemImage: "wand.and.stars")
+                            Label(wtLang.tr("Create Wallpaper…"), systemImage: "wand.and.stars")
                                 .font(.subheadline)
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right")
@@ -91,9 +92,9 @@ struct PosterBoardView: View {
                     .disabled(manager.isBusy)
                 }
 
-                WTSectionCard(header: "Imported") {
+                WTSectionCard(header: wtLang.tr("Imported")) {
                     if manager.receipts.isEmpty {
-                        Text("No wallpapers imported yet. Wallpapers imported here are listed so you can remove them again — wallpapers added any other way are never touched.")
+                        Text(wtLang.tr("No wallpapers imported yet. Wallpapers imported here are listed so you can remove them again — wallpapers added any other way are never touched."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -111,8 +112,8 @@ struct PosterBoardView: View {
                     }
                 }
 
-                WTSectionCard(header: "Package Format") {
-                    Text("A .tendies package is a ZIP archive containing one or more wallpaper descriptors: loose descriptor folders, a descriptors folder, or a container layout mirroring PosterBoard's data store (Library/Application Support/PRBPosterExtensionDataStore/…/Extensions/…/descriptors). Stored and deflated ZIP entries are supported — the same reader Deploy uses; encrypted and ZIP64 archives are rejected.")
+                WTSectionCard(header: wtLang.tr("Package Format")) {
+                    Text(wtLang.tr("A .tendies package is a ZIP archive containing one or more wallpaper descriptors: loose descriptor folders, a descriptors folder, or a container layout mirroring PosterBoard's data store (Library/Application Support/PRBPosterExtensionDataStore/…/Extensions/…/descriptors). Stored and deflated ZIP entries are supported — the same reader Deploy uses; encrypted and ZIP64 archives are rejected."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -140,31 +141,31 @@ struct PosterBoardView: View {
                 pickerError = error.localizedDescription
             }
         }
-        .alert("Import Failed", isPresented: Binding(
+        .alert(wtLang.tr("Import Failed"), isPresented: Binding(
             get: { pickerError != nil },
             set: { if !$0 { pickerError = nil } }
         )) {
-            Button("OK") { }
+            Button(wtLang.tr("OK")) { }
         } message: {
             Text(pickerError ?? "")
         }
-        .confirmationDialog("PosterBoard Updated", isPresented: $showRespringChoice, titleVisibility: .visible) {
-            Button("Respring") { RespringCenter.shared.trigger() }
-            Button("Restart Device") { showManualRestartGuide = true }
-            Button("Later", role: .cancel) { }
+        .confirmationDialog(wtLang.tr("PosterBoard Updated"), isPresented: $showRespringChoice, titleVisibility: .visible) {
+            Button(wtLang.tr("Respring")) { RespringCenter.shared.trigger() }
+            Button(wtLang.tr("Restart Device")) { showManualRestartGuide = true }
+            Button(wtLang.tr("Later"), role: .cancel) { }
         } message: {
-            Text("SpringBoard loads the wallpaper store when it starts — respring or restart to see the change in the wallpaper gallery.")
+            Text(wtLang.tr("SpringBoard loads the wallpaper store when it starts — respring or restart to see the change in the wallpaper gallery."))
         }
         .alert(ManualRestartGuide.title, isPresented: $showManualRestartGuide) {
-            Button("OK") { }
+            Button(wtLang.tr("OK")) { }
         } message: {
             Text(ManualRestartGuide.message)
         }
-        .confirmationDialog("Delete Wallpaper?", isPresented: Binding(
+        .confirmationDialog(wtLang.tr("Delete Wallpaper?"), isPresented: Binding(
             get: { pendingDelete != nil },
             set: { if !$0 { pendingDelete = nil } }
         ), titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
+            Button(wtLang.tr("Delete"), role: .destructive) {
                 if let receipt = pendingDelete {
                     manager.delete(receipt: receipt) { ok in
                         if ok { showRespringChoice = true }
@@ -172,9 +173,9 @@ struct PosterBoardView: View {
                 }
                 pendingDelete = nil
             }
-            Button("Cancel", role: .cancel) { }
+            Button(wtLang.tr("Cancel"), role: .cancel) { }
         } message: {
-            Text("This removes the wallpaper imported from \(pendingDelete?.sourcePackage ?? "the package") — its descriptor folder is deleted from PosterBoard's data store.")
+            Text(wtLang.tr("This removes the wallpaper imported from %@ — its descriptor folder is deleted from PosterBoard's data store.", pendingDelete?.sourcePackage ?? wtLang.tr("the package")))
         }
     }
 
@@ -184,7 +185,7 @@ struct PosterBoardView: View {
     private var statusCard: some View {
         switch manager.state {
         case .idle, .resolving:
-            WTSectionCard(header: "PosterBoard Data") {
+            WTSectionCard(header: wtLang.tr("PosterBoard Data")) {
                 HStack(spacing: 10) {
                     ProgressView()
                     Text(appData.isScanning ? appData.scanPhase : manager.resolvePhase)
@@ -195,10 +196,10 @@ struct PosterBoardView: View {
                 .padding(.vertical, 10)
             }
         case .blocked(let reason):
-            WTSectionCard(footer: "Nothing was written.") {
+            WTSectionCard(footer: wtLang.tr("Nothing was written.")) {
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Label("PosterBoard is unavailable", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("PosterBoard is unavailable"), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(reason)
                             .font(.caption)
@@ -213,7 +214,7 @@ struct PosterBoardView: View {
                     Button {
                         kickResolution()
                     } label: {
-                        Text("Try Again")
+                        Text(wtLang.tr("Try Again"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -223,11 +224,11 @@ struct PosterBoardView: View {
                 }
             }
         case .ready:
-            WTSectionCard(header: "PosterBoard Data") {
+            WTSectionCard(header: wtLang.tr("PosterBoard Data")) {
                 VStack(alignment: .leading, spacing: 6) {
-                    infoRow("Container", manager.containerPath.map { ($0 as NSString).lastPathComponent } ?? "—")
-                    infoRow("Data Store", "Version \(manager.storeVersion ?? "—")")
-                    infoRow("Descriptors", "\(manager.descriptorCount)")
+                    infoRow(wtLang.tr("Container"), manager.containerPath.map { ($0 as NSString).lastPathComponent } ?? "—")
+                    infoRow(wtLang.tr("Data Store"), wtLang.tr("Version %@", manager.storeVersion ?? "—"))
+                    infoRow(wtLang.tr("Descriptors"), "\(manager.descriptorCount)")
                     if let containerPath = manager.containerPath {
                         Text(containerPath)
                             .font(.system(.caption2, design: .monospaced))

@@ -7,21 +7,22 @@ import SwiftUI
 // like the rest of the app.
 
 struct BatteryDiagnosticsView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var manager = BatteryDiagnostics()
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "About this feature", footer: "Read-only: the powerlog is cloned into this app's temp folder and inspected there. Nothing is ever written to the system database. Some iOS 26 firmware restricts the powerlog sandbox token; iOS 27 reads fully.") {
-                Text("Battery & Thermal reads the system powerlog database: battery level, true health (raw max vs design capacity), cycle count, cell temperature, and thermal history. Values come from the latest samples in the log, newest first.")
+            WTSectionCard(header: wtLang.tr("About this feature"), footer: wtLang.tr("Read-only: the powerlog is cloned into this app's temp folder and inspected there. Nothing is ever written to the system database. Some iOS 26 firmware restricts the powerlog sandbox token; iOS 27 reads fully.")) {
+                Text(wtLang.tr("Battery & Thermal reads the system powerlog database: battery level, true health (raw max vs design capacity), cycle count, cell temperature, and thermal history. Values come from the latest samples in the log, newest first."))
                     .font(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
             }
 
-            WTSectionCard(header: "Live thermal state") {
+            WTSectionCard(header: wtLang.tr("Live thermal state")) {
                 HStack {
-                    Text("This device right now")
+                    Text(wtLang.tr("This device right now"))
                         .font(.subheadline)
                     Spacer()
                     Text(manager.liveThermalState)
@@ -31,14 +32,14 @@ struct BatteryDiagnosticsView: View {
                 .padding(.vertical, 10)
             }
 
-            WTSectionCard(header: "Read") {
+            WTSectionCard(header: wtLang.tr("Read")) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 10) {
                         Button {
                             SoundEffects.playTap()
                             manager.load()
                         } label: {
-                            Label(manager.isLoading ? "Reading…" : "Read Powerlog", systemImage: "bolt.fill")
+                            Label(manager.isLoading ? wtLang.tr("Reading…") : wtLang.tr("Read Powerlog"), systemImage: "bolt.fill")
                                 .font(.subheadline.weight(.semibold))
                         }
                         .buttonStyle(.bordered)
@@ -50,17 +51,17 @@ struct BatteryDiagnosticsView: View {
                     }
                     switch manager.state {
                     case .idle:
-                        Text("Tap Read Powerlog to load the latest battery samples.")
+                        Text(wtLang.tr("Tap Read Powerlog to load the latest battery samples."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     case .loading:
-                        Text("Cloning the powerlog and reading its latest samples…")
+                        Text(wtLang.tr("Cloning the powerlog and reading its latest samples…"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     case .ready:
-                        Text("Read complete\(manager.batteryTableUsed.map { " — battery table \($0)" } ?? "")\(manager.thermalTableUsed.map { ", thermal table \($0)" } ?? "").")
+                        Text(wtLang.tr("Read complete%@%@.", manager.batteryTableUsed.map { wtLang.tr(" — battery table %@", $0) } ?? "", manager.thermalTableUsed.map { wtLang.tr(", thermal table %@", $0) } ?? ""))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -77,7 +78,7 @@ struct BatteryDiagnosticsView: View {
 
             if case .ready = manager.state {
                 if let latest = manager.latest {
-                    WTSectionCard(header: "Latest sample") {
+                    WTSectionCard(header: wtLang.tr("Latest sample")) {
                         VStack(alignment: .leading, spacing: 6) {
                             if let level = latest.level {
                                 sampleRow("Level", String(format: "%.0f%%", level))
@@ -110,7 +111,7 @@ struct BatteryDiagnosticsView: View {
                                 sampleRow("Power", String(format: "%.2f W", watts))
                             }
                             if let charging = latest.isCharging {
-                                sampleRow("Charging", charging ? "Yes" : "No")
+                                sampleRow("Charging", charging ? wtLang.tr("Yes") : wtLang.tr("No"))
                             }
                             if let time = latest.timestamp {
                                 sampleRow("Sampled", time.formatted(date: .abbreviated, time: .shortened))
@@ -122,12 +123,12 @@ struct BatteryDiagnosticsView: View {
                 }
 
                 if !manager.samples.isEmpty {
-                    WTSectionCard(header: "Recent samples (\(manager.samples.count))") {
+                    WTSectionCard(header: wtLang.tr("Recent samples (%d)", manager.samples.count)) {
                         VStack(alignment: .leading, spacing: 0) {
                             ForEach(Array(manager.samples.enumerated()), id: \.element.id) { index, sample in
                                 VStack(alignment: .leading, spacing: 2) {
                                     HStack {
-                                        Text(sample.timestamp?.formatted(date: .abbreviated, time: .shortened) ?? "Unknown time")
+                                        Text(sample.timestamp?.formatted(date: .abbreviated, time: .shortened) ?? wtLang.tr("Unknown time"))
                                             .font(.subheadline.weight(.semibold))
                                         Spacer()
                                         if let level = sample.level {
@@ -138,16 +139,16 @@ struct BatteryDiagnosticsView: View {
                                     }
                                     HStack(spacing: 12) {
                                         if let health = sample.healthPercent {
-                                            Text(String(format: "Health %.1f%%", health))
+                                            Text(wtLang.tr("Health %.1f%%", health))
                                         }
                                         if let cycles = sample.cycleCount {
-                                            Text("\(cycles) cycles")
+                                            Text(wtLang.tr("%d cycles", cycles))
                                         }
                                         if let temp = sample.temperature {
                                             Text(String(format: "%.1f °C", temp))
                                         }
                                         if let charging = sample.isCharging, charging {
-                                            Text("Charging")
+                                            Text(wtLang.tr("Charging"))
                                         }
                                     }
                                     .font(.caption)
@@ -163,10 +164,10 @@ struct BatteryDiagnosticsView: View {
                     }
                 }
 
-                WTSectionCard(header: "Thermal history (\(manager.thermalEvents.count))") {
+                WTSectionCard(header: wtLang.tr("Thermal history (%d)", manager.thermalEvents.count)) {
                     VStack(alignment: .leading, spacing: 0) {
                         if manager.thermalEvents.isEmpty {
-                            Text("No thermal events found in the powerlog.")
+                            Text(wtLang.tr("No thermal events found in the powerlog."))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 14)
@@ -174,7 +175,7 @@ struct BatteryDiagnosticsView: View {
                         } else {
                             ForEach(Array(manager.thermalEvents.enumerated()), id: \.element.id) { index, event in
                                 HStack {
-                                    Text(event.timestamp?.formatted(date: .abbreviated, time: .shortened) ?? "Unknown time")
+                                    Text(event.timestamp?.formatted(date: .abbreviated, time: .shortened) ?? wtLang.tr("Unknown time"))
                                         .font(.subheadline)
                                     Spacer()
                                     Text("\(event.band) (\(event.level))")
@@ -192,7 +193,7 @@ struct BatteryDiagnosticsView: View {
                 }
             }
         }
-        .navigationTitle("Battery & Thermal")
+        .navigationTitle(wtLang.tr("Battery & Thermal"))
         .onAppear {
             if case .idle = manager.state {
                 manager.load()
@@ -202,7 +203,7 @@ struct BatteryDiagnosticsView: View {
 
     private func sampleRow(_ label: String, _ value: String) -> some View {
         HStack {
-            Text(label)
+            Text(wtLang.tr(label))
                 .font(.subheadline)
             Spacer()
             Text(value)

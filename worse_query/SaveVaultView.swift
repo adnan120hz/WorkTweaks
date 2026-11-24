@@ -13,6 +13,7 @@ import UniformTypeIdentifiers
 // WorkTweaks.
 
 struct SaveVaultView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject private var appData = AppDataManager.shared
     private let vault = SaveVaultManager()
 
@@ -41,24 +42,24 @@ struct SaveVaultView: View {
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "What this does", footer: "The staging vault lives in this app's Documents and does NOT survive uninstalling WorkTweaks. Verify a restore in the app first, then release the vault.") {
+            WTSectionCard(header: wtLang.tr("What this does"), footer: wtLang.tr("The staging vault lives in this app's Documents and does NOT survive uninstalling WorkTweaks. Verify a restore in the app first, then release the vault.")) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Stage an app's Documents, Library/Preferences and Library/Application Support (never Caches) before its 7-day certificate expires. After reinstall, the data is restored into the app's new container — matched by bundle id, not the old container UUID.")
-                    Text("APFS vault: clonefile staging, zero extra space, atomic restore with rollback. ZIP backup: the same three folders as one .zip file, restored by merging in place.")
+                    Text(wtLang.tr("Stage an app's Documents, Library/Preferences and Library/Application Support (never Caches) before its 7-day certificate expires. After reinstall, the data is restored into the app's new container — matched by bundle id, not the old container UUID."))
+                    Text(wtLang.tr("APFS vault: clonefile staging, zero extra space, atomic restore with rollback. ZIP backup: the same three folders as one .zip file, restored by merging in place."))
                 }
                 .font(.subheadline)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
             }
 
-            WTSectionCard(header: "Pick an app") {
+            WTSectionCard(header: wtLang.tr("Pick an app")) {
                 if appData.isScanning {
                     HStack(spacing: 10) {
                         ProgressView()
                         VStack(alignment: .leading, spacing: 3) {
                             Text(appData.scanPhase)
                                 .font(.subheadline)
-                            Text("The container scan runs once per session.")
+                            Text(wtLang.tr("The container scan runs once per session."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -67,12 +68,12 @@ struct SaveVaultView: View {
                     .padding(.vertical, 10)
                 } else if thirdPartyContainers.isEmpty {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("No third-party apps found.")
+                        Text(wtLang.tr("No third-party apps found."))
                             .font(.subheadline)
-                        Text("Open App Data first so the container scan runs, then come back — or tap Rescan.")
+                        Text(wtLang.tr("Open App Data first so the container scan runs, then come back — or tap Rescan."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Button("Rescan") {
+                        Button(wtLang.tr("Rescan")) {
                             appData.rescan()
                         }
                         .padding(.top, 4)
@@ -115,16 +116,16 @@ struct SaveVaultView: View {
             }
 
             if let container = selectedContainer {
-                WTSectionCard(header: "Selected app", footer: container.path) {
+                WTSectionCard(header: wtLang.tr("Selected app"), footer: container.path) {
                     VStack(alignment: .leading, spacing: 6) {
-                        LabeledContent("Bundle ID", value: container.bundleID)
+                        LabeledContent(wtLang.tr("Bundle ID"), value: container.bundleID)
                         Divider()
-                        LabeledContent("Certificate", value: certChecking ? "Checking…" : certText)
+                        LabeledContent(wtLang.tr("Certificate"), value: certChecking ? wtLang.tr("Checking…") : certText)
                         Divider()
-                        LabeledContent("Database", value: walText)
+                        LabeledContent(wtLang.tr("Database"), value: walText)
                         if !weChatText.isEmpty {
                             Divider()
-                            LabeledContent("WeChat accounts", value: weChatText)
+                            LabeledContent(wtLang.tr("WeChat accounts"), value: weChatText)
                         }
                     }
                     .font(.subheadline)
@@ -132,12 +133,12 @@ struct SaveVaultView: View {
                     .padding(.vertical, 10)
                 }
 
-                WTSectionCard(footer: "Stage copies into the APFS vault (no extra space). ZIP backup copies first, then zips — for very large apps use the APFS vault. Both refuse while the app is still writing its database.") {
+                WTSectionCard(footer: wtLang.tr("Stage copies into the APFS vault (no extra space). ZIP backup copies first, then zips — for very large apps use the APFS vault. Both refuse while the app is still writing its database.")) {
                     VStack(spacing: 10) {
                         Button {
                             stage(container: container)
                         } label: {
-                            Text(isBusy && busyLabel == "Staging…" ? "Staging…" : "Stage into APFS Vault")
+                            Text(wtLang.tr(isBusy && busyLabel == "Staging…" ? "Staging…" : "Stage into APFS Vault"))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 11)
                                 .contentShape(Rectangle())
@@ -146,7 +147,7 @@ struct SaveVaultView: View {
                         Button {
                             zipBackup(container: container)
                         } label: {
-                            Text(isBusy && busyLabel == "Backing up…" ? "Backing up…" : "Back Up as ZIP")
+                            Text(wtLang.tr(isBusy && busyLabel == "Backing up…" ? "Backing up…" : "Back Up as ZIP"))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 11)
                                 .contentShape(Rectangle())
@@ -161,7 +162,7 @@ struct SaveVaultView: View {
                     WTSectionCard {
                         ShareLink(item: zipURLToShare) {
                             HStack(spacing: 10) {
-                                Text("Share \(zipURLToShare.lastPathComponent)")
+                                Text(wtLang.tr("Share %@", zipURLToShare.lastPathComponent))
                                 Spacer()
                                 Image(systemName: "square.and.arrow.up")
                             }
@@ -178,7 +179,7 @@ struct SaveVaultView: View {
                 WTSectionCard {
                     HStack(spacing: 10) {
                         ProgressView()
-                        Text(busyLabel)
+                        Text(wtLang.tr(busyLabel))
                             .font(.subheadline)
                     }
                     .padding(.horizontal, 14)
@@ -196,9 +197,9 @@ struct SaveVaultView: View {
                 }
             }
 
-            WTSectionCard(header: "Staged snapshots", footer: "Restore swaps the staged copy into the app's current container and rolls back if anything fails. Release a snapshot only after you verified the restore in the app.") {
+            WTSectionCard(header: wtLang.tr("Staged snapshots"), footer: wtLang.tr("Restore swaps the staged copy into the app's current container and rolls back if anything fails. Release a snapshot only after you verified the restore in the app.")) {
                 if snapshots.isEmpty {
-                    Text("Nothing staged yet.")
+                    Text(wtLang.tr("Nothing staged yet."))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
@@ -213,17 +214,17 @@ struct SaveVaultView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(snap.sourceBundleID)
                                     .font(.subheadline.weight(.semibold))
-                                Text("\(snap.fileCount) file(s) • \(wtFormatSize(snap.logicalBytes)) • staged \(snap.stagedAt)")
+                                Text(wtLang.tr("%d file(s) • %@ • staged %@", snap.fileCount, wtFormatSize(snap.logicalBytes), snap.stagedAt))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                 HStack(spacing: 12) {
                                     Button {
                                         restore(snapshot: snap, targetBundleID: nil)
                                     } label: {
-                                        Text(restoringBundleID == snap.sourceBundleID ? "Restoring…" : "Restore")
+                                        Text(restoringBundleID == snap.sourceBundleID ? wtLang.tr("Restoring…") : wtLang.tr("Restore"))
                                     }
                                     .disabled(isBusy)
-                                    Menu("Restore into…") {
+                                    Menu(wtLang.tr("Restore into…")) {
                                         ForEach(thirdPartyContainers.filter { $0.bundleID != snap.sourceBundleID }, id: \.id) { target in
                                             Button(target.bundleID) {
                                                 restore(snapshot: snap, targetBundleID: target.bundleID)
@@ -231,7 +232,7 @@ struct SaveVaultView: View {
                                         }
                                     }
                                     .disabled(isBusy)
-                                    Button("Release", role: .destructive) {
+                                    Button(wtLang.tr("Release"), role: .destructive) {
                                         if vault.releaseSnapshot(bundleID: snap.sourceBundleID) {
                                             refreshSnapshots()
                                         }
@@ -248,11 +249,11 @@ struct SaveVaultView: View {
                 }
             }
 
-            WTSectionCard(header: "Restore a ZIP backup", footer: "The ZIP must be a Save Vault backup (it carries a BackupManifest.plist). Files merge in place; system bundle ids are blocked.") {
+            WTSectionCard(header: wtLang.tr("Restore a ZIP backup"), footer: wtLang.tr("The ZIP must be a Save Vault backup (it carries a BackupManifest.plist). Files merge in place; system bundle ids are blocked.")) {
                 Button {
                     showZipImporter = true
                 } label: {
-                    Text("Import ZIP Backup…")
+                    Text(wtLang.tr("Import ZIP Backup…"))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)
                         .contentShape(Rectangle())
@@ -262,7 +263,7 @@ struct SaveVaultView: View {
                 .padding(.vertical, 10)
             }
         }
-        .navigationTitle("Save Vault")
+        .navigationTitle(wtLang.tr("Save Vault"))
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $showZipImporter, allowedContentTypes: [.zip]) { result in
             switch result {
@@ -275,7 +276,7 @@ struct SaveVaultView: View {
                 let tempURL = FileManager.default.temporaryDirectory
                     .appendingPathComponent("vault-restore-\(UUID().uuidString).zip")
                 guard (try? FileManager.default.copyItem(at: url, to: tempURL)) != nil else {
-                    resultMessage = "Could not copy that ZIP for restore."
+                    resultMessage = wtLang.tr("Could not copy that ZIP for restore.")
                     resultIsError = true
                     return
                 }
@@ -295,7 +296,7 @@ struct SaveVaultView: View {
                     }
                 }
             case .failure(let error):
-                resultMessage = "Could not open that file: \(error.localizedDescription)"
+                resultMessage = wtLang.tr("Could not open that file: %@", error.localizedDescription)
                 resultIsError = true
             }
         }
@@ -316,7 +317,7 @@ struct SaveVaultView: View {
         certChecking = true
         certText = ""
         let wal = SaveVaultManager.activeWALFiles(containerPath: container.path)
-        walText = wal.isEmpty ? "Idle" : "Still writing (\(wal.count) active WAL file(s)) — close the app first"
+        walText = wal.isEmpty ? wtLang.tr("Idle") : wtLang.tr("Still writing (%d active WAL file(s)) — close the app first", wal.count)
         let wc = SaveVaultManager.weChatAccountCount(containerPath: container.path)
         weChatText = wc > 0 ? "\(wc)" : ""
         DispatchQueue.global(qos: .userInitiated).async {
@@ -324,13 +325,13 @@ struct SaveVaultView: View {
             let text: String
             switch state {
             case .ok(let date):
-                text = "Valid until \(Self.shortDate(date))"
+                text = wtLang.tr("Valid until %@", Self.shortDate(date))
             case .expiringSoon(let date):
-                text = "Expires soon — \(Self.shortDate(date)). Stage now, reinstall before it ends."
+                text = wtLang.tr("Expires soon — %@. Stage now, reinstall before it ends.", Self.shortDate(date))
             case .expired(let date):
-                text = "Expired \(Self.shortDate(date)) — reinstall the app first."
+                text = wtLang.tr("Expired %@ — reinstall the app first.", Self.shortDate(date))
             case .unknown:
-                text = "Could not be read"
+                text = wtLang.tr("Could not be read")
             }
             DispatchQueue.main.async {
                 if selectedBundleID == container.bundleID {
@@ -357,7 +358,7 @@ struct SaveVaultView: View {
             isBusy = false
             switch outcome {
             case .success(let manifest):
-                resultMessage = "Staged \(manifest.sourceBundleID): \(manifest.fileCount) file(s), \(wtFormatSize(manifest.logicalBytes)). Verified against the source."
+                resultMessage = wtLang.tr("Staged %@: %d file(s), %@. Verified against the source.", manifest.sourceBundleID, manifest.fileCount, wtFormatSize(manifest.logicalBytes))
                 resultIsError = false
                 refreshSnapshots()
             case .failure(let message):
@@ -376,7 +377,7 @@ struct SaveVaultView: View {
             isBusy = false
             switch outcome {
             case .success(let url):
-                resultMessage = "ZIP backup saved: \(url.lastPathComponent). Share it to Files before you uninstall anything."
+                resultMessage = wtLang.tr("ZIP backup saved: %@. Share it to Files before you uninstall anything.", url.lastPathComponent)
                 resultIsError = false
                 zipURLToShare = url
             case .failure(let message):

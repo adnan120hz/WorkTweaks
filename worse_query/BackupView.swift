@@ -14,16 +14,17 @@ import SwiftUI
 /// like every other page. The List's swipe-to-delete on snapshots
 /// becomes a long-press context menu — same delete, same rows.
 struct BackupView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var manager: GestaltManager
 
     var body: some View {
         NavigationStack {
             WTGlassPage {
-                WTSectionCard(header: "Snapshots", footer: "A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.") {
+                WTSectionCard(header: wtLang.tr("Snapshots"), footer: wtLang.tr("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")) {
                     Button {
                         manager.createManualSnapshot()
                     } label: {
-                        Text("Back Up Now")
+                        Text(wtLang.tr("Back Up Now"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -34,21 +35,21 @@ struct BackupView: View {
                 }
 
                 if let original = manager.originalSnapshot {
-                    WTSectionCard(header: "Original") {
+                    WTSectionCard(header: wtLang.tr("Original")) {
                         snapshotRow(original)
                     }
                 }
 
                 if manager.otherSnapshots.isEmpty {
-                    WTSectionCard(header: "Apply Snapshots") {
-                        Text("No snapshots yet. Apply some tweaks or tap Back Up Now.")
+                    WTSectionCard(header: wtLang.tr("Apply Snapshots")) {
+                        Text(wtLang.tr("No snapshots yet. Apply some tweaks or tap Back Up Now."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
                     }
                 } else {
-                    WTSectionCard(header: "Apply Snapshots") {
+                    WTSectionCard(header: wtLang.tr("Apply Snapshots")) {
                         LazyVStack(alignment: .leading, spacing: 0) {
                             ForEach(Array(manager.otherSnapshots.enumerated()), id: \.element.id) { index, snapshot in
                                 if index > 0 {
@@ -60,7 +61,7 @@ struct BackupView: View {
                                         Button(role: .destructive) {
                                             manager.deleteSnapshot(snapshot)
                                         } label: {
-                                            Label("Delete", systemImage: "trash")
+                                            Label(wtLang.tr("Delete"), systemImage: "trash")
                                         }
                                     }
                             }
@@ -79,7 +80,7 @@ struct BackupView: View {
                     }
                 }
             }
-            .navigationTitle("Backup")
+            .navigationTitle(wtLang.tr("Backup"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -109,7 +110,7 @@ struct BackupView: View {
                     Text(snapshot.date, format: .dateTime.day().month().year().hour().minute())
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("\(snapshot.enabledTweakIDs.count) active tweaks · \(snapshot.cacheExtraCount) CacheExtra keys")
+                    Text(wtLang.tr("%d active tweaks · %d CacheExtra keys", snapshot.enabledTweakIDs.count, snapshot.cacheExtraCount))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -130,6 +131,7 @@ struct BackupView: View {
 // MARK: - Detail
 
 struct BackupDetailView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var manager: GestaltManager
     let snapshot: BackupSnapshot
 
@@ -139,29 +141,29 @@ struct BackupDetailView: View {
         WTGlassPage {
             WTSectionCard {
                 VStack(alignment: .leading, spacing: 0) {
-                    LabeledContent("Type", value: snapshot.kind.label)
+                    LabeledContent(wtLang.tr("Type"), value: snapshot.kind.label)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                     Divider().padding(.leading, 14)
-                    LabeledContent("Date", value: snapshot.date.formatted(date: .abbreviated, time: .standard))
+                    LabeledContent(wtLang.tr("Date"), value: snapshot.date.formatted(date: .abbreviated, time: .standard))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                     Divider().padding(.leading, 14)
-                    LabeledContent("Total CacheExtra keys", value: "\(snapshot.cacheExtraCount)")
+                    LabeledContent(wtLang.tr("Total CacheExtra keys"), value: "\(snapshot.cacheExtraCount)")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                     Divider().padding(.leading, 14)
-                    LabeledContent("Active tweaks", value: "\(snapshot.enabledTweakIDs.count) of \(TweakCatalog.all.count)")
+                    LabeledContent(wtLang.tr("Active tweaks"), value: wtLang.tr("%d of %d", snapshot.enabledTweakIDs.count, TweakCatalog.all.count))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }
             }
 
-            WTSectionCard(footer: "Rewrites the entire MobileGestalt.plist from this backup. A device restart is required after restoring.") {
+            WTSectionCard(footer: wtLang.tr("Rewrites the entire MobileGestalt.plist from this backup. A device restart is required after restoring.")) {
                 Button(role: .destructive) {
                     showRestoreAllConfirm = true
                 } label: {
-                    Text("Restore Everything")
+                    Text(wtLang.tr("Restore Everything"))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 11)
@@ -170,7 +172,7 @@ struct BackupDetailView: View {
                 .disabled(!manager.isValid)
             }
 
-            WTSectionCard(header: "By Tweak") {
+            WTSectionCard(header: wtLang.tr("By Tweak")) {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(TweakCatalog.all.enumerated()), id: \.element.id) { index, tweak in
                         if index > 0 {
@@ -181,12 +183,12 @@ struct BackupDetailView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(tweak.title)
                                     .font(.subheadline.weight(.medium))
-                                Text(snapshot.enabledTweakIDs.contains(tweak.id) ? "On in this backup" : "Off in this backup")
+                                Text(snapshot.enabledTweakIDs.contains(tweak.id) ? wtLang.tr("On in this backup") : wtLang.tr("Off in this backup"))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Button("Restore") {
+                            Button(wtLang.tr("Restore")) {
                                 manager.restoreTweak(tweak, from: snapshot)
                             }
                             .buttonStyle(.bordered)
@@ -200,7 +202,7 @@ struct BackupDetailView: View {
                 .padding(.vertical, 4)
             }
 
-            WTSectionCard(header: "By Key") {
+            WTSectionCard(header: wtLang.tr("By Key")) {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(snapshot.entries.enumerated()), id: \.element.id) { index, entry in
                         if index > 0 {
@@ -216,12 +218,12 @@ struct BackupDetailView: View {
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
-                                Text(entry.present ? "Value: \(entry.valueDescription)" : "Not present in this backup")
+                                Text(entry.present ? wtLang.tr("Value: %@", entry.valueDescription) : wtLang.tr("Not present in this backup"))
                                     .font(.caption)
                                     .foregroundStyle(entry.present ? .primary : .secondary)
                             }
                             Spacer()
-                            Button("Restore") {
+                            Button(wtLang.tr("Restore")) {
                                 manager.restoreKey(entry, from: snapshot)
                             }
                             .buttonStyle(.bordered)
@@ -235,26 +237,26 @@ struct BackupDetailView: View {
                 .padding(.vertical, 4)
             }
         }
-        .navigationTitle("Backup Details")
+        .navigationTitle(wtLang.tr("Backup Details"))
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("Restore this entire backup?", isPresented: $showRestoreAllConfirm) {
-            Button("Restore Everything", role: .destructive) {
+        .confirmationDialog(wtLang.tr("Restore this entire backup?"), isPresented: $showRestoreAllConfirm) {
+            Button(wtLang.tr("Restore Everything"), role: .destructive) {
                 manager.restore(snapshot)
             }
         } message: {
-            Text("The current MobileGestalt will be entirely replaced with this \(snapshot.kind.label) backup.")
+            Text(wtLang.tr("The current MobileGestalt will be entirely replaced with this %@ backup.", snapshot.kind.label))
         }
-        .confirmationDialog("Restart Required", isPresented: $manager.showRestartRequired, titleVisibility: .visible) {
-            Button("Restart Device") { manager.presentManualRestartGuide() }
-            Button("Later", role: .cancel) { }
+        .confirmationDialog(wtLang.tr("Restart Required"), isPresented: $manager.showRestartRequired, titleVisibility: .visible) {
+            Button(wtLang.tr("Restart Device")) { manager.presentManualRestartGuide() }
+            Button(wtLang.tr("Later"), role: .cancel) { }
         } message: {
-            Text("Restore changes only take effect after a full device restart — a respring is not enough. Choosing Later just postpones it; the changes stay pending until you restart.")
+            Text(wtLang.tr("Restore changes only take effect after a full device restart — a respring is not enough. Choosing Later just postpones it; the changes stay pending until you restart."))
         }
         .alert(manager.restartAlertTitle ?? "", isPresented: Binding(
             get: { manager.restartAlertTitle != nil },
             set: { if !$0 { manager.restartAlertTitle = nil } }
         )) {
-            Button("OK") { manager.restartAlertTitle = nil }
+            Button(wtLang.tr("OK")) { manager.restartAlertTitle = nil }
         } message: {
             Text(manager.restartAlertMessage)
         }

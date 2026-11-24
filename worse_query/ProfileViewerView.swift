@@ -9,6 +9,7 @@ import SwiftUI
 // particular is permanently read-only (see ProfileViewer.swift).
 
 struct ProfileViewerView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var viewer = ProfileViewer()
 
     var body: some View {
@@ -18,7 +19,7 @@ struct ProfileViewerView: View {
                 WTSectionCard {
                     HStack(spacing: 10) {
                         ProgressView()
-                        Text("Reading the configuration profiles…")
+                        Text(wtLang.tr("Reading the configuration profiles…"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -28,7 +29,7 @@ struct ProfileViewerView: View {
             case .blocked(let message):
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 6) {
-                        Label("Couldn't read the configuration profiles.", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("Couldn't read the configuration profiles."), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(message)
                             .font(.caption)
@@ -39,7 +40,7 @@ struct ProfileViewerView: View {
                 }
             case .ready:
                 if let audit = viewer.audit {
-                    WTSectionCard(header: "Supervision") {
+                    WTSectionCard(header: wtLang.tr("Supervision")) {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack(spacing: 8) {
                                 Image(systemName: supervisionIcon(audit.state))
@@ -51,7 +52,7 @@ struct ProfileViewerView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             if let org = audit.organizationName {
-                                Text("Organization: \(org)")
+                                Text(wtLang.tr("Organization: %@", org))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -60,14 +61,14 @@ struct ProfileViewerView: View {
                         .padding(.vertical, 10)
                     }
 
-                    WTSectionCard(header: "Device Configuration") {
+                    WTSectionCard(header: wtLang.tr("Device Configuration")) {
                         VStack(alignment: .leading, spacing: 0) {
-                            LabeledContent("Lock Screen Footnote", value: audit.footnote ?? "Not set")
+                            LabeledContent(wtLang.tr("Lock Screen Footnote"), value: audit.footnote ?? wtLang.tr("Not set"))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 9)
                             Divider()
                                 .padding(.leading, 14)
-                            LabeledContent("Asset Tag", value: audit.assetTag ?? "Not set")
+                            LabeledContent(wtLang.tr("Asset Tag"), value: audit.assetTag ?? wtLang.tr("Not set"))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 9)
                         }
@@ -75,11 +76,11 @@ struct ProfileViewerView: View {
                 }
 
                 WTSectionCard(
-                    header: "Installed Profiles",
-                    footer: "Parsed from the .plist files in the ConfigurationProfiles directory. This page never installs or removes a profile."
+                    header: wtLang.tr("Installed Profiles"),
+                    footer: wtLang.tr("Parsed from the .plist files in the ConfigurationProfiles directory. This page never installs or removes a profile.")
                 ) {
                     if viewer.records.isEmpty {
-                        Text("No installable profile records were found in this directory.")
+                        Text(wtLang.tr("No installable profile records were found in this directory."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
@@ -121,9 +122,9 @@ struct ProfileViewerView: View {
                     }
                 }
 
-                WTSectionCard(header: "Files in ConfigurationProfiles") {
+                WTSectionCard(header: wtLang.tr("Files in ConfigurationProfiles")) {
                     if viewer.files.isEmpty {
-                        Text("The directory is empty.")
+                        Text(wtLang.tr("The directory is empty."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
@@ -161,7 +162,7 @@ struct ProfileViewerView: View {
                 }
             }
         }
-        .navigationTitle("Configuration Profiles")
+        .navigationTitle(wtLang.tr("Configuration Profiles"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             viewer.load()
@@ -170,9 +171,9 @@ struct ProfileViewerView: View {
 
     private func supervisionTitle(_ state: ProfileAudit.State) -> String {
         switch state {
-        case .clean: return "Not Supervised"
-        case .genuineMDM: return "Genuine MDM"
-        case .fakeResidue: return "Fake-Supervision Residue"
+        case .clean: return wtLang.tr("Not Supervised")
+        case .genuineMDM: return wtLang.tr("Genuine MDM")
+        case .fakeResidue: return wtLang.tr("Fake-Supervision Residue")
         }
     }
 

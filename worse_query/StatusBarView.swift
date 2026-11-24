@@ -8,6 +8,7 @@ import SwiftUI
 // MobileGestalt/CacheExtra tweak system. Only for iOS 27.
 
 struct StatusBarView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let console: Console
 
     @State private var overrides = StatusBarOverrides()
@@ -58,12 +59,12 @@ struct StatusBarView: View {
                 // is not hidden behind it.
                 Color.clear.frame(height: 60)
             }
-            .navigationTitle("Status Bar")
+            .navigationTitle(wtLang.tr("Status Bar"))
             .navigationBarTitleDisplayMode(.inline)
             .onAppear { transport = TransportGate.check() }
-            .alert("Apply — read this first", isPresented: $showRisk) {
-                Button("Cancel", role: .cancel) { }
-                Button("Apply Anyway", role: .destructive) {
+            .alert(wtLang.tr("Apply — read this first"), isPresented: $showRisk) {
+                Button(wtLang.tr("Cancel"), role: .cancel) { }
+                Button(wtLang.tr("Apply Anyway"), role: .destructive) {
                     runApply()
                 }
             } message: {
@@ -83,9 +84,9 @@ struct StatusBarView: View {
     private var introCard: some View {
         WTSectionCard {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Status Bar")
+                Text(wtLang.tr("Status Bar"))
                     .font(.headline)
-                Text("Change the carrier name, network label and signal bars. iOS 27 only. A separate system from the Tweaks tab. LiveContainer is not recommended for this — use a direct install (Signed Apps) instead.")
+                Text(wtLang.tr("Change the carrier name, network label and signal bars. iOS 27 only. A separate system from the Tweaks tab. LiveContainer is not recommended for this — use a direct install (Signed Apps) instead."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -98,23 +99,23 @@ struct StatusBarView: View {
     // MARK: Carrier name
 
     private var carrierCard: some View {
-        WTSectionCard(header: "Custom Carrier Name") {
+        WTSectionCard(header: wtLang.tr("Custom Carrier Name")) {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Carrier name (Primary)", isOn: $overrides.carrierName.set)
+                Toggle(wtLang.tr("Carrier name (Primary)"), isOn: $overrides.carrierName.set)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.carrierName.set {
-                    TextField("Carrier name (max 64)", text: $overrides.carrierName.text)
+                    TextField(wtLang.tr("Carrier name (max 64)"), text: $overrides.carrierName.text)
                         .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled()
                 }
-                Toggle("Carrier name (Secondary)", isOn: $overrides.secondaryCarrierName.set)
+                Toggle(wtLang.tr("Carrier name (Secondary)"), isOn: $overrides.secondaryCarrierName.set)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.secondaryCarrierName.set {
-                    TextField("Secondary carrier name (max 64)", text: $overrides.secondaryCarrierName.text)
+                    TextField(wtLang.tr("Secondary carrier name (max 64)"), text: $overrides.secondaryCarrierName.text)
                         .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled()
                 }
-                Text("Dual SIM: primary is the line used for data, secondary is the other line.")
+                Text(wtLang.tr("Dual SIM: primary is the line used for data, secondary is the other line."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -127,29 +128,29 @@ struct StatusBarView: View {
     // MARK: Network type
 
     private var networkCard: some View {
-        WTSectionCard(header: "Network Type Label") {
+        WTSectionCard(header: wtLang.tr("Network Type Label")) {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Network label (Primary)", isOn: $overrides.dataNetworkType.set)
+                Toggle(wtLang.tr("Network label (Primary)"), isOn: $overrides.dataNetworkType.set)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.dataNetworkType.set {
-                    Picker("Network type", selection: $overrides.dataNetworkType.value) {
+                    Picker(wtLang.tr("Network type"), selection: $overrides.dataNetworkType.value) {
                         ForEach(StatusBarNetworkType.options, id: \.value) { option in
                             Text(option.label).tag(option.value)
                         }
                     }
                     .pickerStyle(.menu)
                 }
-                Toggle("Network label (Secondary)", isOn: $overrides.secondaryDataNetworkType.set)
+                Toggle(wtLang.tr("Network label (Secondary)"), isOn: $overrides.secondaryDataNetworkType.set)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.secondaryDataNetworkType.set {
-                    Picker("Secondary network type", selection: $overrides.secondaryDataNetworkType.value) {
+                    Picker(wtLang.tr("Secondary network type"), selection: $overrides.secondaryDataNetworkType.value) {
                         ForEach(StatusBarNetworkType.options, id: \.value) { option in
                             Text(option.label).tag(option.value)
                         }
                     }
                     .pickerStyle(.menu)
                 }
-                Text("Forces the label shown (5G, 5G+, 5G UC, LTE, …). Limited — the label is display-only.")
+                Text(wtLang.tr("Forces the label shown (5G, 5G+, 5G UC, LTE, …). Limited — the label is display-only."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -162,19 +163,19 @@ struct StatusBarView: View {
     // MARK: Signal bars
 
     private var signalCard: some View {
-        WTSectionCard(header: "Signal Bars") {
+        WTSectionCard(header: wtLang.tr("Signal Bars")) {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Signal bars (Primary)", isOn: $overrides.signalBars.set)
+                Toggle(wtLang.tr("Signal bars (Primary)"), isOn: $overrides.signalBars.set)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.signalBars.set {
-                    Stepper("Bars: \(overrides.signalBars.value)", value: $overrides.signalBars.value, in: 0...4)
+                    Stepper(wtLang.tr("Bars: %d", overrides.signalBars.value), value: $overrides.signalBars.value, in: 0...4)
                 }
-                Toggle("Signal bars (Secondary)", isOn: $overrides.secondarySignalBars.set)
+                Toggle(wtLang.tr("Signal bars (Secondary)"), isOn: $overrides.secondarySignalBars.set)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                 if overrides.secondarySignalBars.set {
-                    Stepper("Secondary bars: \(overrides.secondarySignalBars.value)", value: $overrides.secondarySignalBars.value, in: 0...4)
+                    Stepper(wtLang.tr("Secondary bars: %d", overrides.secondarySignalBars.value), value: $overrides.secondarySignalBars.value, in: 0...4)
                 }
-                Text("Sets how many bars are drawn. Static — it does not follow the real signal.")
+                Text(wtLang.tr("Sets how many bars are drawn. Static — it does not follow the real signal."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -187,15 +188,15 @@ struct StatusBarView: View {
     // MARK: Hide icons
 
     private var hideIconsCard: some View {
-        WTSectionCard(header: "Hide Status Bar Icons") {
+        WTSectionCard(header: wtLang.tr("Hide Status Bar Icons")) {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Hide VPN icon", isOn: $hideVPN)
+                Toggle(wtLang.tr("Hide VPN icon"), isOn: $hideVPN)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-                Toggle("Hide Location icon", isOn: $hideLocation)
+                Toggle(wtLang.tr("Hide Location icon"), isOn: $hideLocation)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-                Toggle("Hide Alarm icon", isOn: $hideAlarm)
+                Toggle(wtLang.tr("Hide Alarm icon"), isOn: $hideAlarm)
                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
-                Text("Partial — some icons may still show. Hidden through the archive's suppressed identifiers.")
+                Text(wtLang.tr("Partial — some icons may still show. Hidden through the archive's suppressed identifiers."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -208,9 +209,9 @@ struct StatusBarView: View {
     // MARK: Photo backup & restore (its own menu)
 
     private var photoBackupCard: some View {
-        WTSectionCard(header: "Photos & Videos") {
+        WTSectionCard(header: wtLang.tr("Photos & Videos")) {
             VStack(alignment: .leading, spacing: 0) {
-                Text("A partial restore can affect photos and videos. Back them up first — optional, you can skip it.")
+                Text(wtLang.tr("A partial restore can affect photos and videos. Back them up first — optional, you can skip it."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -225,7 +226,7 @@ struct StatusBarView: View {
                     HStack {
                         Image(systemName: "photo.badge.plus")
                             .foregroundStyle(.secondary)
-                        Text("Backup Your Photos & Videos Here!")
+                        Text(wtLang.tr("Backup Your Photos & Videos Here!"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Image(systemName: "chevron.right")
                             .font(.caption)
@@ -245,7 +246,7 @@ struct StatusBarView: View {
                     HStack {
                         Image(systemName: "photo.on.rectangle")
                             .foregroundStyle(.secondary)
-                        Text("Your All BackUP Files Here!")
+                        Text(wtLang.tr("Your All BackUP Files Here!"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Image(systemName: "chevron.right")
                             .font(.caption)
@@ -263,7 +264,7 @@ struct StatusBarView: View {
     // MARK: Apply (iOS 26 partial restore)
 
     private var applyCard: some View {
-        WTSectionCard(header: "Apply") {
+        WTSectionCard(header: wtLang.tr("Apply")) {
             VStack(alignment: .leading, spacing: 12) {
                 Button {
                     SoundEffects.playTap()
@@ -271,7 +272,7 @@ struct StatusBarView: View {
                 } label: {
                     HStack {
                         Image(systemName: "checkmark.circle")
-                        Text(isApplying ? "Applying…" : "Apply Status Bar")
+                        Text(isApplying ? wtLang.tr("Applying…") : wtLang.tr("Apply Status Bar"))
                             .font(.subheadline.weight(.semibold))
                         Spacer(minLength: 0)
                     }

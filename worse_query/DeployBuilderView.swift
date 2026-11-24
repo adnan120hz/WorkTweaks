@@ -35,6 +35,7 @@ struct DeployEditorSession: Identifiable {
 }
 
 struct DeployBuilderView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var appDataManager: AppDataManager
     let session: DeployEditorSession
 
@@ -70,27 +71,27 @@ struct DeployBuilderView: View {
     private var bundleIDProblem: String? {
         let trimmed = bundleIDText.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            return "A bundle ID is required — it names the one app this package may touch."
+            return wtLang.tr("A bundle ID is required — it names the one app this package may touch.")
         }
         if trimmed.contains("/") || trimmed.contains("..") {
-            return "The bundle ID is not a valid identifier."
+            return wtLang.tr("The bundle ID is not a valid identifier.")
         }
         return nil
     }
 
     private func pathProblem(_ file: StoredDeployPackageFile) -> String? {
         DeployManager.cleanRelativePath(file.destinationPath) == nil
-            ? "Paths must be relative, non-empty and contain no \"..\" component."
+            ? wtLang.tr("Paths must be relative, non-empty and contain no \"..\" component.")
             : nil
     }
 
     private var saveProblem: String? {
         if let bundleIDProblem { return bundleIDProblem }
         if files.isEmpty {
-            return "Add at least one file — a package with no files deploys nothing."
+            return wtLang.tr("Add at least one file — a package with no files deploys nothing.")
         }
         if files.contains(where: { pathProblem($0) != nil }) {
-            return "One of the destination paths is invalid."
+            return wtLang.tr("One of the destination paths is invalid.")
         }
         return nil
     }
@@ -100,13 +101,13 @@ struct DeployBuilderView: View {
     var body: some View {
         NavigationStack {
             WTGlassPage {
-                WTSectionCard(header: "Package") {
+                WTSectionCard(header: wtLang.tr("Package")) {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 8) {
-                            Text("Name")
+                            Text(wtLang.tr("Name"))
                                 .font(.subheadline)
                             Spacer()
-                            TextField("Optional label", text: $nameText)
+                            TextField(wtLang.tr("Optional label"), text: $nameText)
                                 .multilineTextAlignment(.trailing)
                                 .autocorrectionDisabled()
                         }
@@ -117,10 +118,10 @@ struct DeployBuilderView: View {
                             .padding(.leading, 14)
 
                         HStack(spacing: 8) {
-                            Text("Scope")
+                            Text(wtLang.tr("Scope"))
                                 .font(.subheadline)
                             Spacer()
-                            Picker("Scope", selection: $scope) {
+                            Picker(wtLang.tr("Scope"), selection: $scope) {
                                 ForEach(DeployManager.scopes, id: \.self) { scopeOption in
                                     Text(scopeOption).tag(scopeOption)
                                 }
@@ -134,14 +135,14 @@ struct DeployBuilderView: View {
                 }
 
                 WTSectionCard(
-                    header: "Target",
+                    header: wtLang.tr("Target"),
                     footer: scope == "AppGroup"
-                        ? "For AppGroup scope, the target is the App Group identifier (for example group.com.example) — type it here."
-                        : "The bundle ID of the one app this package may touch. Pick it from the App Data container scan, or type it."
+                        ? wtLang.tr("For AppGroup scope, the target is the App Group identifier (for example group.com.example) — type it here.")
+                        : wtLang.tr("The bundle ID of the one app this package may touch. Pick it from the App Data container scan, or type it.")
                 ) {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 8) {
-                            Text("Bundle ID")
+                            Text(wtLang.tr("Bundle ID"))
                                 .font(.subheadline)
                             Spacer()
                             TextField("com.example.app", text: $bundleIDText)
@@ -167,7 +168,7 @@ struct DeployBuilderView: View {
                         Button {
                             showContainerPicker = true
                         } label: {
-                            Label("Pick from App Data scan…", systemImage: "list.bullet.rectangle")
+                            Label(wtLang.tr("Pick from App Data scan…"), systemImage: "list.bullet.rectangle")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
@@ -177,12 +178,12 @@ struct DeployBuilderView: View {
                 }
 
                 WTSectionCard(
-                    header: "Files (\(files.count))",
-                    footer: "Payload files are copied into the package. Add File accepts any file — a .plist is added as a payload, and a .zip is unpacked, each file inside becoming a payload with its destination defaulting to its path inside the archive. Destinations are relative paths only; absolute paths and \"..\" are rejected, exactly like an imported package."
+                    header: wtLang.tr("Files (%d)", files.count),
+                    footer: wtLang.tr("Payload files are copied into the package. Add File accepts any file — a .plist is added as a payload, and a .zip is unpacked, each file inside becoming a payload with its destination defaulting to its path inside the archive. Destinations are relative paths only; absolute paths and \"..\" are rejected, exactly like an imported package.")
                 ) {
                     VStack(alignment: .leading, spacing: 0) {
                         if files.isEmpty {
-                            Text("No files yet.")
+                            Text(wtLang.tr("No files yet."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 14)
@@ -202,7 +203,7 @@ struct DeployBuilderView: View {
                         Button {
                             showFilePicker = true
                         } label: {
-                            Label("Add File…", systemImage: "plus")
+                            Label(wtLang.tr("Add File…"), systemImage: "plus")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
@@ -219,9 +220,9 @@ struct DeployBuilderView: View {
                 }
 
                 if let saveError {
-                    WTSectionCard(footer: "Nothing was written — the stored manifest is unchanged.") {
+                    WTSectionCard(footer: wtLang.tr("Nothing was written — the stored manifest is unchanged.")) {
                         VStack(alignment: .leading, spacing: 3) {
-                            Label("This package was rejected", systemImage: "exclamationmark.triangle.fill")
+                            Label(wtLang.tr("This package was rejected"), systemImage: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
                             Text(saveError)
                                 .font(.caption)
@@ -241,13 +242,13 @@ struct DeployBuilderView: View {
                 }
 
                 WTSectionCard(
-                    header: "Export",
-                    footer: "Saves the package, then shares ONE .zip file — save it in Files. Deploy imports that zip and applies it without asking for locations."
+                    header: wtLang.tr("Export"),
+                    footer: wtLang.tr("Saves the package, then shares ONE .zip file — save it in Files. Deploy imports that zip and applies it without asking for locations.")
                 ) {
                     Button {
                         exportZIP()
                     } label: {
-                        Label("Export ZIP", systemImage: "square.and.arrow.up")
+                        Label(wtLang.tr("Export ZIP"), systemImage: "square.and.arrow.up")
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -255,14 +256,14 @@ struct DeployBuilderView: View {
                     }
                 }
             }
-            .navigationTitle(session.isNew ? "New Package" : "Edit Package")
+            .navigationTitle(session.isNew ? wtLang.tr("New Package") : wtLang.tr("Edit Package"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { cancel() }
+                    Button(wtLang.tr("Cancel")) { cancel() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
+                    Button(wtLang.tr("Save")) { save() }
                         .fontWeight(.semibold)
                         .disabled(saveProblem != nil)
                 }
@@ -302,7 +303,7 @@ struct DeployBuilderView: View {
                         ))
                         addError = nil
                     } else {
-                        addError = "The picked file could not be copied into the package."
+                        addError = wtLang.tr("The picked file could not be copied into the package.")
                     }
                 case .failure(let error):
                     addError = error.localizedDescription
@@ -341,7 +342,7 @@ struct DeployBuilderView: View {
                 Image(systemName: "arrow.turn.down.right")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                TextField("Destination path", text: $files[index].destinationPath)
+                TextField(wtLang.tr("Destination path"), text: $files[index].destinationPath)
                     .font(.system(.subheadline, design: .monospaced))
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
@@ -396,7 +397,7 @@ struct DeployBuilderView: View {
             if let url = DeployManager.exportZipURL(for: saved) {
                 exportItem = BuilderExportItem(url: url)
             } else {
-                saveError = "The package could not be exported."
+                saveError = wtLang.tr("The package could not be exported.")
             }
         }
     }
@@ -415,6 +416,7 @@ struct DeployBuilderView: View {
 // MARK: - Container picker (bundle ID from the App Data scan)
 
 struct DeployContainerPickerView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var appDataManager: AppDataManager
     let onPick: (String) -> Void
 
@@ -436,8 +438,8 @@ struct DeployContainerPickerView: View {
                 } else if appDataManager.containers.isEmpty {
                     WTSectionCard {
                         Text(appDataManager.didScan
-                             ? "The container scan found no containers."
-                             : "No scan yet. The scan starts automatically; if it does not, open App Data once, or type the bundle ID by hand.")
+                             ? wtLang.tr("The container scan found no containers.")
+                             : wtLang.tr("No scan yet. The scan starts automatically; if it does not, open App Data once, or type the bundle ID by hand."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
@@ -445,8 +447,8 @@ struct DeployContainerPickerView: View {
                     }
                 } else {
                     WTSectionCard(
-                        header: "Containers (\(appDataManager.containers.count))",
-                        footer: "Identifiers from the App Data container scan — the same list Deploy resolves Application targets against."
+                        header: wtLang.tr("Containers (%d)", appDataManager.containers.count),
+                        footer: wtLang.tr("Identifiers from the App Data container scan — the same list Deploy resolves Application targets against.")
                     ) {
                         VStack(alignment: .leading, spacing: 0) {
                             ForEach(Array(appDataManager.containers.enumerated()), id: \.element.id) { index, container in
@@ -478,11 +480,11 @@ struct DeployContainerPickerView: View {
                     }
                 }
             }
-            .navigationTitle("Pick Target App")
+            .navigationTitle(wtLang.tr("Pick Target App"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(wtLang.tr("Cancel")) { dismiss() }
                 }
             }
             .onAppear {
@@ -503,6 +505,7 @@ struct DeployContainerPickerView: View {
 // page.
 
 struct PackageBuilderView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var appDataManager: AppDataManager
     @StateObject private var deployManager = DeployManager()
 
@@ -519,9 +522,9 @@ struct PackageBuilderView: View {
             )
 
             if let importError {
-                WTSectionCard(footer: "Nothing was written.") {
+                WTSectionCard(footer: wtLang.tr("Nothing was written.")) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Label("This package was rejected", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("This package was rejected"), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(importError)
                             .font(.caption)
@@ -539,7 +542,7 @@ struct PackageBuilderView: View {
                 resolveRequest: $resolveRequest
             )
         }
-        .navigationTitle("Package Builder")
+        .navigationTitle(wtLang.tr("Package Builder"))
         .navigationBarTitleDisplayMode(.inline)
     }
 

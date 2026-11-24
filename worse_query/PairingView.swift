@@ -132,6 +132,7 @@ enum VPNTunnelStatus {
 // MARK: - The page
 
 struct PairingView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var pairing = PairingController.shared
     @State private var statusMessage: String?
     @State private var showPairingImporter = false
@@ -153,7 +154,7 @@ struct PairingView: View {
             }
             Color.clear.frame(height: 60)
         }
-        .navigationTitle("Get Pairing File + VPN Status")
+        .navigationTitle(wtLang.tr("Get Pairing File + VPN Status"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { refresh() }
         .fileImporter(
@@ -173,9 +174,9 @@ struct PairingView: View {
         Task {
             do {
                 _ = try await pairing.startAndWait()
-                statusMessage = "Pairing file saved to the app."
+                statusMessage = wtLang.tr("Pairing file saved to the app.")
             } catch is CancellationError {
-                statusMessage = "Pairing cancelled."
+                statusMessage = wtLang.tr("Pairing cancelled.")
             } catch {
                 statusMessage = error.localizedDescription
             }
@@ -202,24 +203,24 @@ struct PairingView: View {
             return
         }
         guard url.startAccessingSecurityScopedResource() else {
-            statusMessage = "Could not access that file."
+            statusMessage = wtLang.tr("Could not access that file.")
             return
         }
         defer { url.stopAccessingSecurityScopedResource() }
         guard let data = try? Data(contentsOf: url) else {
-            statusMessage = "Could not read that file."
+            statusMessage = wtLang.tr("Could not read that file.")
             return
         }
         var format = PropertyListSerialization.PropertyListFormat.xml
         let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: &format)
         guard plist is [String: Any] else {
-            statusMessage = "That file is not a pairing file."
+            statusMessage = wtLang.tr("That file is not a pairing file.")
             return
         }
         if PairingStore.savePairingFile(from: url) {
-            statusMessage = "Pairing file imported."
+            statusMessage = wtLang.tr("Pairing file imported.")
         } else {
-            statusMessage = "Could not save that pairing file."
+            statusMessage = wtLang.tr("Could not save that pairing file.")
         }
         refresh()
     }
@@ -229,9 +230,9 @@ struct PairingView: View {
     private var introCard: some View {
         WTSectionCard {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Get Pairing File + VPN Status")
+                Text(wtLang.tr("Get Pairing File + VPN Status"))
                     .font(.headline)
-                Text("The pairing file + Local Dev VPN tunnel are the transport Airlift uses to reach the device. Green = ready, gray = not ready.")
+                Text(wtLang.tr("The pairing file + Local Dev VPN tunnel are the transport Airlift uses to reach the device. Green = ready, gray = not ready."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -244,16 +245,16 @@ struct PairingView: View {
     // MARK: Get Pairing File (on-device, iOS 27)
 
     private var pairingCard: some View {
-        WTSectionCard(header: "Get Pairing File") {
+        WTSectionCard(header: wtLang.tr("Get Pairing File")) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     statusDot(isReady: hasPairing)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Pairing file")
+                        Text(wtLang.tr("Pairing file"))
                             .font(.subheadline.weight(.semibold))
                         Text(hasPairing
-                             ? "Saved: \(PairingStore.savedFileName ?? "pairing file")"
-                             : "No pairing file saved yet.")
+                             ? wtLang.tr("Saved: %@", PairingStore.savedFileName ?? "pairing file")
+                             : wtLang.tr("No pairing file saved yet."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -267,40 +268,40 @@ struct PairingView: View {
                             .font(.system(size: 44, weight: .bold, design: .monospaced))
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, 4)
-                        Text("Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.")
+                        Text(wtLang.tr("Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    Button("Cancel Pairing") {
+                    Button(wtLang.tr("Cancel Pairing")) {
                         SoundEffects.playTap()
                         pairing.softCancel()
                         refresh()
                     }
                     .buttonStyle(.bordered)
                 } else {
-                    Button("Pair This iPhone") {
+                    Button(wtLang.tr("Pair This iPhone")) {
                         startPairing()
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(pairing.running)
-                    Button("Import Pairing File") {
+                    Button(wtLang.tr("Import Pairing File")) {
                         SoundEffects.playTap()
                         showPairingImporter = true
                     }
                     .buttonStyle(.bordered)
                     if hasPairing {
-                        Button("Remove Pairing File", role: .destructive) {
+                        Button(wtLang.tr("Remove Pairing File"), role: .destructive) {
                             SoundEffects.playTap()
                             PairingStore.removePairingFile()
                             PairingController.deleteStoredPairingCredentials()
-                            statusMessage = "Pairing file removed."
+                            statusMessage = wtLang.tr("Pairing file removed.")
                             refresh()
                         }
                         .buttonStyle(.bordered)
                     }
                 }
-                Text("Two ways to get a pairing file: Pair This iPhone (iOS 27 only) shows a 6-digit PIN — approve it in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks. Or import a pairing file (.plist) from your computer manually. The pairing file is saved in the app.")
+                Text(wtLang.tr("Two ways to get a pairing file: Pair This iPhone (iOS 27 only) shows a 6-digit PIN — approve it in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks. Or import a pairing file (.plist) from your computer manually. The pairing file is saved in the app."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -313,26 +314,26 @@ struct PairingView: View {
     // MARK: VPN Tunnel
 
     private var vpnCard: some View {
-        WTSectionCard(header: "VPN Tunnel") {
+        WTSectionCard(header: wtLang.tr("VPN Tunnel")) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     statusDot(isReady: tunnelUp)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Local Dev VPN")
+                        Text(wtLang.tr("Local Dev VPN"))
                             .font(.subheadline.weight(.semibold))
                         Text(tunnelUp
-                             ? "Connected\(tunnelAddresses.isEmpty ? "" : ": \(tunnelAddresses.joined(separator: ", "))")"
-                             : "Not connected.")
+                             ? wtLang.tr("Connected%@", tunnelAddresses.isEmpty ? "" : ": \(tunnelAddresses.joined(separator: ", "))")
+                             : wtLang.tr("Not connected."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
-                Button("Refresh Status") {
+                Button(wtLang.tr("Refresh Status")) {
                     SoundEffects.playTap()
                     refresh()
                 }
                 .buttonStyle(.bordered)
-                Text("Open the Local Dev VPN app and connect. The tunnel shows as a utun interface on 10.7.x.x (gateway 10.7.0.1).")
+                Text(wtLang.tr("Open the Local Dev VPN app and connect. The tunnel shows as a utun interface on 10.7.x.x (gateway 10.7.0.1)."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

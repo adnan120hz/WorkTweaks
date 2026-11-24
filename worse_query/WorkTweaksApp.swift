@@ -8,13 +8,16 @@ struct WorkTweaksApp: App {
         // in place on the same inode so iOS does not regenerate the
         // cache (and wipe the tweaks) on reboot/respring.
         UserDefaults.standard.register(defaults: [
-            "atomic_write": true
+            "atomic_write": true,
+            // Language default: English (US) is the main language.
+            "wt.language": "en-US"
         ])
     }
 
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environmentObject(WTLangStore.shared)
         }
     }
 }

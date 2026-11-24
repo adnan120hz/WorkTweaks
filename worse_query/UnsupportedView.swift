@@ -8,6 +8,7 @@ import SwiftUI
 // changing the device's iOS version.
 
 struct UnsupportedView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @State private var showTutorials = false
     @State private var showLicense = false
 
@@ -26,7 +27,7 @@ struct UnsupportedView: View {
                     SupportedReleaseRow(release: release)
                 }
             } header: {
-                Text("Supported iOS Versions")
+                Text(wtLang.tr("Supported iOS Versions"))
             }
         }
         .listStyle(.insetGrouped)
@@ -43,7 +44,7 @@ struct UnsupportedView: View {
                 TutorialsView()
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Close") { showTutorials = false }
+                            Button(wtLang.tr("Close")) { showTutorials = false }
                         }
                     }
             }
@@ -53,7 +54,7 @@ struct UnsupportedView: View {
                 LicenseView()
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Close") { showLicense = false }
+                            Button(wtLang.tr("Close")) { showLicense = false }
                         }
                     }
             }
@@ -67,15 +68,15 @@ struct UnsupportedView: View {
                 .foregroundStyle(.orange)
 
             VStack(spacing: 8) {
-                Text("This iOS Version Isn't Supported")
+                Text(wtLang.tr("This iOS Version Isn't Supported"))
                     .font(.title3.weight(.bold))
                     .multilineTextAlignment(.center)
-                Text("Your device is running **\(SupportInfo.deviceSummary)**. WorkTweaks v2.0 only runs on the builds listed below, so the app can't open on this version.")
+                Text(LocalizedStringKey(wtLang.tr("Your device is running **%@**. WorkTweaks v2.0 only runs on the builds listed below, so the app can't open on this version.", SupportInfo.deviceSummary)))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("If you update or downgrade to a supported build, WorkTweaks will open normally.")
+                Text(wtLang.tr("If you update or downgrade to a supported build, WorkTweaks will open normally."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -89,7 +90,7 @@ struct UnsupportedView: View {
             Button {
                 showTutorials = true
             } label: {
-                Label("Open Tutorials", systemImage: "book")
+                Label(wtLang.tr("Open Tutorials"), systemImage: "book")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
@@ -100,7 +101,7 @@ struct UnsupportedView: View {
             Button {
                 showLicense = true
             } label: {
-                Label("License & Credits", systemImage: "doc.text")
+                Label(wtLang.tr("License & Credits"), systemImage: "doc.text")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)

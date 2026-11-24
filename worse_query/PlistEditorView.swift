@@ -10,6 +10,7 @@ import SwiftUI
 // PlistEditor.swift).
 
 struct PlistEditorView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var manager: AppDataManager
     let path: String
     let name: String
@@ -26,7 +27,7 @@ struct PlistEditorView: View {
                 WTSectionCard {
                     HStack(spacing: 10) {
                         ProgressView()
-                        Text("Reading the property list…")
+                        Text(wtLang.tr("Reading the property list…"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -36,7 +37,7 @@ struct PlistEditorView: View {
             case .blocked(let message):
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 6) {
-                        Label("Couldn't open this property list.", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("Couldn't open this property list."), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(message)
                             .font(.caption)
@@ -47,11 +48,11 @@ struct PlistEditorView: View {
                 }
             case .ready:
                 WTSectionCard(
-                    header: editor.rootKind == .dictionary ? "Keys" : "Elements",
-                    footer: "Nested dictionaries, arrays and Data are shown read-only — the editor never rewrites a structure it cannot show."
+                    header: editor.rootKind == .dictionary ? wtLang.tr("Keys") : wtLang.tr("Elements"),
+                    footer: wtLang.tr("Nested dictionaries, arrays and Data are shown read-only — the editor never rewrites a structure it cannot show.")
                 ) {
                     if editor.rows.isEmpty {
-                        Text("This property list has no top-level entries.")
+                        Text(wtLang.tr("This property list has no top-level entries."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
@@ -70,12 +71,12 @@ struct PlistEditorView: View {
                     }
                 }
 
-                WTSectionCard(footer: "Saving rebuilds the property list from this table, takes a backup of the original first, then writes it back in place. Close the owning app before saving — a running app can overwrite your edits.") {
+                WTSectionCard(footer: wtLang.tr("Saving rebuilds the property list from this table, takes a backup of the original first, then writes it back in place. Close the owning app before saving — a running app can overwrite your edits.")) {
                     VStack(alignment: .leading, spacing: 0) {
                         Button {
                             showAddRow = true
                         } label: {
-                            Label("Add Row", systemImage: "plus")
+                            Label(wtLang.tr("Add Row"), systemImage: "plus")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
@@ -86,7 +87,7 @@ struct PlistEditorView: View {
                         Button {
                             editor.save(manager: manager)
                         } label: {
-                            Text(editor.isSaving ? "Saving…" : (editor.isDirty ? "Save" : "Saved"))
+                            Text(editor.isSaving ? wtLang.tr("Saving…") : (editor.isDirty ? wtLang.tr("Save") : wtLang.tr("Saved")))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 11)
                                 .contentShape(Rectangle())
@@ -114,19 +115,19 @@ struct PlistEditorView: View {
         .sheet(isPresented: $showAddRow) {
             PlistRowAddSheet(editor: editor)
         }
-        .confirmationDialog("Delete this row?", isPresented: Binding(
+        .confirmationDialog(wtLang.tr("Delete this row?"), isPresented: Binding(
             get: { showDeleteConfirm != nil },
             set: { if !$0 { showDeleteConfirm = nil } }
         )) {
-            Button("Delete Row", role: .destructive) {
+            Button(wtLang.tr("Delete Row"), role: .destructive) {
                 if let row = showDeleteConfirm {
                     editor.deleteRow(row)
                 }
                 showDeleteConfirm = nil
             }
-            Button("Cancel", role: .cancel) { showDeleteConfirm = nil }
+            Button(wtLang.tr("Cancel"), role: .cancel) { showDeleteConfirm = nil }
         } message: {
-            Text("The entry is removed from the property list on the next Save.")
+            Text(wtLang.tr("The entry is removed from the property list on the next Save."))
         }
         .onAppear {
             if case .idle = editor.state {
@@ -188,6 +189,7 @@ struct PlistEditorView: View {
 // MARK: - Row edit sheet
 
 private struct PlistRowEditSheet: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var editor: PlistEditor
     let row: PlistRow
 
@@ -198,8 +200,8 @@ private struct PlistRowEditSheet: View {
     var body: some View {
         NavigationStack {
             WTGlassPage {
-                WTSectionCard(header: row.key, footer: "Type: \(row.kind.rawValue). \(hint)") {
-                    TextField("Value", text: $text)
+                WTSectionCard(header: row.key, footer: wtLang.tr("Type: %@. %@", row.kind.rawValue, hint)) {
+                    TextField(wtLang.tr("Value"), text: $text)
                         .font(.system(.body, design: .monospaced))
                         .disableAutocorrection(true)
                         .textInputAutocapitalization(.never)
@@ -225,18 +227,18 @@ private struct PlistRowEditSheet: View {
                             dismiss()
                         }
                     } label: {
-                        Text("Apply Edit")
+                        Text(wtLang.tr("Apply Edit"))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
                             .contentShape(Rectangle())
                     }
                 }
             }
-            .navigationTitle("Edit Value")
+            .navigationTitle(wtLang.tr("Edit Value"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(wtLang.tr("Cancel")) { dismiss() }
                 }
             }
         }
@@ -247,10 +249,10 @@ private struct PlistRowEditSheet: View {
 
     private var hint: String {
         switch row.kind {
-        case .integer: return "Whole numbers only."
-        case .real: return "Numbers only."
-        case .bool: return "true or false."
-        case .date: return "ISO date (e.g. 2026-11-24T15:30:00Z) or yyyy-MM-dd HH:mm:ss."
+        case .integer: return wtLang.tr("Whole numbers only.")
+        case .real: return wtLang.tr("Numbers only.")
+        case .bool: return wtLang.tr("true or false.")
+        case .date: return wtLang.tr("ISO date (e.g. 2026-11-24T15:30:00Z) or yyyy-MM-dd HH:mm:ss.")
         default: return ""
         }
     }
@@ -259,6 +261,7 @@ private struct PlistRowEditSheet: View {
 // MARK: - Add row sheet
 
 private struct PlistRowAddSheet: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var editor: PlistEditor
 
     @Environment(\.dismiss) private var dismiss
@@ -272,10 +275,10 @@ private struct PlistRowAddSheet: View {
     var body: some View {
         NavigationStack {
             WTGlassPage {
-                WTSectionCard(header: "New Row") {
+                WTSectionCard(header: wtLang.tr("New Row")) {
                     VStack(alignment: .leading, spacing: 0) {
                         if editor.rootKind == .dictionary {
-                            TextField("Key", text: $key)
+                            TextField(wtLang.tr("Key"), text: $key)
                                 .disableAutocorrection(true)
                                 .textInputAutocapitalization(.never)
                                 .padding(.horizontal, 14)
@@ -283,7 +286,7 @@ private struct PlistRowAddSheet: View {
                             Divider()
                                 .padding(.leading, 14)
                         }
-                        Picker("Type", selection: $kind) {
+                        Picker(wtLang.tr("Type"), selection: $kind) {
                             ForEach(scalarKinds, id: \.self) { kind in
                                 Text(kind.rawValue).tag(kind)
                             }
@@ -293,7 +296,7 @@ private struct PlistRowAddSheet: View {
                         .padding(.vertical, 8)
                         Divider()
                             .padding(.leading, 14)
-                        TextField("Value", text: $text)
+                        TextField(wtLang.tr("Value"), text: $text)
                             .font(.system(.body, design: .monospaced))
                             .disableAutocorrection(true)
                             .textInputAutocapitalization(.never)
@@ -320,18 +323,18 @@ private struct PlistRowAddSheet: View {
                             dismiss()
                         }
                     } label: {
-                        Text("Add Row")
+                        Text(wtLang.tr("Add Row"))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
                             .contentShape(Rectangle())
                     }
                 }
             }
-            .navigationTitle("Add Row")
+            .navigationTitle(wtLang.tr("Add Row"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(wtLang.tr("Cancel")) { dismiss() }
                 }
             }
         }

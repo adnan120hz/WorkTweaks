@@ -22,6 +22,7 @@ import UniformTypeIdentifiers
 // are English, like the rest of the app.
 
 struct PosterBoardMakerView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var manager: PosterBoardManager
 
     @State private var name = "Custom"
@@ -47,9 +48,9 @@ struct PosterBoardMakerView: View {
 
     var body: some View {
         WTGlassPage {
-            WTSectionCard(header: "Wallpaper", footer: "Videos use the first 12 seconds. Photos become a single still frame.") {
+            WTSectionCard(header: wtLang.tr("Wallpaper"), footer: wtLang.tr("Videos use the first 12 seconds. Photos become a single still frame.")) {
                 VStack(alignment: .leading, spacing: 0) {
-                    TextField("Wallpaper name", text: $name)
+                    TextField(wtLang.tr("Wallpaper name"), text: $name)
                         .disableAutocorrection(true)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 11)
@@ -60,7 +61,7 @@ struct PosterBoardMakerView: View {
                         pickerKind = .photo
                     } label: {
                         HStack(spacing: 10) {
-                            Label(pickedPhoto == nil ? "Choose Photo…" : "Photo chosen — tap to change", systemImage: "photo")
+                            Label(pickedPhoto == nil ? wtLang.tr("Choose Photo…") : wtLang.tr("Photo chosen — tap to change"), systemImage: "photo")
                                 .font(.subheadline)
                             Spacer(minLength: 0)
                             if let photo = pickedPhoto {
@@ -102,8 +103,8 @@ struct PosterBoardMakerView: View {
             }
 
             if pickedVideoURL != nil {
-                WTSectionCard(header: "Video") {
-                    Toggle("Loop (forwards and backwards)", isOn: $loop)
+                WTSectionCard(header: wtLang.tr("Video")) {
+                    Toggle(wtLang.tr("Loop (forwards and backwards)"), isOn: $loop)
                         .font(.subheadline)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 11)
@@ -132,12 +133,12 @@ struct PosterBoardMakerView: View {
                 }
             }
 
-            WTSectionCard(footer: "A respring is required before a new wallpaper appears in the gallery.") {
+            WTSectionCard(footer: wtLang.tr("A respring is required before a new wallpaper appears in the gallery.")) {
                 Button {
                     buildAndInstall()
                 } label: {
                     HStack(spacing: 10) {
-                        Label("Build & Install Wallpaper", systemImage: "wand.and.stars")
+                        Label(wtLang.tr("Build & Install Wallpaper"), systemImage: "wand.and.stars")
                             .font(.subheadline.weight(.semibold))
                         Spacer(minLength: 0)
                         if isBuilding || manager.isBusy {
@@ -152,30 +153,30 @@ struct PosterBoardMakerView: View {
                 .disabled(!canBuild)
             }
         }
-        .navigationTitle("Create Wallpaper")
+        .navigationTitle(wtLang.tr("Create Wallpaper"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $pickerKind) { kind in
             PhotoVideoPicker(filter: kind == .photo ? .images : .videos) { result in
                 handlePicked(result, kind: kind)
             }
         }
-        .alert("Could Not Build", isPresented: Binding(
+        .alert(wtLang.tr("Could Not Build"), isPresented: Binding(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
         )) {
-            Button("OK") { }
+            Button(wtLang.tr("OK")) { }
         } message: {
             Text(errorMessage ?? "")
         }
-        .confirmationDialog("PosterBoard Updated", isPresented: $showRespringChoice, titleVisibility: .visible) {
-            Button("Respring") { RespringCenter.shared.trigger() }
-            Button("Restart Device") { showManualRestartGuide = true }
-            Button("Later", role: .cancel) { }
+        .confirmationDialog(wtLang.tr("PosterBoard Updated"), isPresented: $showRespringChoice, titleVisibility: .visible) {
+            Button(wtLang.tr("Respring")) { RespringCenter.shared.trigger() }
+            Button(wtLang.tr("Restart Device")) { showManualRestartGuide = true }
+            Button(wtLang.tr("Later"), role: .cancel) { }
         } message: {
-            Text("SpringBoard loads the wallpaper store when it starts — respring or restart to see the change in the wallpaper gallery.")
+            Text(wtLang.tr("SpringBoard loads the wallpaper store when it starts — respring or restart to see the change in the wallpaper gallery."))
         }
         .alert(ManualRestartGuide.title, isPresented: $showManualRestartGuide) {
-            Button("OK") { }
+            Button(wtLang.tr("OK")) { }
         } message: {
             Text(ManualRestartGuide.message)
         }
@@ -183,9 +184,9 @@ struct PosterBoardMakerView: View {
 
     private var videoButtonTitle: String {
         if let duration = pickedVideoDuration {
-            return String(format: "Video chosen (%.1f s) — tap to change", duration)
+            return wtLang.tr("Video chosen (%.1f s) — tap to change", duration)
         }
-        return "Choose Video…"
+        return wtLang.tr("Choose Video…")
     }
 
     // MARK: Pick handling
@@ -212,7 +213,7 @@ struct PosterBoardMakerView: View {
                 do {
                     try FileManager.default.copyItem(at: url, to: copy)
                 } catch {
-                    DispatchQueue.main.async { self.errorMessage = "Could not read this video: \(error.localizedDescription)" }
+                    DispatchQueue.main.async { self.errorMessage = wtLang.tr("Could not read this video: %@", error.localizedDescription) }
                     return
                 }
                 let duration = CMTimeGetSeconds(AVURLAsset(url: copy).duration)
@@ -235,7 +236,7 @@ struct PosterBoardMakerView: View {
         let loop = loop
         isBuilding = true
         errorMessage = nil
-        progressText = photo != nil ? "Building still wallpaper…" : "Reading video frames…"
+        progressText = photo != nil ? wtLang.tr("Building still wallpaper…") : wtLang.tr("Reading video frames…")
         DispatchQueue.global(qos: .userInitiated).async {
             let folder: URL
             do {
@@ -257,7 +258,7 @@ struct PosterBoardMakerView: View {
                 return
             }
             DispatchQueue.main.async {
-                self.progressText = "Installing into PosterBoard…"
+                self.progressText = wtLang.tr("Installing into PosterBoard…")
                 self.manager.installBuiltDescriptor(folder: folder, name: displayName.isEmpty ? "Custom" : displayName) { ok in
                     self.isBuilding = false
                     self.progressText = ""

@@ -15,6 +15,7 @@ import SwiftUI
 // and loads automatically once the scan completes.
 
 struct VoiceMemosAIView: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var engine = VoiceMemosAI()
     @ObservedObject private var appData = AppDataManager.shared
     @State private var showDeleteCacheConfirm = false
@@ -22,17 +23,17 @@ struct VoiceMemosAIView: View {
     var body: some View {
         WTGlassPage {
             WTSectionCard(
-                header: "Voice Memos",
-                footer: "Exported as .m4a files with their original titles, zipped to this app's Documents/VoiceMemosExports. The recordings database is only ever read — never written."
+                header: wtLang.tr("Voice Memos"),
+                footer: wtLang.tr("Exported as .m4a files with their original titles, zipped to this app's Documents/VoiceMemosExports. The recordings database is only ever read — never written.")
             ) {
                 switch engine.recordingsState {
                 case .idle, .loading:
                     HStack(spacing: 10) {
                         ProgressView()
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(appData.didScan ? "Reading the recordings database…" : "Waiting for the App Data scan…")
+                            Text(appData.didScan ? wtLang.tr("Reading the recordings database…") : wtLang.tr("Waiting for the App Data scan…"))
                                 .font(.subheadline)
-                            Text("The Voice Memos container is found through the App Data scan.")
+                            Text(wtLang.tr("The Voice Memos container is found through the App Data scan."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -41,12 +42,12 @@ struct VoiceMemosAIView: View {
                     .padding(.vertical, 10)
                 case .blocked(let message):
                     VStack(alignment: .leading, spacing: 6) {
-                        Label("Couldn't load the recordings.", systemImage: "exclamationmark.triangle.fill")
+                        Label(wtLang.tr("Couldn't load the recordings."), systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(message)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Button("Try Again") {
+                        Button(wtLang.tr("Try Again")) {
                             engine.retryLoadRecordings()
                         }
                         .padding(.top, 4)
@@ -55,7 +56,7 @@ struct VoiceMemosAIView: View {
                     .padding(.vertical, 10)
                 case .ready:
                     if engine.recordings.isEmpty {
-                        Text("No recordings were found in the Voice Memos database.")
+                        Text(wtLang.tr("No recordings were found in the Voice Memos database."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
@@ -104,7 +105,7 @@ struct VoiceMemosAIView: View {
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 0) {
-                            Button("Select All") {
+                            Button(wtLang.tr("Select All")) {
                                 for index in engine.recordings.indices {
                                     engine.recordings[index].isSelected = true
                                 }
@@ -113,7 +114,7 @@ struct VoiceMemosAIView: View {
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
                             .contentShape(Rectangle())
-                            Button("Select None") {
+                            Button(wtLang.tr("Select None")) {
                                 for index in engine.recordings.indices {
                                     engine.recordings[index].isSelected = false
                                 }
@@ -128,7 +129,7 @@ struct VoiceMemosAIView: View {
                         Button {
                             engine.exportSelected()
                         } label: {
-                            Text(engine.isExporting ? "Exporting…" : "Export Selected (\(engine.recordings.filter { $0.isSelected }.count))")
+                            Text(engine.isExporting ? wtLang.tr("Exporting…") : wtLang.tr("Export Selected (%d)", engine.recordings.filter { $0.isSelected }.count))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 11)
                                 .contentShape(Rectangle())
@@ -138,7 +139,7 @@ struct VoiceMemosAIView: View {
                             Divider()
                                 .padding(.leading, 14)
                             ShareLink(item: url) {
-                                Label("Share \(url.lastPathComponent)", systemImage: "square.and.arrow.up")
+                                Label(wtLang.tr("Share %@", url.lastPathComponent), systemImage: "square.and.arrow.up")
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 11)
@@ -160,13 +161,13 @@ struct VoiceMemosAIView: View {
             }
 
             WTSectionCard(
-                header: "AI Cache",
-                footer: "Sizes are probed read-only (depth 4). Delete Cache removes only files under Library/Caches inside these targets — the AI models live elsewhere and are never touched."
+                header: wtLang.tr("AI Cache"),
+                footer: wtLang.tr("Sizes are probed read-only (depth 4). Delete Cache removes only files under Library/Caches inside these targets — the AI models live elsewhere and are never touched.")
             ) {
                 if engine.isProbingAI && engine.aiTargets.isEmpty {
                     HStack(spacing: 10) {
                         ProgressView()
-                        Text("Probing cache sizes…")
+                        Text(wtLang.tr("Probing cache sizes…"))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -174,10 +175,10 @@ struct VoiceMemosAIView: View {
                     .padding(.vertical, 10)
                 } else if engine.aiTargets.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("No AI cache targets were found.")
+                        Text(wtLang.tr("No AI cache targets were found."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Button("Probe Again") {
+                        Button(wtLang.tr("Probe Again")) {
                             engine.probeAICache()
                         }
                         .padding(.top, 4)
@@ -197,11 +198,11 @@ struct VoiceMemosAIView: View {
                                         .font(.subheadline.weight(.semibold))
                                         .lineLimit(1)
                                     if target.probed {
-                                        Text("\(target.fileCount) file(s) • \(wtFormatSize(target.bytes)) total • \(wtFormatSize(target.cachesBytes)) in Caches")
+                                        Text(wtLang.tr("%d file(s) • %@ total • %@ in Caches", target.fileCount, wtFormatSize(target.bytes), wtFormatSize(target.cachesBytes)))
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     } else {
-                                        Text("Grant refused — size unknown.")
+                                        Text(wtLang.tr("Grant refused — size unknown."))
                                             .font(.caption)
                                             .foregroundStyle(.orange)
                                     }
@@ -221,7 +222,7 @@ struct VoiceMemosAIView: View {
                     Button(role: .destructive) {
                         showDeleteCacheConfirm = true
                     } label: {
-                        Text(engine.isDeletingCache ? "Deleting…" : "Delete AI Cache Files")
+                        Text(engine.isDeletingCache ? wtLang.tr("Deleting…") : wtLang.tr("Delete AI Cache Files"))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
@@ -241,15 +242,15 @@ struct VoiceMemosAIView: View {
                 }
             }
         }
-        .navigationTitle("Voice Memos & AI Cache")
+        .navigationTitle(wtLang.tr("Voice Memos & AI Cache"))
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("Delete the AI cache files?", isPresented: $showDeleteCacheConfirm) {
-            Button("Delete Cache Files", role: .destructive) {
+        .confirmationDialog(wtLang.tr("Delete the AI cache files?"), isPresented: $showDeleteCacheConfirm) {
+            Button(wtLang.tr("Delete Cache Files"), role: .destructive) {
                 engine.deleteAICaches()
             }
-            Button("Cancel", role: .cancel) { }
+            Button(wtLang.tr("Cancel"), role: .cancel) { }
         } message: {
-            Text("Only files under Library/Caches inside the listed targets are deleted. AI models are never touched, and caches regenerate when the apps run again.")
+            Text(wtLang.tr("Only files under Library/Caches inside the listed targets are deleted. AI models are never touched, and caches regenerate when the apps run again."))
         }
         .onAppear {
             appData.scanIfNeeded()
