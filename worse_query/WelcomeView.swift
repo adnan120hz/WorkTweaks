@@ -115,9 +115,9 @@ struct WelcomeView: View {
 
     private var header: some View {
         VStack(spacing: 16) {
-            // The real app icon — the same artwork as the home-screen
-            // icon (bundled as the AppIconDisplay image set).
-            Image("AppIconDisplay")
+            // The real icon artwork for the current language —
+            // same PNGs as the home-screen alternate icons.
+            Image(uiImage: WTHeaderIcon.image(for: wtLang.language))
                 .resizable()
                 .scaledToFit()
                 .frame(width: 104, height: 104)

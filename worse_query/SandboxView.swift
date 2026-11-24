@@ -72,18 +72,17 @@ struct SandboxView: View {
                 WTSectionCard {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 14) {
-                            Image("AppIconDisplay")
+                            // The real icon artwork for the
+                            // current language — the same PNGs
+                            // as the home-screen alternate
+                            // icons, so the box follows the
+                            // language live, in sync with the
+                            // home-screen icon switch.
+                            Image(uiImage: WTHeaderIcon.image(for: lang.language))
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 52, height: 52)
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                                // Tinted with the language theme
-                                // (the home-screen icon itself is
-                                // swapped via alternate icons).
-                                .overlay(
-                                    lang.theme.gradient.opacity(0.28).blendMode(.overlay),
-                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                )
                             VStack(alignment: .leading, spacing: 3) {
                                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                                     Text("WorkTweaks")

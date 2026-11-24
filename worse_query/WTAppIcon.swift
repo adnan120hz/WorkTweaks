@@ -44,3 +44,36 @@ enum WTAppIcon {
         }
     }
 }
+
+// MARK: - In-app header icon (v7.0)
+//
+// The icon box inside the app (Sandbox header card, Welcome
+// screen) shows the same artwork as the home-screen icon for
+// the current language: the four 1024x1024 PNGs shipped at
+// the bundle root. The header reads lang.language, so it
+// updates live the moment the language changes, in sync
+// with the home-screen icon switch.
+enum WTHeaderIcon {
+    /// Bundle-root PNG name for the current language's icon.
+    static func imageName(for language: WTLanguage) -> String {
+        switch language {
+        case .enUS: return "AppIcon-US"
+        case .id: return "AppIcon-ID"
+        case .zhHans: return "AppIcon-CN"
+        case .vi: return "AppIcon-VN"
+        }
+    }
+
+    /// Loads the header icon artwork from the bundle.
+    /// UIImage(named:) finds loose bundle-root PNGs; the
+    /// explicit path lookup is the fallback. Falls back to
+    /// the AppIconDisplay asset so the header never renders
+    /// blank if a PNG is ever missing.
+    static func image(for language: WTLanguage) -> UIImage {
+        let name = imageName(for: language)
+        if let image = UIImage(named: name) { return image }
+        if let url = Bundle.main.url(forResource: name, withExtension: "png"),
+           let image = UIImage(contentsOfFile: url.path) { return image }
+        return UIImage(named: "AppIconDisplay") ?? UIImage()
+    }
+}

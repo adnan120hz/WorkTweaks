@@ -16,9 +16,12 @@ import SwiftUI
 // motif — so the two themes never read as the same.
 //
 // Flags are drawn with SwiftUI shapes only — no flag emoji,
-// no image assets. The Apple logo watermark (SF Symbol
-// "applelogo", low opacity, theme-tinted) sits behind page
-// titles at the top-right, like the reference screenshot.
+// no image assets. Per user order, NO logo or flag artwork
+// appears in any page background: the flag theme lives only
+// in accent colors/gradients and in the small foreground
+// flag indicators (header-card language row, language
+// picker sheet). The Apple logo watermark and the faint
+// flag background were removed.
 
 struct WTTheme {
     let language: WTLanguage
@@ -198,36 +201,5 @@ struct WTFlagView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
-    }
-}
-
-// MARK: - Page background: flag + Apple watermark
-//
-// Used by WTGlassPage behind every page: the flag drawn
-// large and very faint at the top-right, with the Apple
-// logo watermark over it, theme-tinted — the reference
-// screenshot's look, applied app-wide.
-
-struct WTThemeBackground: View {
-    @EnvironmentObject private var lang: WTLangStore
-
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Color(.systemGroupedBackground)
-            WTFlagView(language: lang.language)
-                .frame(width: 230, height: 152)
-                .opacity(0.10)
-                .offset(x: 36, y: -34)
-                .mask(
-                    LinearGradient(
-                        colors: [.black, .black.opacity(0.4), .clear],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
-            Image(systemName: "applelogo")
-                .font(.system(size: 150, weight: .bold))
-                .foregroundStyle(lang.theme.accent.opacity(0.10))
-                .offset(x: 28, y: -14)
-        }
     }
 }
