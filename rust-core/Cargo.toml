@@ -25,7 +25,9 @@ idevice-ffi = { path = "vendor/idevice-ffi", default-features = false, features 
   "mobile_image_mounter",
   "remote_pairing",
   "rsd",
+  "tcp",
   "tunnel_tcp_stack",
+  "usbmuxd",
   "xpc",
 ] }
 
@@ -35,6 +37,14 @@ idevice-ffi = { path = "vendor/idevice-ffi", default-features = false, features 
 # SideInstaller's rust-core/Cargo.toml. The vendored copy carries
 # SideInstaller's local fixes (OPACK back-references, etc.) — see
 # vendor/idevice/README.md.
+#
+# `tcp` + `usbmuxd` are MANDATORY, not optional: idevice-ffi's `provider`
+# module is ungated (lib.rs:57) but provider.rs unconditionally imports
+# `TcpProvider` (gated behind idevice/tcp) and `UsbmuxdProvider` +
+# `crate::usbmuxd` (gated behind idevice/usbmuxd) — an upstream
+# feature-gate bug. Without both, the crate fails with E0432
+# (run 45605495913). SideInstaller never hits it because it enables
+# `full`. Both are pure Rust (tokio/net, futures) — no native deps.
 [patch."https://github.com/jkcoxson/idevice.git"]
 idevice = { path = "vendor/idevice" }
 

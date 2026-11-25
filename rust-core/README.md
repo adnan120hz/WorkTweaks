@@ -51,12 +51,14 @@ plus `aws-lc` for TLS):
 | `mobile_image_mounter` | developer disk image mount (`image_mounter_*`) |
 | `remote_pairing` | RPPairing file + tunnel (`rp_pairing_file_*`, `tunnel_create_rppairing_multihost`) |
 | `rsd`, `xpc` | RSD handshake (`RsdHandshakeHandle`, `*_connect_rsd`) |
+| `tcp`, `usbmuxd` | MANDATORY: `provider.rs` is ungated but unconditionally imports `TcpProvider` / `UsbmuxdProvider` / `crate::usbmuxd` — without both the crate fails with E0432 (upstream gate bug; SideInstaller avoids it via `full`). Pure Rust (`tokio/net`, `futures`), no native deps. |
 | `tunnel_tcp_stack` | the in-process TCP stack the tunnel runs on (`tunnel_provider`) |
 | `aws-lc` | TLS (rustls/aws-lc-rs), matching SideInstaller |
 
 `lockdown` / `provider` / `pairing_file` modules in idevice-ffi are
 ungated, so `lockdownd_connect_rsd` / `lockdownd_get_value` need no extra
-feature. `full` is deliberately NOT enabled.
+feature — but `provider.rs` still needs `tcp` + `usbmuxd` (see the table
+above). `full` is deliberately NOT enabled.
 
 ## What v1 deliberately does NOT build or call
 
