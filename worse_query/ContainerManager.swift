@@ -273,8 +273,15 @@ final class ContainerManager: ObservableObject {
     /// ASCII letters, digits, "." and "-" (LC sanitizes
     /// non-ASCII the same way).
     static func sanitizedFolderName(bundleID: String) -> String {
+        // ASCII letters/digits only (Unicode.Scalar.Properties
+        // has no isAlphanumeric) plus "." and "-".
         let kept = bundleID.unicodeScalars.filter {
-            $0.isASCII && ($0.properties.isAlphanumeric || $0 == "." || $0 == "-")
+            $0.isASCII && (
+                ($0.value >= 48 && $0.value <= 57) ||   // 0-9
+                ($0.value >= 65 && $0.value <= 90) ||   // A-Z
+                ($0.value >= 97 && $0.value <= 122) ||  // a-z
+                $0 == "." || $0 == "-"
+            )
         }
         let base = String(String.UnicodeScalarView(kept))
         return (base.isEmpty ? "unknown" : base) + ".app"
