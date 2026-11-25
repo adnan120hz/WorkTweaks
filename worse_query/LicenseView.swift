@@ -95,7 +95,7 @@ struct LicenseView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     creditRow(
                         title: "3105 — YangJiii",
-                        detail: wtLang.tr("Reference — app-data browsing and portable patches"),
+                        detail: wtLang.tr("Reference & Patch Files"),
                         url: "https://github.com/YangJiiii/3105"
                     )
                     Divider()
@@ -220,6 +220,11 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     LabeledContent("WCMigrate — yangokok886", value: "GPL-3.0")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("3105 — YangJiii", value: "GPL-3.0")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }

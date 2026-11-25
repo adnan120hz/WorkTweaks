@@ -409,6 +409,7 @@ private struct CreditsPage: View {
             ("Pocket Poster — leminlimez", "GPL-3.0"),
             ("Erosion-CN — Kianuni", "GPL-3.0"),
             ("WCMigrate — yangokok886", "GPL-3.0"),
+            ("3105 — YangJiii", "GPL-3.0"),
         ]
     }
 
@@ -423,7 +424,7 @@ private struct CreditsPage: View {
             ("Pocket Poster — leminlimez", "Reference — video-to-wallpaper (CAML) builder used by the PosterBoard wallpaper maker."),
             ("Erosion-CN — Kianuni", "Reference — Splash Ad Cache Lock mechanism (ad SDK cache lock, save vault, diagnostics, Wi-Fi file sharing, Voice Memos export, AI cache probes)."),
             ("WCMigrate — yangokok886", "Reference — APFS save-vault idea (clonefile staging, atomic swap with rollback)."),
-            ("3105 — YangJiii", "Reference — app-data browsing and portable patches"),
+            ("3105 — YangJiii", "Reference & Patch Files"),
             ("Xo File", "Reference — cache data cleaner"),
             ("Siri AI Method — Toto", "Reference — turn on new Siri AI (CacheData line edit + device spoof)"),
         ]
