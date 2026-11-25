@@ -392,13 +392,14 @@ final class ContainerAuthSession: ObservableObject {
         log("exporting the certificate as a .p12 for the Container…")
         let pkcs1 = try CertificateIdentity.privateKeyPKCS1(email: email)
         let password = UUID().uuidString
-        guard let p12 = try WTPKCS12Export.exportPKCS12(
+        // No guard let: an NSError-convention ObjC method imports
+        // as throwing with a non-optional return (a nil return
+        // becomes the throw), so the failure path is the catch.
+        let p12 = try WTPKCS12Export.exportPKCS12(
             withPrivateKeyPKCS1: pkcs1,
             certificate: identity.certificateDER,
             chain: AppleChain.certificatesDER,
-            password: password) else {
-            throw CertificateError.message("Could not build the .p12 for the certificate.")
-        }
+            password: password)
         try LCContainerPatch.storeCertificateData(p12, password: password)
         ContainerManager.shared.refreshCertificate()
         log("certificate stored — guests can now be signed and launched")
