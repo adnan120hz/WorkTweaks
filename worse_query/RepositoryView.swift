@@ -5,7 +5,7 @@ import SwiftUI
 // A built-in catalog of Deploy packages, installable in-app
 // through the existing Deploy engine or saved to Files.
 //
-// The 8 zips live in the app bundle as resources. Display
+// The 41 zips live in the app bundle as resources. Display
 // data is read from each zip's own manifest.json at runtime
 // (via DeployManager.loadPackage) — the manifest is the
 // source of truth; nothing about the packages is hardcoded
@@ -27,14 +27,6 @@ enum RepositoryStore {
     /// order they are listed. The zips sit next to the
     /// sources in worse_query/ and ship in the app bundle.
     static let zipFileNames = [
-        "abc-example",
-        "collections-sample",
-        "editor-app-prefs",
-        "free-fire-config",
-        "free-fire-max-config",
-        "game-config",
-        "mobile-legends-config",
-        "pubg-mobile-90fps-smooth",
         // Converted 3105 patches (bundleID + paths proven from
         // the decoded .3105 packages; see 3105-PATCH_GUIDE.md).
         "3105-capcut-pro",
