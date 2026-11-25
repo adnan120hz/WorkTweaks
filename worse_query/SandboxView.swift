@@ -27,7 +27,6 @@ struct SandboxView: View {
     /// importer state. The toggle is saved but disabled until
     /// the JIT session lands in Phase 3 — it must never show
     /// a fake "JIT on" state.
-    @AppStorage("wt.containerJITEnabled") private var containerJITEnabled = false
     @State private var showContainerImporter = false
     @State private var containerImportError: String?
 
@@ -263,12 +262,10 @@ struct SandboxView: View {
                     }
                 }
 
-                // Install IPA on Container (Phase 1 host
-                // skeleton): the guest list + IPA import live in
-                // ContainerView; the JIT toggle sits here so it
-                // is visible on the Sandbox home. The toggle is
-                // disabled until the JIT session lands in
-                // Phase 3 — it is saved, but nothing runs yet.
+                // Install IPA on Container: the guest list + IPA
+                // import + the real JIT toggle live in ContainerView
+                // (Phase 3 JIT session). This card is the Sandbox
+                // home entry point only — no JIT control here.
                 WTSectionCard(header: lang.tr("Install IPA on Container")) {
                     VStack(alignment: .leading, spacing: 0) {
                         utilityRow(lang.tr("Containers"), systemImage: "shippingbox") {
@@ -293,24 +290,6 @@ struct SandboxView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        Divider().padding(.leading, 14)
-                        HStack(spacing: 10) {
-                            Label("JIT", systemImage: "bolt.fill")
-                                .font(.subheadline)
-                                .fixedSize(horizontal: false, vertical: true)
-                            Spacer(minLength: 0)
-                            Toggle("", isOn: $containerJITEnabled)
-                                .labelsHidden()
-                                .disabled(true)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 11)
-                        Text(lang.tr("JIT is not available yet — it arrives in a later update."))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.horizontal, 14)
-                            .padding(.bottom, 10)
                     }
                 }
                 .fileImporter(
