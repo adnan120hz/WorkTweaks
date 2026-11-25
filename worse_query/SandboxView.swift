@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Sandbox tab (v3.0: utilities as their own menus)
 //
@@ -22,6 +23,13 @@ struct SandboxView: View {
     @State private var groupText = AppGroupResolver.configuredGroup
     /// Language picker sheet (v7.0 flag-themed UI).
     @State private var showLanguagePicker = false
+    /// Install IPA on Container (Phase 1): JIT toggle + IPA
+    /// importer state. The toggle is saved but disabled until
+    /// the JIT session lands in Phase 3 — it must never show
+    /// a fake "JIT on" state.
+    @AppStorage("wt.containerJITEnabled") private var containerJITEnabled = false
+    @State private var showContainerImporter = false
+    @State private var containerImportError: String?
 
     /// Master switch for the Tweaks tab (v2.0): the Tweaks tab
     /// stays locked until this is turned on. Shared with the
@@ -253,6 +261,84 @@ struct SandboxView: View {
                             VoiceMemosAIView()
                         }
                     }
+                }
+
+                // Install IPA on Container (Phase 1 host
+                // skeleton): the guest list + IPA import live in
+                // ContainerView; the JIT toggle sits here so it
+                // is visible on the Sandbox home. The toggle is
+                // disabled until the JIT session lands in
+                // Phase 3 — it is saved, but nothing runs yet.
+                WTSectionCard(header: lang.tr("Install IPA on Container")) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        utilityRow(lang.tr("Containers"), systemImage: "shippingbox") {
+                            ContainerView()
+                        }
+                        Divider().padding(.leading, 14)
+                        Button {
+                            SoundEffects.playTap()
+                            showContainerImporter = true
+                        } label: {
+                            HStack(spacing: 10) {
+                                Label(lang.tr("Import IPA"), systemImage: "square.and.arrow.down")
+                                    .font(.subheadline)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
+                                Image(systemName: "plus")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        Divider().padding(.leading, 14)
+                        HStack(spacing: 10) {
+                            Label("JIT", systemImage: "bolt.fill")
+                                .font(.subheadline)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
+                            Toggle("", isOn: $containerJITEnabled)
+                                .labelsHidden()
+                                .disabled(true)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        Text(lang.tr("JIT is not available yet — it arrives in a later update."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 10)
+                    }
+                }
+                .fileImporter(
+                    isPresented: $showContainerImporter,
+                    allowedContentTypes: [UTType(filenameExtension: "ipa")!],
+                    allowsMultipleSelection: false
+                ) { result in
+                    switch result {
+                    case .success(let urls):
+                        guard let url = urls.first else { return }
+                        Task {
+                            do {
+                                _ = try await ContainerManager.shared.installIPA(from: url)
+                            } catch {
+                                containerImportError = error.localizedDescription
+                            }
+                        }
+                    case .failure(let error):
+                        containerImportError = error.localizedDescription
+                    }
+                }
+                .alert(lang.tr("Install failed"), isPresented: Binding(
+                    get: { containerImportError != nil },
+                    set: { if !$0 { containerImportError = nil } }
+                )) {
+                    Button(lang.tr("OK"), role: .cancel) { containerImportError = nil }
+                } message: {
+                    Text(containerImportError ?? "")
                 }
 
                 WTSectionCard(header: lang.tr("System")) {

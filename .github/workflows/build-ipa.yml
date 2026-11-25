@@ -45,7 +45,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build
 
-      - name: Inject pairing Info.plist keys
+      - name: Inject Info.plist keys
         run: |
           set -euo pipefail
           APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
@@ -58,6 +58,25 @@ jobs:
           /usr/libexec/PlistBuddy -c "Delete :UIBackgroundModes" "$PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$PLIST"
+          # Install IPA on Container (Phase 1, LiveContainer host):
+          # LC's background modes beyond audio, the livecontainer
+          # URL scheme, and the schemes WorkTweaks may open.
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:1 string bluetooth-central" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:2 string external-accessory" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:3 string fetch" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:4 string location" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string LiveContainer" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string livecontainer" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :LSApplicationQueriesSchemes" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:0 string sidestore" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:1 string livecontainer" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:2 string livecontainer2" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:3 string livecontainer3" "$PLIST"
           # Alternate app icons (v7.0 language themes): the
           # recolored 1024x1024 PNGs live at the bundle root
           # (worse_query/AppIcon-{ID,CN,VN,RU}.png, auto-included
@@ -79,6 +98,8 @@ jobs:
           done
           /usr/libexec/PlistBuddy -c "Print :NSBonjourServices" "$PLIST"
           /usr/libexec/PlistBuddy -c "Print :UIBackgroundModes" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Print :LSApplicationQueriesSchemes" "$PLIST"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundleAlternateIcons" "$PLIST"
 
       - name: Package IPA

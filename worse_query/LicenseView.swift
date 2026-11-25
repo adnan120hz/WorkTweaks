@@ -141,6 +141,17 @@ struct LicenseView: View {
                     )
                     Divider()
                         .padding(.leading, 14)
+                    // LiveContainer core is vendored from the
+                    // user's fork adnan120hz/livecontainer
+                    // (byte-identical to upstream main); the
+                    // upstream URL is the credit.
+                    creditRow(
+                        title: "LiveContainer",
+                        detail: wtLang.tr("Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core)."),
+                        url: "https://github.com/LiveContainer/LiveContainer"
+                    )
+                    Divider()
+                        .padding(.leading, 14)
                     // Toto is credited without a link: the
                     // user named the person only, no URL was given.
                     VStack(alignment: .leading, spacing: 3) {
@@ -225,6 +236,16 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     LabeledContent("3105 — YangJiii", value: "GPL-3.0")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("LiveContainer", value: "AGPL-3.0")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("ZSign", value: "GPL-3.0")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }

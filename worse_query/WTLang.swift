@@ -1012,6 +1012,20 @@ enum WTStrings {
         "Installed on %@": "Terinstal pada %@",
         "No packages could be loaded from the app bundle.": "Tidak ada paket yang bisa dimuat dari app bundle.",
 
+        "Install IPA on Container": "Instal IPA di Container",
+        "Import IPA": "Impor IPA",
+        "JIT is not available yet — it arrives in a later update.": "JIT belum tersedia — hadir di pembaruan berikutnya.",
+        "Guest apps live in the WorkTweaks App Group and run inside this app. Phase 1 installs and lists them; patching, signing and launch land in later phases.": "Aplikasi tamu tinggal di App Group WorkTweaks dan berjalan di dalam aplikasi ini. Fase 1 memasang dan menampilkannya; patching, signing, dan launch hadir di fase berikutnya.",
+        "No containers installed yet — import an .ipa to add one.": "Belum ada container terpasang — impor .ipa untuk menambah.",
+        "Launch needs a certificate (Phase 2) or JIT (Phase 3).": "Launch butuh sertifikat (Fase 2) atau JIT (Fase 3).",
+        "Not patched yet": "Belum di-patch",
+        "Patched": "Sudah di-patch",
+        "Install failed": "Instal gagal",
+        "Delete %@?": "Hapus %@?",
+        "This deletes the guest app and its data container.": "Ini menghapus aplikasi tamu beserta data container-nya.",
+        "Install complete — the guest is stored but not patched yet.": "Instal selesai — tamu sudah tersimpan tapi belum di-patch.",
+        "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "Aplikasi tamu berjalan di dalam WorkTweaks — instal IPA, patching, dan launch (inti LiveContainer).",
+
     ]
 
     // Chinese (Simplified)
@@ -1909,6 +1923,20 @@ enum WTStrings {
         "Installed": "已安装",
         "Installed on %@": "安装于 %@",
         "No packages could be loaded from the app bundle.": "无法从 App 包中加载任何软件包。",
+
+        "Install IPA on Container": "在容器中安装 IPA",
+        "Import IPA": "导入 IPA",
+        "JIT is not available yet — it arrives in a later update.": "JIT 尚未可用——将在后续更新中推出。",
+        "Guest apps live in the WorkTweaks App Group and run inside this app. Phase 1 installs and lists them; patching, signing and launch land in later phases.": "访客应用位于 WorkTweaks App Group 内，并在本应用中运行。第 1 阶段负责安装和列表；补丁、签名和启动将在后续阶段推出。",
+        "No containers installed yet — import an .ipa to add one.": "尚未安装任何容器——导入 .ipa 即可添加。",
+        "Launch needs a certificate (Phase 2) or JIT (Phase 3).": "启动需要证书（第 2 阶段）或 JIT（第 3 阶段）。",
+        "Not patched yet": "尚未打补丁",
+        "Patched": "已打补丁",
+        "Install failed": "安装失败",
+        "Delete %@?": "删除 %@？",
+        "This deletes the guest app and its data container.": "这将删除访客应用及其数据容器。",
+        "Install complete — the guest is stored but not patched yet.": "安装完成——访客已保存，但尚未打补丁。",
+        "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "访客应用在 WorkTweaks 内运行——IPA 安装、补丁与启动（LiveContainer 核心）。",
 
     ]
 
@@ -2808,6 +2836,20 @@ enum WTStrings {
         "Installed on %@": "Đã cài đặt vào %@",
         "No packages could be loaded from the app bundle.": "Không thể tải gói nào từ app bundle.",
 
+        "Install IPA on Container": "Cài đặt IPA trên Container",
+        "Import IPA": "Nhập IPA",
+        "JIT is not available yet — it arrives in a later update.": "JIT chưa khả dụng — sẽ có trong bản cập nhật sau.",
+        "Guest apps live in the WorkTweaks App Group and run inside this app. Phase 1 installs and lists them; patching, signing and launch land in later phases.": "Ứng dụng khách nằm trong App Group của WorkTweaks và chạy trong ứng dụng này. Giai đoạn 1 cài đặt và liệt kê chúng; vá, ký và khởi chạy sẽ có ở các giai đoạn sau.",
+        "No containers installed yet — import an .ipa to add one.": "Chưa có container nào được cài đặt — nhập .ipa để thêm.",
+        "Launch needs a certificate (Phase 2) or JIT (Phase 3).": "Khởi chạy cần chứng chỉ (Giai đoạn 2) hoặc JIT (Giai đoạn 3).",
+        "Not patched yet": "Chưa được vá",
+        "Patched": "Đã vá",
+        "Install failed": "Cài đặt thất bại",
+        "Delete %@?": "Xóa %@?",
+        "This deletes the guest app and its data container.": "Thao tác này sẽ xóa ứng dụng khách và container dữ liệu của nó.",
+        "Install complete — the guest is stored but not patched yet.": "Cài đặt xong — khách đã được lưu nhưng chưa được vá.",
+        "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "Ứng dụng khách chạy trong WorkTweaks — cài đặt IPA, vá và khởi chạy (lõi LiveContainer).",
+
     ]
 
     // Russian
@@ -3705,6 +3747,20 @@ enum WTStrings {
         "Installed": "Установлено",
         "Installed on %@": "Установлено %@",
         "No packages could be loaded from the app bundle.": "Не удалось загрузить пакеты из app bundle.",
+
+        "Install IPA on Container": "Установка IPA в контейнер",
+        "Import IPA": "Импорт IPA",
+        "JIT is not available yet — it arrives in a later update.": "JIT пока недоступен — появится в следующем обновлении.",
+        "Guest apps live in the WorkTweaks App Group and run inside this app. Phase 1 installs and lists them; patching, signing and launch land in later phases.": "Гостевые приложения находятся в App Group WorkTweaks и запускаются внутри этого приложения. Фаза 1 устанавливает их и показывает список; патчинг, подпись и запуск появятся в следующих фазах.",
+        "No containers installed yet — import an .ipa to add one.": "Контейнеры пока не установлены — импортируйте .ipa, чтобы добавить.",
+        "Launch needs a certificate (Phase 2) or JIT (Phase 3).": "Для запуска нужен сертификат (фаза 2) или JIT (фаза 3).",
+        "Not patched yet": "Ещё не пропатчено",
+        "Patched": "Пропатчено",
+        "Install failed": "Установка не удалась",
+        "Delete %@?": "Удалить %@?",
+        "This deletes the guest app and its data container.": "Это удалит гостевое приложение и его контейнер данных.",
+        "Install complete — the guest is stored but not patched yet.": "Установка завершена — гость сохранён, но ещё не пропатчен.",
+        "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "Гостевые приложения работают внутри WorkTweaks — установка IPA, патчинг и запуск (ядро LiveContainer).",
 
     ]
 }

@@ -12,6 +12,14 @@ struct WorkTweaksApp: App {
             // Language default: English (US) is the main language.
             "wt.language": "en-US"
         ])
+        // Install IPA on Container (Phase 1): the launch-path
+        // decision lives here — if a guest was selected, the
+        // bootstrap runs instead of the host UI. In Phase 1
+        // the bootstrap is not linked yet (litehook pending),
+        // so the check only logs honestly and the host UI
+        // opens normally. Phase 2 replaces it with the real
+        // LiveContainerMain call.
+        ContainerLaunch.checkSelectedGuest()
     }
 
     var body: some Scene {
