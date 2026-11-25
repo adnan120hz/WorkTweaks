@@ -161,7 +161,12 @@ struct TweaksView: View {
                 }
             }
             .navigationTitle("WorkTweaks")
-            .navigationBarTitleDisplayMode(.large)
+            // Large Text: the .large title renders at ~42pt and
+            // overlaps the first cards (the two ScrollViews
+            // confuse the large-title tracking), so use the small
+            // inline title instead — the identity card already
+            // shows the name and version.
+            .navigationBarTitleDisplayMode(dynamicTypeSize.wtIsLargeText ? .inline : .large)
             .toolbar {
                 // Search is a New UI feature — the Old UI (v1)
                 // never had it.
@@ -276,8 +281,8 @@ struct TweaksView: View {
     // Default sizes keep the two-column page: a scrolling
     // column of tweak cards on the left and the fixed
     // 150pt Sections/identity/Menus column on the right.
-    // At Large Text (Dynamic Type .xxxLarge and above,
-    // including all Accessibility sizes) that 150pt column
+    // At Large Text (Dynamic Type .xxLarge and above,
+    // including .xxxLarge and all Accessibility sizes) that 150pt column
     // is too narrow for its labels ("Dynamic Island",
     // "Apple Intelligence" truncate, cards overlap the big
     // title) and the squeezed left column truncates card

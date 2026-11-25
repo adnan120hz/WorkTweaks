@@ -14,17 +14,27 @@ import SwiftUI
 /// TweakCatalog.presentation) — only the rendering is uniform.
 // MARK: - Large Text layout
 //
-// One trigger for the whole app: Dynamic Type .xxxLarge and
-// every Accessibility size (.accessibility1–.accessibility5).
-// At those sizes fixed-width side columns and two-column
-// layouts squeeze their labels until they truncate or overlap,
-// so layouts that read this flag collapse to a single column
-// and let their labels wrap (see TweaksView.columnsView and
-// the keypad below). Default sizes are untouched.
+// One trigger for the whole app: Dynamic Type .xxLarge and
+// above, including .xxxLarge and every Accessibility size
+// (.accessibility1–.accessibility5). The threshold was
+// .xxxLarge (commit 5cd716bd) but the user's on-device
+// screenshot proved the two-column Tweaks layout already
+// breaks at .xxLarge: the 150pt Sections column wraps every
+// multi-word label to two lines, the giant large title
+// overlaps the first cards, and the non-scrolling right
+// column's Menus card slides behind the floating tab bar —
+// while the trigger never fired, so the single-column
+// fallback never ran. At .xxLarge and up, fixed-width side
+// columns and two-column layouts squeeze their labels until
+// they truncate or overlap, so layouts that read this flag
+// collapse to a single column and let their labels wrap
+// (see TweaksView.columnsView and the keypad below).
+// Default sizes are untouched.
 
 extension DynamicTypeSize {
-    /// True from .xxxLarge up, including all Accessibility sizes.
-    var wtIsLargeText: Bool { self >= .xxxLarge }
+    /// True from .xxLarge up, including .xxxLarge and all
+    /// Accessibility sizes.
+    var wtIsLargeText: Bool { self >= .xxLarge }
 }
 
 // MARK: - Liquid Glass card surface
