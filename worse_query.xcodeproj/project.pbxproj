@@ -36,6 +36,12 @@
 				"LiveContainerCore/TweakLoader/Notification.m",
 				"LiveContainerCore/TweakLoader/TweakLoader.m",
 				"LiveContainerCore/TweakLoader/UIKit+GuestHooks.m",
+				"LiveContainerCore/LICENSE",
+				"LiveContainerCore/README.md",
+				"LiveContainerCore/README.LITEHOOK.md",
+				"LiveContainerCore/entitlements-reference.xml",
+				"LiveContainerCore/litehook/LICENSE",
+				"LiveContainerCore/litehook/README.md",
 			);
 			target = 3657C2D8303730E800908AE2 /* worse_query */;
 		};
