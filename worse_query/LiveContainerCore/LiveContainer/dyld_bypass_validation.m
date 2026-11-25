@@ -20,6 +20,11 @@
 
 static int (*orig_fcntl)(int fildes, int cmd, void *param) = 0;
 
+// Single definitions of the pointers declared extern in
+// dyld_bypass_validation.h (see the note there).
+int (*orig_dyld_fcntl)(int fildes, int cmd, void *param) = 0;
+int (*orig_dyld_mmap)(int fildes, int cmd, void *param) = 0;
+
 // Originated from _kernelrpc_mach_vm_protect_trap
 ASM(
 .global _builtin_vm_protect \n
