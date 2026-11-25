@@ -10,11 +10,17 @@ changes in the fork. Build from main, NOT from release 3.8.0.
 License: AGPL-3.0 (see `LICENSE` in this folder — the verbatim
 LiveContainer LICENSE). Compatible with WorkTweaks (AGPL-3.0).
 Sub-component licenses, from LiveContainer's README:
-- ZSign: originally by zhlynn; LiveContainer uses Feather's
-  version of ZSign modified by khcrysalis. Feather is GPL-3.0,
-  so the vendored ZSign is treated as GPL-3.0 (compatible with
-  AGPL-3.0 via GPLv3 §13). There is no license file inside LC's
-  `ZSign/` itself — this is recorded, not assumed away.
+- ZSign: originally by zhlynn (MIT — verified 2026-11-25:
+  zhlynn/zsign LICENSE reads "MIT License, Copyright (c)
+  2026 zhlynn"; the vendored files match zhlynn's src/ layout
+  exactly: archo, macho, openssl, signing + common/).
+  LiveContainer uses Feather's version of ZSign modified by
+  khcrysalis, and Feather itself is GPL-3.0 (verified:
+  claration/Feather, LICENSE; the old khcrysalis/Feather URL
+  now redirects there). The vendored `ZSign/` carries no
+  license file of its own, so LicenseView credits both:
+  "ZSign — zhlynn" MIT and "Feather — khcrysalis" GPL-3.0.
+  Either way it is compatible with WorkTweaks (AGPL-3.0).
 - litehook: MIT (see README.LITEHOOK.md — **not vendored yet**).
 - CFastFind (used by `utils.m`, Linus Henze): MIT.
 
@@ -56,9 +62,14 @@ Sub-component licenses, from LiveContainer's README:
 - `litehook/` — **BLOCKED, see README.LITEHOOK.md.** The LC
   core cannot compile without it.
 - `dyld_cache_format.h` — `LCMachOUtils.m` includes it, but the
-  file is NOT in the LC repo (it is a dyld private header).
-  Phase 2 must supply it (e.g. from Apple's open-source dyld)
-  before the core can compile.
+  file is NOT in the LC repo (it is a dyld private header) and
+  NOT in either submodule (fishhook/litehook) — only referenced
+  (litehook's src/litehook.c references it too). Nothing in LC's
+  CI supplies it either (prepare_dependencies.sh downloads
+  OpenSSL only), yet LC builds on xcode-27, so it resolves from
+  the Xcode SDK's default search paths; no vendoring needed.
+  Our CI will prove this the moment the core compiles (blocked
+  on litehook, see README.LITEHOOK.md).
 - `main.c` — LC's app entry (dlopens
   `LiveContainerShared.framework` and calls `LiveContainerMain`).
   Not applicable: WorkTweaks keeps its Swift `@main`

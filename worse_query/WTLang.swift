@@ -1026,6 +1026,8 @@ enum WTStrings {
         "Install complete — the guest is stored but not patched yet.": "Instal selesai — tamu sudah tersimpan tapi belum di-patch.",
         "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "Aplikasi tamu berjalan di dalam WorkTweaks — instal IPA, patching, dan launch (inti LiveContainer).",
 
+        "ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis.": "Penandatanganan ZSign di perangkat — adaptasi iOS Feather atas zsign zhlynn, dimodifikasi oleh khcrysalis.",
+
     ]
 
     // Chinese (Simplified)
@@ -1937,6 +1939,8 @@ enum WTStrings {
         "This deletes the guest app and its data container.": "这将删除访客应用及其数据容器。",
         "Install complete — the guest is stored but not patched yet.": "安装完成——访客已保存，但尚未打补丁。",
         "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "访客应用在 WorkTweaks 内运行——IPA 安装、补丁与启动（LiveContainer 核心）。",
+
+        "ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis.": "设备端 ZSign 签名——Feather 对 zhlynn zsign 的 iOS 改编，由 khcrysalis 修改。",
 
     ]
 
@@ -2850,6 +2854,8 @@ enum WTStrings {
         "Install complete — the guest is stored but not patched yet.": "Cài đặt xong — khách đã được lưu nhưng chưa được vá.",
         "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "Ứng dụng khách chạy trong WorkTweaks — cài đặt IPA, vá và khởi chạy (lõi LiveContainer).",
 
+        "ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis.": "Ký ZSign trên thiết bị — bản chuyển thể iOS của Feather từ zsign của zhlynn, do khcrysalis chỉnh sửa.",
+
     ]
 
     // Russian
@@ -3761,6 +3767,8 @@ enum WTStrings {
         "This deletes the guest app and its data container.": "Это удалит гостевое приложение и его контейнер данных.",
         "Install complete — the guest is stored but not patched yet.": "Установка завершена — гость сохранён, но ещё не пропатчен.",
         "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "Гостевые приложения работают внутри WorkTweaks — установка IPA, патчинг и запуск (ядро LiveContainer).",
+
+        "ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis.": "Подпись ZSign на устройстве — iOS-адаптация Feather для zsign от zhlynn, изменённая khcrysalis.",
 
     ]
 }

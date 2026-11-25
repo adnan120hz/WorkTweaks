@@ -152,6 +152,19 @@ struct LicenseView: View {
                     )
                     Divider()
                         .padding(.leading, 14)
+                    // ZSign provenance (verified 2026-11-25):
+                    // originally zhlynn/zsign (MIT); LiveContainer
+                    // uses Feather's iOS adaptation, modified by
+                    // khcrysalis (Feather itself is GPL-3.0).
+                    // khcrysalis/Feather now redirects to
+                    // claration/Feather — the current URL is used.
+                    creditRow(
+                        title: "Feather — khcrysalis",
+                        detail: wtLang.tr("ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis."),
+                        url: "https://github.com/claration/Feather"
+                    )
+                    Divider()
+                        .padding(.leading, 14)
                     // Toto is credited without a link: the
                     // user named the person only, no URL was given.
                     VStack(alignment: .leading, spacing: 3) {
@@ -245,7 +258,12 @@ struct LicenseView: View {
                         .padding(.vertical, 9)
                     Divider()
                         .padding(.leading, 14)
-                    LabeledContent("ZSign", value: "GPL-3.0")
+                    LabeledContent("ZSign — zhlynn", value: "MIT")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("Feather — khcrysalis", value: "GPL-3.0")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }

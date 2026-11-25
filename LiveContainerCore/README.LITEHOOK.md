@@ -43,5 +43,8 @@ git submodule update --init litehook
 Then copy the submodule tree to
 `LiveContainerCore/litehook/` so the layout matches LC's
 includes (`litehook/src/litehook.h` relative to
-`LiveContainer/`). After that, the core still needs
-`dyld_cache_format.h` (see README.md) before it compiles.
+`LiveContainer/`). After that the core should compile:
+`dyld_cache_format.h` resolves from the Xcode SDK (see
+README.md) and OpenSSL comes from LC's
+prepare_dependencies.sh pattern (krzyzanowskim/OpenSSL
+3.6.5000, to be mirrored in our CI when the core links).
