@@ -6,6 +6,16 @@ it as `worse_query/WTIDevice.xcframework` in CI (see
 Swift imports it as `WTIDevice` and calls the FFI through the minimal
 header `include/wtidevice.h`.
 
+**Module map split (why the xcframework has no modulemap):** Swift finds
+the module through `include/module.modulemap`, which lives in the source
+tree and is picked up via the `$(SRCROOT)/rust-core/include` entry in the
+app target's `HEADER_SEARCH_PATHS` (pbxproj). The xcframework ships
+headers ONLY (`wtidevice.h` + `plist.h`, copied to a temp dir by the CI
+step) — AirliftFFI's xcframework already provides
+`include/module.modulemap`, and two xcframeworks shipping one each
+collide at build time ("Multiple commands produce
+`.../include/module.modulemap`", run 45605996210).
+
 ## What it is
 
 A staticlib shim re-exporting idevice's C FFI — the same surface

@@ -5,8 +5,11 @@
 // (`rust-core/vendor/idevice-ffi/idevice.h`, cbindgen output for
 // jkcoxson/idevice @ 7bd551c16c6dd2e058740d85a2d9399a51a776e9 — the same
 // revision SideInstaller v2.2.0 ships). The 9032-line generated header is
-// NOT shipped: the xcframework carries this file + plist.h only, and
-// Swift imports the module as `WTIDevice` (see module.modulemap).
+// NOT shipped: the xcframework carries this file + plist.h only (no
+// module.modulemap — AirliftFFI already provides include/module.modulemap,
+// and two xcframeworks shipping one each collide at build time). Swift
+// imports the module as `WTIDevice` through the module.modulemap in
+// rust-core/include, found via HEADER_SEARCH_PATHS (see rust-core/README.md).
 //
 // plist helpers (plist_t, plist_get_node_type, plist_get_bool_val,
 // plist_dict_get_item, plist_get_string_val, plist_get_uint_val,

@@ -63,10 +63,18 @@ jobs:
           # cbindgen regenerates vendor/idevice-ffi/idevice.h in place during
           # the build (feature-gated subset). It is NOT shipped: the
           # xcframework headers are the minimal hand-written wtidevice.h +
-          # plist.h + module.modulemap in rust-core/include.
+          # plist.h from rust-core/include — WITHOUT module.modulemap.
+          # AirliftFFI's xcframework already provides
+          # include/module.modulemap, and two xcframeworks shipping one
+          # each collide ("Multiple commands produce
+          # .../include/module.modulemap", run 45605996210). Swift imports
+          # WTIDevice through the module.modulemap in rust-core/include,
+          # found via the HEADER_SEARCH_PATHS entry in the pbxproj.
+          mkdir -p /tmp/wtidevice-headers
+          cp rust-core/include/wtidevice.h rust-core/include/plist.h /tmp/wtidevice-headers/
           xcodebuild -create-xcframework \
             -library rust-core/target/aarch64-apple-ios/release/libwt_idevice_ffi.a \
-            -headers rust-core/include \
+            -headers /tmp/wtidevice-headers \
             -output worse_query/WTIDevice.xcframework
           ls -lh worse_query/WTIDevice.xcframework/ios-arm64/libwt_idevice_ffi.a
           ls worse_query/WTIDevice.xcframework/ios-arm64/Headers/
