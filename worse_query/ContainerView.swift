@@ -14,6 +14,11 @@ import UniformTypeIdentifiers
 struct ContainerView: View {
     @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var manager = ContainerManager.shared
+    @StateObject private var auth = ContainerAuthSession()
+    @State private var authPassword = ""
+    @State private var twoFactorCode = ""
+    @State private var showSignOutConfirm = false
+    @State private var certToRevoke: DevelopmentCertificate?
     @State private var showImporter = false
     @State private var importError: String?
     @State private var guestToDelete: ContainerGuest?
@@ -36,6 +41,226 @@ struct ContainerView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
+            }
+
+            // Apple ID — sign in on-device, pick a team, provision
+            // the host (bundle + App Group + profile), and the
+            // resulting certificate is stored as a .p12, so guests
+            // sign and launch without a manual .p12 import. The
+            // password is typed here only: it goes to Apple's
+            // servers for sign-in and is never stored or logged.
+            WTSectionCard {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Label(wtLang.tr("Apple ID"), systemImage: "person.crop.circle.badge.checkmark")
+                            .font(.subheadline.weight(.semibold))
+                        Spacer(minLength: 0)
+                        if case .signedIn(let email) = auth.signInState {
+                            Text(email)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.top, 10)
+
+                    switch auth.signInState {
+                    case .signedOut, .failed:
+                        TextField(wtLang.tr("Apple ID email"), text: $auth.appleIDEmail)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.emailAddress)
+                            .font(.subheadline)
+                            .padding(.horizontal, 14)
+                        SecureField(wtLang.tr("Password"), text: $authPassword)
+                            .font(.subheadline)
+                            .padding(.horizontal, 14)
+                        Text(wtLang.tr("Sign in on-device only — your password goes to Apple for sign-in and is never stored."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 14)
+                        if case .failed(let message) = auth.signInState {
+                            Text(message)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.horizontal, 14)
+                        }
+                        Button {
+                            SoundEffects.playTap()
+                            let password = authPassword
+                            authPassword = ""
+                            auth.signIn(password: password)
+                        } label: {
+                            Label(wtLang.tr("Sign In with Apple ID"), systemImage: "person.crop.circle")
+                                .font(.subheadline.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(auth.busy || auth.appleIDEmail.trimmingCharacters(in: .whitespaces).isEmpty || authPassword.isEmpty)
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 10)
+                    case .working(let status):
+                        HStack(spacing: 8) {
+                            ProgressView()
+                            Text(wtLang.tr(status))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 10)
+                    case .needsTwoFactor:
+                        Text(wtLang.tr("Enter the 6-digit code sent to your trusted device."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 14)
+                        TextField(wtLang.tr("Verification code"), text: $twoFactorCode)
+                            .keyboardType(.numberPad)
+                            .font(.subheadline)
+                            .padding(.horizontal, 14)
+                        HStack(spacing: 10) {
+                            Button {
+                                SoundEffects.playTap()
+                                let code = twoFactorCode
+                                twoFactorCode = ""
+                                auth.submitTwoFactorCode(code)
+                            } label: {
+                                Text(wtLang.tr("Verify"))
+                                    .font(.subheadline.weight(.semibold))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(twoFactorCode.trimmingCharacters(in: .whitespaces).isEmpty)
+                            Button {
+                                SoundEffects.playTap()
+                                twoFactorCode = ""
+                                auth.cancelTwoFactor()
+                            } label: {
+                                Text(wtLang.tr("Cancel"))
+                                    .font(.subheadline)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 10)
+                    case .signedIn:
+                        if let team = auth.team {
+                            HStack {
+                                Text(wtLang.tr("Team"))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Spacer(minLength: 0)
+                                Text("\(team.name ?? wtLang.tr("Personal Team")) (\(team.teamId))")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 14)
+                        }
+                        if auth.teams.count > 1 {
+                            Picker(wtLang.tr("Team"), selection: Binding(
+                                get: { auth.selectedTeamId ?? auth.teams.first?.teamId ?? "" },
+                                set: { auth.selectedTeamId = $0 }
+                            )) {
+                                ForEach(auth.teams, id: \.teamId) { team in
+                                    Text("\(team.name ?? wtLang.tr("Personal Team")) (\(team.teamId))").tag(team.teamId)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .padding(.horizontal, 14)
+                        }
+                        if manager.hasCertificate {
+                            Text(wtLang.tr("Certificate ready — guests can be signed and launched."))
+                                .font(.caption)
+                                .foregroundStyle(.green)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.horizontal, 14)
+                        } else {
+                            Text(wtLang.tr("No certificate yet — provision one below, or import a .p12."))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.horizontal, 14)
+                        }
+                        if case .working(let status) = auth.provisionState {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                Text(wtLang.tr(status))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 14)
+                        }
+                        if case .failed(let message) = auth.provisionState {
+                            Text(auth.provisionError ?? message)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.horizontal, 14)
+                        }
+                        Button {
+                            SoundEffects.playTap()
+                            auth.provision()
+                        } label: {
+                            Label(wtLang.tr("Provision Certificate"), systemImage: "key.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(auth.busy || auth.team == nil)
+                        .padding(.horizontal, 14)
+                        if auth.showCertRecovery {
+                            Text(wtLang.tr("The free-team certificate slot is full (7460). Revoke an old certificate below, then a new one is created automatically."))
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.horizontal, 14)
+                            ForEach(auth.teamCertificates) { cert in
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(cert.name ?? wtLang.tr("Certificate"))
+                                            .font(.caption.weight(.semibold))
+                                        Text(cert.machineName ?? "")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer(minLength: 0)
+                                    if auth.isOurs(cert) {
+                                        Text(wtLang.tr("This device"))
+                                            .font(.caption)
+                                            .foregroundStyle(.green)
+                                    } else {
+                                        Button(wtLang.tr("Revoke")) {
+                                            SoundEffects.playTap()
+                                            certToRevoke = cert
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .disabled(auth.busy)
+                                    }
+                                }
+                                .padding(.horizontal, 14)
+                            }
+                        }
+                        Button {
+                            SoundEffects.playTap()
+                            showSignOutConfirm = true
+                        } label: {
+                            Label(wtLang.tr("Sign Out"), systemImage: "rectangle.portrait.and.arrow.right")
+                                .font(.subheadline)
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 10)
+                    }
+                }
             }
 
             // Certificate — the .p12 that signs guests. Without it,
@@ -247,6 +472,9 @@ struct ContainerView: View {
         .onAppear {
             manager.refresh()
             manager.refreshCertificate()
+            if case .signedIn = auth.signInState {
+                auth.refreshCertificateInfo()
+            }
             if let error = ContainerManager.launchError {
                 ContainerManager.launchError = nil
                 launchError = error
@@ -347,6 +575,36 @@ struct ContainerView: View {
             }
         } message: {
             Text(wtLang.tr("This removes the stored .p12 certificate. Guests already signed keep working; new installs will not be signed."))
+        }
+        .alert(
+            wtLang.tr("Sign out?"),
+            isPresented: $showSignOutConfirm
+        ) {
+            Button(wtLang.tr("Sign Out"), role: .destructive) {
+                auth.signOut()
+            }
+            Button(wtLang.tr("Cancel"), role: .cancel) {
+                showSignOutConfirm = false
+            }
+        } message: {
+            Text(wtLang.tr("This clears the saved Apple ID session and removes the stored container certificate. Guests already signed keep working; new installs will not be signed until you sign in again or import a .p12."))
+        }
+        .alert(
+            wtLang.tr("Revoke this certificate?"),
+            isPresented: Binding(
+                get: { certToRevoke != nil },
+                set: { if !$0 { certToRevoke = nil } }
+            ),
+            presenting: certToRevoke
+        ) { cert in
+            Button(wtLang.tr("Revoke"), role: .destructive) {
+                auth.revokeCertificate(cert)
+            }
+            Button(wtLang.tr("Cancel"), role: .cancel) {
+                certToRevoke = nil
+            }
+        } message: { _ in
+            Text(wtLang.tr("Revoking frees the certificate slot. The certificate is gone for every app signed with it — installs signed with it stop launching until they are re-signed."))
         }
         .alert(
             wtLang.tr("Delete %@?", guestToDelete?.displayName ?? ""),

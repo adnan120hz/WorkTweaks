@@ -6,3 +6,5 @@
 #include "pathleak.h"
 #include "TaskEntitlements.h"
 #include "LiveContainerCore/LCContainerPatch.h"
+#include "LiveContainerCore/WTPKCS12Export.h"
+#include <CommonCrypto/CommonCrypto.h>

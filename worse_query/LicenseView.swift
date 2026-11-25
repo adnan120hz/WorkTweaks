@@ -175,6 +175,32 @@ struct LicenseView: View {
                     )
                     Divider()
                         .padding(.leading, 14)
+                    // SideInstaller — FrizzleM: the sign-in /
+                    // provisioning system the Container's Apple ID
+                    // login ports (GrandSlam auth, teams,
+                    // certificates, App IDs, App Groups, profiles).
+                    // Custom license: personal/non-commercial use
+                    // only; §4 requires the attribution
+                    // "SideInstaller by FrizzleM" + link, which
+                    // this row is.
+                    creditRow(
+                        title: "SideInstaller by FrizzleM",
+                        detail: wtLang.tr("Apple ID sign-in + provisioning — the system the Container's Apple ID login ports (GrandSlam auth, teams, certificates, App IDs, App Groups, profiles)."),
+                        url: "https://github.com/FrizzleM/SideInstaller"
+                    )
+                    Divider()
+                        .padding(.leading, 14)
+                    // isideload — Nicholas Sharp (MIT): the Rust
+                    // core whose GrandSlam + developer-services
+                    // protocol the sign-in and provisioning flow
+                    // follows (via Signed Apps).
+                    creditRow(
+                        title: "isideload — Nicholas Sharp",
+                        detail: wtLang.tr("Apple ID auth + developer-services protocol the Container's sign-in and provisioning follow."),
+                        url: "https://github.com/nab138/isideload"
+                    )
+                    Divider()
+                        .padding(.leading, 14)
                     // Toto is credited without a link: the
                     // user named the person only, no URL was given.
                     VStack(alignment: .leading, spacing: 3) {
@@ -279,6 +305,16 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     LabeledContent("Feather — khcrysalis", value: "GPL-3.0")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("SideInstaller by FrizzleM", value: "Custom")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("isideload — Nicholas Sharp", value: "MIT")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }
