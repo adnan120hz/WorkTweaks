@@ -18,10 +18,29 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3657C2DB303730E800908AE2 /* worse_query */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1B2C3D4E5F60718293A4B5C /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+			);
 			path = worse_query;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A1B2C3D4E5F60718293A4B5C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"LiveContainerCore/LCUtils.m",
+				"LiveContainerCore/TweakLoader/BackgroundTasks.m",
+				"LiveContainerCore/TweakLoader/DocumentPicker.m",
+				"LiveContainerCore/TweakLoader/Notification.m",
+				"LiveContainerCore/TweakLoader/TweakLoader.m",
+				"LiveContainerCore/TweakLoader/UIKit+GuestHooks.m",
+			);
+			target = 3657C2D8303730E800908AE2 /* worse_query */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 
 /* Begin PBXFrameworksBuildPhase section */
 		3657C2D6303730E800908AE2 /* Frameworks */ = {
@@ -249,12 +268,27 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
 				CODE_SIGN_ENTITLEMENTS = worse_query/worse_query.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K976G5HK7K;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Dependencies/OpenSSL.xcframework/ios-arm64",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/worse_query/LiveContainerCore",
+					"$(SRCROOT)/worse_query/LiveContainerCore/LiveContainer",
+					"$(SRCROOT)/worse_query/LiveContainerCore/ZSign/common",
+					"$(SRCROOT)/worse_query/LiveContainerCore/litehook/src",
+					"$(SRCROOT)/worse_query/LiveContainerCore/litehook/external/include",
+					"$(SRCROOT)/Dependencies/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/Headers",
+				);
 				INFOPLIST_KEY_CFBundleDisplayName = WorkTweaks;
 				INFOPLIST_KEY_NSBonjourServices = (
 					"_remotepairing-pairable-host._tcp",
@@ -276,6 +310,14 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 7.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					IOKit,
+					"-framework",
+					Security,
+					"-framework",
+					OpenSSL,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "cc.forcequit.worse-query";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -301,12 +343,27 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
 				CODE_SIGN_ENTITLEMENTS = worse_query/worse_query.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K976G5HK7K;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Dependencies/OpenSSL.xcframework/ios-arm64",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/worse_query/LiveContainerCore",
+					"$(SRCROOT)/worse_query/LiveContainerCore/LiveContainer",
+					"$(SRCROOT)/worse_query/LiveContainerCore/ZSign/common",
+					"$(SRCROOT)/worse_query/LiveContainerCore/litehook/src",
+					"$(SRCROOT)/worse_query/LiveContainerCore/litehook/external/include",
+					"$(SRCROOT)/Dependencies/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/Headers",
+				);
 				INFOPLIST_KEY_CFBundleDisplayName = WorkTweaks;
 				INFOPLIST_KEY_NSBonjourServices = (
 					"_remotepairing-pairable-host._tcp",
@@ -328,6 +385,14 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 7.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					IOKit,
+					"-framework",
+					Security,
+					"-framework",
+					OpenSSL,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "cc.forcequit.worse-query";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

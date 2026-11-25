@@ -25,6 +25,20 @@ jobs:
             "https://raw.githubusercontent.com/adnan120hz/aircard-ios/40640c4d827aeab8d798285b57d24fcf6be070d0/AirliftFFI.xcframework/ios-arm64/libairlift_ffi.a"
           ls -lh worse_query/AirliftFFI.xcframework/ios-arm64/libairlift_ffi.a
 
+      - name: Fetch OpenSSL
+        run: |
+          set -euo pipefail
+          # ZSign needs OpenSSL headers + lib at compile time.
+          # Pinned to krzyzanowskim/OpenSSL 3.6.5000, matching
+          # LiveContainer's prepare_dependencies.sh pattern
+          # (curl -LO .../OpenSSL.xcframework.zip, unzip, move to
+          # Dependencies/OpenSSL.xcframework).
+          mkdir -p Dependencies
+          curl -sL -o /tmp/OpenSSL.xcframework.zip "https://github.com/krzyzanowskim/OpenSSL/releases/download/3.6.5000/OpenSSL.xcframework.zip"
+          unzip -q -o /tmp/OpenSSL.xcframework.zip -d Dependencies
+          rm /tmp/OpenSSL.xcframework.zip
+          ls Dependencies/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/Headers/opensslv.h
+
       - name: Show toolchain
         run: |
           xcodebuild -version
@@ -44,6 +58,34 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build
+
+      - name: Build TweakLoader.dylib
+        run: |
+          set -euo pipefail
+          # The guest-side loader dylib. Its 5 sources carry
+          # __attribute__((constructor)) hooks that must run inside
+          # the GUEST, never inside WorkTweaks, so they are excluded
+          # from the app target (pbxproj exception set) and built
+          # here as a separate dylib. -undefined dynamic_lookup lets
+          # its references to the host's LC symbols (utils,
+          # LCSharedUtils categories) resolve at dlopen time.
+          # It is unsigned in CI; the user's signing flow signs the
+          # whole bundle (including Frameworks/) at install time.
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          mkdir -p "$APP_PATH/Frameworks"
+          clang -dynamiclib -arch arm64 -isysroot "$SDK" -miphoneos-version-min=15.0 \
+            -fobjc-arc -fmodules \
+            -I worse_query/LiveContainerCore/LiveContainer \
+            -I worse_query/LiveContainerCore/litehook/src \
+            -I worse_query/LiveContainerCore/litehook/external/include \
+            -framework Foundation -framework UIKit -framework UniformTypeIdentifiers \
+            -framework LocalAuthentication -framework UserNotifications -framework Security \
+            -undefined dynamic_lookup \
+            -install_name @rpath/TweakLoader.dylib \
+            worse_query/LiveContainerCore/TweakLoader/*.m \
+            -o "$APP_PATH/Frameworks/TweakLoader.dylib"
+          ls -lh "$APP_PATH/Frameworks/TweakLoader.dylib"
 
       - name: Inject Info.plist keys
         run: |
