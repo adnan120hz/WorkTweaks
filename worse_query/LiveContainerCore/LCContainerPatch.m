@@ -43,7 +43,7 @@ static const int kCurrentPatchRevision = 7;
     [fm removeItemAtPath:execPath error:&err];
     [fm moveItemAtPath:backupPath toPath:execPath error:&err];
 
-    BOOL dontInjectTweakLoader = [info[@"dontInjectTweakLoader"] boolValue];
+    __block BOOL dontInjectTweakLoader = [info[@"dontInjectTweakLoader"] boolValue];
     __block BOOL has64bitSlice = NO;
     __block BOOL isEncrypted = NO;
     __block BOOL tweakLoaderCantInject = NO;
@@ -170,57 +170,19 @@ static const int kCurrentPatchRevision = 7;
         if (outError) *outError = [self errorWithMessage:@"No certificate imported"];
         return nil;
     }
-    SecIdentityRef identity = NULL;
-    SecCertificateRef certificate = NULL;
-    NSDictionary *query = @{(__bridge id)kSecImportExportPassphrase: password};
-    CFArrayRef items = NULL;
-    OSStatus status = SecPKCS12Import((__bridge CFDataRef)p12Data, (__bridge CFDictionaryRef)query, &items);
-    if (status != errSecSuccess || !items || CFArrayGetCount(items) == 0) {
-        if (items) CFRelease(items);
+    // NOTE: the first version of this method used SecCertificateCopyValues
+    // + kSecOIDOrganizationalUnitName / kSecOIDX509V1ValidityNotAfter /
+    // kSecPropertyKeyValue. All of those are macOS-only: in the iOS SDK
+    // SecCertificate.h they are declared __OSX_AVAILABLE_STARTING(
+    // __MAC_10_7, __IPHONE_NA), so no import fixes the build on iOS.
+    // Parse the stored .p12 offline via ZSign/OpenSSL instead — same
+    // OU + notAfter extraction checkCert uses, minus its live OCSP call.
+    NSDictionary *info = [ZSigner certificateInfoWithCert:p12Data pass:password];
+    if (!info) {
         if (outError) *outError = [self errorWithMessage:@"The stored certificate no longer parses — remove it and import it again."];
         return nil;
     }
-    CFDictionaryRef item = CFArrayGetValueAtIndex(items, 0);
-    identity = (SecIdentityRef)CFDictionaryGetValue(item, kSecImportItemIdentity);
-    if (identity) {
-        SecIdentityCopyCertificate(identity, &certificate);
-    }
-    CFRelease(items);
-    if (!certificate) {
-        if (outError) *outError = [self errorWithMessage:@"The stored certificate has no identity."];
-        return nil;
-    }
-    NSString *teamID = nil;
-    NSDate *expiration = nil;
-    CFArrayRef keys = (__bridge CFArrayRef)@[(__bridge id)kSecOIDOrganizationalUnitName, (__bridge id)kSecOIDX509V1ValidityNotAfter];
-    CFErrorRef cfError = NULL;
-    CFDictionaryRef values = SecCertificateCopyValues(certificate, keys, &cfError);
-    if (values) {
-        CFDictionaryRef ouEntry = CFDictionaryGetValue(values, kSecOIDOrganizationalUnitName);
-        if (ouEntry) {
-            CFTypeRef ouValue = CFDictionaryGetValue(ouEntry, kSecPropertyKeyValue);
-            if (ouValue && CFGetTypeID(ouValue) == CFArrayGetTypeID() && CFArrayGetCount(ouValue) > 0) {
-                CFTypeRef first = CFArrayGetValueAtIndex(ouValue, 0);
-                if (first && CFGetTypeID(first) == CFStringGetTypeID()) {
-                    teamID = (__bridge NSString *)first;
-                }
-            }
-        }
-        CFDictionaryRef expEntry = CFDictionaryGetValue(values, kSecOIDX509V1ValidityNotAfter);
-        if (expEntry) {
-            CFTypeRef expValue = CFDictionaryGetValue(expEntry, kSecPropertyKeyValue);
-            if (expValue && CFGetTypeID(expValue) == CFDateGetTypeID()) {
-                expiration = (__bridge NSDate *)expValue;
-            }
-        }
-        CFRelease(values);
-    }
-    CFRelease(certificate);
-    if (!teamID) teamID = @"—";
-    NSMutableDictionary *result = [NSMutableDictionary dictionary];
-    result[@"teamId"] = teamID;
-    if (expiration) result[@"expirationDate"] = expiration;
-    return result;
+    return info;
 }
 
 + (BOOL)storeCertificateData:(NSData *)p12Data

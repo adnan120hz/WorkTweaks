@@ -87,6 +87,21 @@ jobs:
             -o "$APP_PATH/Frameworks/TweakLoader.dylib"
           ls -lh "$APP_PATH/Frameworks/TweakLoader.dylib"
 
+      - name: Embed OpenSSL.framework
+        run: |
+          set -euo pipefail
+          # ZSign links OpenSSL dynamically (@rpath/OpenSSL.framework/OpenSSL).
+          # The linker finds it via FRAMEWORK_SEARCH_PATHS at build time,
+          # but dyld needs the framework inside the bundle at launch:
+          # b3ae457e shipped without it and force-closed at launch
+          # ("Library not loaded: @rpath/OpenSSL.framework/OpenSSL").
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          mkdir -p "$APP_PATH/Frameworks"
+          cp -R Dependencies/OpenSSL.xcframework/ios-arm64/OpenSSL.framework "$APP_PATH/Frameworks/OpenSSL.framework"
+          ls -lh "$APP_PATH/Frameworks/OpenSSL.framework/OpenSSL"
+          file "$APP_PATH/Frameworks/OpenSSL.framework/OpenSSL"
+          otool -L "$APP_PATH/worse_query" | grep -F OpenSSL || true
+
       - name: Inject Info.plist keys
         run: |
           set -euo pipefail

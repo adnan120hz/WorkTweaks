@@ -327,6 +327,43 @@ int checkCert(NSData *key,
 + (int)checkCert:(NSData *)cert pass:(NSString *)pass completionHandler:(void(^)(int status, NSDate* expirationDate, NSString* organizationalUnitName, NSString *error))completionHandler {
     return checkCert(cert, pass, completionHandler);
 }
+
++ (NSDictionary *)certificateInfoWithCert:(NSData *)cert pass:(NSString *)pass {
+    const char* strPKeyFileData = (const char*)[cert bytes];
+    string strPassword = [pass cStringUsingEncoding:NSUTF8StringEncoding];
+
+    ZLog::logs.clear();
+
+    __block ZSignAsset zSignAsset;
+
+    if (!zSignAsset.InitSimple(strPKeyFileData, (int)[cert length], nil, 0, strPassword)) {
+        ZLog::logs.clear();
+        return nil;
+    }
+
+    X509* x509Cert = (X509*)zSignAsset.m_x509Cert;
+    if (!x509Cert) return nil;
+
+    NSString *teamID = [NSString stringWithUTF8String:zSignAsset.m_strTeamId.c_str()];
+    if (teamID.length == 0) teamID = @"—";
+
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    result[@"teamId"] = teamID;
+
+    // Same notAfter extraction checkCert uses (Apple dev certs carry a
+    // UTCTime notAfter, hence the "20" prefix + yyyyMMddHHmmss'Z' parse).
+    ASN1_TIME *notAfter = X509_get_notAfter(x509Cert);
+    if (notAfter && notAfter->data) {
+        NSString *fullDateString = [NSString stringWithFormat:@"20%s", notAfter->data];
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        formatter.dateFormat = @"yyyyMMddHHmmss'Z'";
+        formatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];
+        formatter.locale = NSLocale.currentLocale;
+        NSDate *expirationDate = [formatter dateFromString:fullDateString];
+        if (expirationDate) result[@"expirationDate"] = expirationDate;
+    }
+    return result;
+}
 @end
 
 }
