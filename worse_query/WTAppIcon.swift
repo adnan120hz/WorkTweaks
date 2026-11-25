@@ -36,12 +36,43 @@ enum WTAppIcon {
     }
 
     static func apply(for language: WTLanguage) {
-        let desired = alternateName(for: language)
+        apply(desired: alternateName(for: language), retried: false)
+    }
+
+    /// `desired` is the icon for the language that was current
+    /// when the change was asked for. On failure iOS is usually
+    /// refusing a rapid successive change (the user switching
+    /// languages quickly, or the previous change's system alert
+    /// still up), so one retry a second later covers it — never
+    /// more than one. The retry re-reads the CURRENT language
+    /// first: if the user switched again inside that second,
+    /// the stale retry must not resurrect the old icon.
+    private static func apply(desired: String?, retried: Bool) {
         guard UIApplication.shared.supportsAlternateIcons else { return }
         guard UIApplication.shared.alternateIconName != desired else { return }
         UIApplication.shared.setAlternateIconName(desired) { error in
             if let error {
-                print("[WTIcon] setAlternateIconName failed: \(error)")
+                // The Log tab IS stdout (Console dup2's it at
+                // launch), so print is the in-app log path — the
+                // same one the [Container] lines use. The failure
+                // used to print only the bare error; the wanted
+                // icon is what says which switch failed.
+                print("[WTIcon] setAlternateIconName failed (want \(desired ?? "primary")): \(error)")
+                guard !retried else {
+                    print("[WTIcon] icon change failed after retry — icon stays \(UIApplication.shared.alternateIconName ?? "primary").")
+                    return
+                }
+                print("[WTIcon] retrying icon change in 1s…")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    let current = WTLanguage(rawValue: UserDefaults.standard.string(forKey: WTLangStore.defaultsKey) ?? "en-US") ?? .enUS
+                    guard alternateName(for: current) == desired else {
+                        print("[WTIcon] language changed again — skipping the stale icon retry.")
+                        return
+                    }
+                    apply(desired: desired, retried: true)
+                }
+            } else {
+                print("[WTIcon] icon changed to \(desired ?? "primary").")
             }
         }
     }
