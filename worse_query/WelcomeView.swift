@@ -31,9 +31,11 @@ import SwiftUI
 // headers, no centered avatar card.
 //
 // Every string goes through wtLang.tr, so the pages follow the
-// app language (English default). The feature-row emojis stay
-// — they are decorative here by the user's order; the rest of
-// the app stays emoji-free. Dynamic Type: scalable TextStyle
+// app language (English default). The feature rows use custom
+// blue icons (a solid blue tile + white SF Symbol, made for
+// this app) — NO stock Unicode emoji anywhere in the welcome,
+// by the user's order; the rest of the app stays emoji-free.
+// Dynamic Type: scalable TextStyle
 // fonts only, no fixed heights, rows wrap instead of
 // truncating.
 
@@ -277,7 +279,7 @@ private struct DeveloperPage: View {
 // The same 18 v7.0 features, now grouped into four glass
 // cards instead of one flat list — Tweaks & System, Files &
 // Data, Look & Feel, Setup & More. The rows themselves are
-// unchanged (emoji, title, one-line description), so every
+// unchanged (custom blue icon, title, one-line description), so every
 // existing translation key still applies; only the four
 // group headers are new keys.
 
@@ -288,33 +290,33 @@ private struct FeaturesPage: View {
     /// what it does. Titles reuse the app's existing
     /// translation keys where they exist; the one-line
     /// descriptions are Introducing keys.
-    private var groups: [(title: String, features: [(emoji: String, title: String, desc: String)])] {
+    private var groups: [(title: String, features: [(icon: String, title: String, desc: String)])] {
         [
             ("Tweaks & System", [
-                ("🎛️", "Tweaks", "24 catalog tweaks — Dynamic Island, iPadOS Mode, custom region and more."),
-                ("🔓", "Sandbox Escape", "Reach system folders the sandbox normally hides."),
-                ("🔋", "Battery & Thermal", "Battery health, cycle count and temperature — read-only."),
-                ("💥", "Jetsam & Crash", "See why apps were killed, with crash logs you can delete."),
-                ("📋", "Configuration Profiles", "List installed profiles, read-only — no fake supervision."),
+                ("slider.horizontal.3", "Tweaks", "24 catalog tweaks — Dynamic Island, iPadOS Mode, custom region and more."),
+                ("lock.open.fill", "Sandbox Escape", "Reach system folders the sandbox normally hides."),
+                ("battery.100", "Battery & Thermal", "Battery health, cycle count and temperature — read-only."),
+                ("memorychip", "Jetsam & Crash", "See why apps were killed, with crash logs you can delete."),
+                ("person.badge.shield.checkmark", "Configuration Profiles", "List installed profiles, read-only — no fake supervision."),
             ]),
             ("Files & Data", [
-                ("📁", "App Data", "Browse any app's container, edit files, and build portable patches."),
-                ("💾", "Save Vault", "Back up an app's save data and restore it after a reinstall."),
-                ("📡", "Wi-Fi File Sharing", "Share files with your PC over Wi-Fi, protected by a PIN."),
-                ("🗃️", "SQLite / plist editor", "Edit app databases and preference files in place."),
-                ("🎙️", "Voice Memos & AI Cache", "Export voice memos and check Apple Intelligence cache size."),
-                ("🧹", "Cache Data Cleaner", "Free space by cleaning app caches, safely."),
+                ("folder.fill", "App Data", "Browse any app's container, edit files, and build portable patches."),
+                ("archivebox.fill", "Save Vault", "Back up an app's save data and restore it after a reinstall."),
+                ("wifi", "Wi-Fi File Sharing", "Share files with your PC over Wi-Fi, protected by a PIN."),
+                ("tablecells.fill", "SQLite / plist editor", "Edit app databases and preference files in place."),
+                ("mic.fill", "Voice Memos & AI Cache", "Export voice memos and check Apple Intelligence cache size."),
+                ("trash.fill", "Cache Data Cleaner", "Free space by cleaning app caches, safely."),
             ]),
             ("Look & Feel", [
-                ("🖼️", "PosterBoard", "Make lock-screen wallpapers from your photos and videos."),
-                ("🛡️", "Splash Ad Cache Lock", "Lock ad splash-screen caches so apps open without the splash ad."),
+                ("photo.fill", "PosterBoard", "Make lock-screen wallpapers from your photos and videos."),
+                ("shield.fill", "Splash Ad Cache Lock", "Lock ad splash-screen caches so apps open without the splash ad."),
             ]),
             ("Setup & More", [
-                ("✈️", "Airlift", "Flash passcode themes and wallet card skins over the pairing tunnel."),
-                ("🔑", "Get Pairing File", "Pair this iPhone on-device and unlock Airlift."),
-                ("💽", "Backup", "Snapshots of your tweaks, plus All Data Backup for photos and videos."),
-                ("📜", "Log", "Every action, logged — send it when something goes wrong."),
-                ("🌐", "Languages", "English, Indonesian, Chinese, Vietnamese and Russian — the UI follows you."),
+                ("airplane", "Airlift", "Flash passcode themes and wallet card skins over the pairing tunnel."),
+                ("key.fill", "Get Pairing File", "Pair this iPhone on-device and unlock Airlift."),
+                ("externaldrive.fill", "Backup", "Snapshots of your tweaks, plus All Data Backup for photos and videos."),
+                ("terminal.fill", "Log", "Every action, logged — send it when something goes wrong."),
+                ("globe", "Languages", "English, Indonesian, Chinese, Vietnamese and Russian — the UI follows you."),
             ]),
         ]
     }
@@ -340,7 +342,7 @@ private struct FeaturesPage: View {
                                     Divider()
                                         .padding(.leading, 14)
                                 }
-                                featureRow(emoji: feature.emoji, title: feature.title, desc: feature.desc)
+                                featureRow(icon: feature.icon, title: feature.title, desc: feature.desc)
                             }
                         }
                         .padding(.vertical, 4)
@@ -356,11 +358,20 @@ private struct FeaturesPage: View {
         }
     }
 
-    private func featureRow(emoji: String, title: String, desc: String) -> some View {
+    private func featureRow(icon: String, title: String, desc: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            Text(emoji)
-                .font(.title3)
-                .frame(width: 30, alignment: .center)
+            // Custom blue icon (made for this app — NO stock
+            // Unicode emoji): a solid blue tile with a white
+            // SF Symbol. Fixed size: row icons don't scale
+            // with Dynamic Type.
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color(red: 10 / 255, green: 132 / 255, blue: 255 / 255))
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 30, height: 30)
             VStack(alignment: .leading, spacing: 1) {
                 Text(wtLang.tr(title))
                     .font(.subheadline.weight(.semibold))
