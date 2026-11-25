@@ -39,6 +39,38 @@ jobs:
           rm /tmp/OpenSSL.xcframework.zip
           ls Dependencies/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/Headers/opensslv.h
 
+      - name: Build WTIDevice (Rust FFI)
+        run: |
+          set -euo pipefail
+          # JIT transport (Install IPA on Container, Phase 3): idevice's C
+          # FFI as a staticlib, packed as worse_query/WTIDevice.xcframework
+          # so the pbxproj reference resolves. Only idevice/idevice-ffi are
+          # vendored (rust-core/vendor/); the rest of the dep tree resolves
+          # from crates.io. Device slice only — the tunnel talks to a real
+          # iPhone over the Local Dev VPN, so there is no simulator slice.
+          # IPHONEOS_DEPLOYMENT_TARGET matches the app target (26.0) — NOT
+          # SideInstaller's 17.4.
+          if ! command -v cargo >/dev/null && [ -f "$HOME/.cargo/env" ]; then
+            set +u
+            source "$HOME/.cargo/env" || true
+            set -u
+          fi
+          rustup target add aarch64-apple-ios
+          export IPHONEOS_DEPLOYMENT_TARGET=26.0
+          cd rust-core
+          cargo build --release --target aarch64-apple-ios
+          cd ..
+          # cbindgen regenerates vendor/idevice-ffi/idevice.h in place during
+          # the build (feature-gated subset). It is NOT shipped: the
+          # xcframework headers are the minimal hand-written wtidevice.h +
+          # plist.h + module.modulemap in rust-core/include.
+          xcodebuild -create-xcframework \
+            -library rust-core/target/aarch64-apple-ios/release/libwt_idevice_ffi.a \
+            -headers rust-core/include \
+            -output worse_query/WTIDevice.xcframework
+          ls -lh worse_query/WTIDevice.xcframework/ios-arm64/libwt_idevice_ffi.a
+          ls worse_query/WTIDevice.xcframework/ios-arm64/Headers/
+
       - name: Show toolchain
         run: |
           xcodebuild -version
@@ -112,6 +144,11 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSBonjourServices array" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:0 string _remotepairing-pairable-host._tcp" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:1 string _worktweaksprobe._tcp" "$PLIST"
+          # JIT (Phase 3): the Bonjour browse for this iPhone's remote-pairing
+          # listener (`WTNetworkStatus.ownRemotePairingAdvert`) needs the
+          # listener's own service type, not just the pairable-host one the
+          # pairing host publishes. Mirrors the pbxproj INFOPLIST_KEY entry.
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:2 string _remotepairing._tcp" "$PLIST"
           /usr/libexec/PlistBuddy -c "Delete :UIBackgroundModes" "$PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$PLIST"

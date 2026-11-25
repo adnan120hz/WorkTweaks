@@ -19,6 +19,12 @@ struct WorkTweaksApp: App {
         // so the check only logs honestly and the host UI
         // opens normally. Phase 2 replaces it with the real
         // LiveContainerMain call.
+        // Install IPA on Container (Phase 3, JIT): if JIT was armed
+        // for a guest, attach the debugserver session to our own pid
+        // BEFORE the guest bootstrap runs — the guest must never make
+        // a JIT call before the debugger is attached. On failure the
+        // guest still launches, JIT-less, and the failure is recorded.
+        ContainerJITManager.resumePendingSessionIfNeeded()
         ContainerLaunch.checkSelectedGuest()
     }
 

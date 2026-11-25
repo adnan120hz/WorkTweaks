@@ -185,7 +185,7 @@ struct LicenseView: View {
                     // this row is.
                     creditRow(
                         title: "SideInstaller by FrizzleM",
-                        detail: wtLang.tr("Apple ID sign-in + provisioning — the system the Container's Apple ID login ports (GrandSlam auth, teams, certificates, App IDs, App Groups, profiles)."),
+                        detail: wtLang.tr("Apple ID sign-in, provisioning and signing — and the JIT session, developer disk image download and device transport this build derives from"),
                         url: "https://github.com/FrizzleM/SideInstaller"
                     )
                     Divider()
@@ -198,6 +198,17 @@ struct LicenseView: View {
                         title: "isideload — Nicholas Sharp",
                         detail: wtLang.tr("Apple ID auth + developer-services protocol the Container's sign-in and provisioning follow."),
                         url: "https://github.com/nab138/isideload"
+                    )
+                    Divider()
+                        .padding(.leading, 14)
+                    // idevice — Jackson Coxson (jkcoxson, MIT):
+                    // the RPPairing tunnel + RSD services the JIT
+                    // session's device transport uses (vendored
+                    // under rust-core/vendor, idevice 7bd551c).
+                    creditRow(
+                        title: "idevice — Jackson Coxson (jkcoxson)",
+                        detail: wtLang.tr("RPPairing tunnel + RSD services (lockdown, AMFI, debugserver, developer disk image) — the JIT transport"),
+                        url: "https://github.com/jkcoxson/idevice"
                     )
                     Divider()
                         .padding(.leading, 14)
@@ -315,6 +326,11 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     LabeledContent("isideload — Nicholas Sharp", value: "MIT")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("idevice — Jackson Coxson (jkcoxson)", value: "MIT")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }

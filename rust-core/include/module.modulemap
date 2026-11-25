@@ -1,0 +1,10 @@
+module WTIDevice {
+    // Minimal hand-written header declaring only the idevice FFI functions
+    // the JIT session uses (signatures copied verbatim from the generated
+    // idevice.h). See wtidevice.h.
+    header "wtidevice.h"
+    // libplist helpers (plist_t, PLIST_BOOLEAN, plist_get_*, plist_free,
+    // plist_mem_free). Copied byte-identical from vendor/idevice-ffi/plist.h.
+    header "plist.h"
+    export *
+}

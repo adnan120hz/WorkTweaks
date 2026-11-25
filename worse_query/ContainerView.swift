@@ -15,6 +15,7 @@ struct ContainerView: View {
     @EnvironmentObject private var wtLang: WTLangStore
     @StateObject private var manager = ContainerManager.shared
     @StateObject private var auth = ContainerAuthSession()
+    @StateObject private var jitManager = ContainerJITManager.shared
     @State private var authPassword = ""
     @State private var twoFactorCode = ""
     @State private var showSignOutConfirm = false
@@ -442,7 +443,7 @@ struct ContainerView: View {
                                     }
                                     .buttonStyle(.borderedProminent)
                                 } else if guest.is32bit {
-                                    Text(wtLang.tr("32-bit — needs JIT (Phase 3)"))
+                                    Text(wtLang.tr("32-bit — needs JIT + classic mode, which is not in this build."))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 } else if !guest.signed {
@@ -458,14 +459,7 @@ struct ContainerView: View {
                 }
             }
 
-            WTSectionCard {
-                Text(wtLang.tr("JIT is not available yet — it arrives in a later update."))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-            }
+            ContainerJITSection(manager: manager, jitManager: jitManager)
         }
         .navigationTitle(wtLang.tr("Install IPA on Container"))
         .navigationBarTitleDisplayMode(.inline)
