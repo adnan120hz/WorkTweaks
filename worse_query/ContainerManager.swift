@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import Compression
 
-// MARK: - Install IPA on Container (Phase 1 host skeleton)
+// MARK: - Install IPA on Container (Phase 2 host)
 //
 // Guest apps ("containers") live in the WorkTweaks App Group,
 // mirroring LiveContainer's layout
@@ -14,16 +14,16 @@ import Compression
 // itself: LC resolves SideStore/AltStore groups first, WorkTweaks
 // resolves its own group via AppGroupResolver.
 //
-// Phase 1 CAN: list guests, import an .ipa (unzip, validate,
-// encryption check, store the bundle, write LCAppInfo.plist,
-// create the data container skeleton).
-// Phase 1 CANNOT: patch the executable (needs LCMachOUtils —
-// blocked on the litehook submodule, see
-// LiveContainerCore/README.LITEHOOK.md), sign the guest
-// (Phase 2), or launch it (needs signing or a JIT session,
-// Phases 2–3). Installs therefore land with
-// LCPatchRevision = -1 ("not patched yet") and the UI says so
-// plainly instead of pretending the guest is ready to run.
+// Phase 2 CAN: list guests, import a decrypted .ipa, patch the
+// executable (LCContainerPatch — LCMachOUtils, currentPatchRev 7),
+// sign the guest with an imported .p12 certificate (ZSigner,
+// called directly), and launch it JIT-less (LiveContainerMain).
+// The JIT toggle stays OFF/disabled until the Phase 3 JIT session
+// exists; no fake "JIT on" anywhere. A certificate is required
+// to launch on iOS 26+ (LCBootstrap refuses without one), so
+// launch is honest about that: no cert, no launch.
+// Encrypted IPAs are still refused; 32-bit guests are refused
+// (they need JIT + classic mode, Phase 3).
 
 /// One installed guest app.
 struct ContainerGuest: Identifiable {
@@ -39,12 +39,23 @@ struct ContainerGuest: Identifiable {
     let folderName: String
     let bundlePath: String
     let dataUUID: String
-    /// -1 = installed by Phase 1, never patched.
+    /// -1 = installed but never patched; 7 = patched (current).
     let patchRevision: Int
+    /// Set by the patch step (LCAppInfo.plist "is32bit"): 32-bit
+    /// guests need JIT + classic mode (Phase 3), so they install
+    /// but never launch here.
+    let is32bit: Bool
+    /// Set when a sign with the stored certificate succeeded
+    /// (LCAppInfo.plist "WTSigned").
+    let signed: Bool
     let installedAt: Date?
 
     var id: String { bundleID }
     var isPatched: Bool { patchRevision >= Self.currentPatchRevision }
+    /// Launchable JIT-less: patched, 64-bit, and signed. (The
+    /// cert gate lives in LCBootstrap: on iOS 26+ launch is
+    /// refused outright without a certificate.)
+    var isLaunchable: Bool { isPatched && !is32bit && signed }
 }
 
 enum ContainerError: LocalizedError {
@@ -129,6 +140,8 @@ final class ContainerManager: ObservableObject {
                 bundlePath: bundlePath,
                 dataUUID: (info?["LCDataUUID"] as? String) ?? "",
                 patchRevision: (info?["LCPatchRevision"] as? Int) ?? -1,
+                is32bit: (info?["is32bit"] as? Bool) ?? false,
+                signed: (info?["WTSigned"] as? Bool) ?? false,
                 installedAt: info?["installationDate"] as? Date
             ))
         }
@@ -217,8 +230,9 @@ final class ContainerManager: ObservableObject {
             installedDestination = destination
 
             // LCAppInfo.plist — the metadata invokeAppMain reads.
-            // LCPatchRevision -1 means "installed, never patched":
-            // patching lands once the LC core links (Phase 2).
+            // Written with LCPatchRevision -1 first; the patch step
+            // below rewrites it to 7 (or the install fails and the
+            // catch removes the destination again).
             let dataUUID = UUID().uuidString
             let lcInfo: [String: Any] = [
                 "LCPatchRevision": -1,
@@ -229,12 +243,45 @@ final class ContainerManager: ObservableObject {
             let lcInfoData = try PropertyListSerialization.data(fromPropertyList: lcInfo, format: .xml, options: 0)
             try lcInfoData.write(to: destination.appendingPathComponent("LCAppInfo.plist"))
 
+            // Patch the executable (LCContainerPatch — LCMachOUtils,
+            // currentPatchRev 7, TweakLoader injected). A failure
+            // here is a failed install.
+            let patchResult = try LCContainerPatch.patchGuestApp(atPath: destination.path, executableName: executable)
+            let patchRevision = (patchResult["patchRevision"] as? Int) ?? -1
+            let is32bit = (patchResult["is32bit"] as? Bool) ?? false
+            print("[Container] patched \(bundleID) — revision \(patchRevision), 32-bit: \(is32bit).")
+
             // Data container skeleton (LC creates the container
             // lazily on first run; the skeleton is created here so
             // the guest's LCDataUUID already points somewhere).
             let containerDir = dataRoot.appendingPathComponent(dataUUID, isDirectory: true)
             for sub in ["Documents", "Library", "Library/Caches", "Library/Preferences", "tmp"] {
                 try fm.createDirectory(at: containerDir.appendingPathComponent(sub, isDirectory: true), withIntermediateDirectories: true)
+            }
+
+            // Sign with the stored certificate when one is imported
+            // (ZSigner, direct call). LC skips signing for 32-bit
+            // guests; without a cert the guest stays unsigned and
+            // unlaunchable. A sign failure does NOT fail the
+            // install — the guest lands patched-but-unsigned and
+            // the result says so.
+            var signed = false
+            var signNote = ""
+            if is32bit {
+                signNote = " This guest is 32-bit — it needs JIT + classic mode (Phase 3) to run."
+            } else if LCContainerPatch.hasCertificate() {
+                do {
+                    signed = try await signGuest(bundlePath: destination.path, bundleID: bundleID)
+                    if signed {
+                        try setLCAppInfoFlag(bundlePath: destination.path, key: "WTSigned", value: true)
+                        signNote = " Signed with your certificate — ready to launch."
+                    }
+                } catch {
+                    signNote = " Signing failed: \(error.localizedDescription)"
+                    print("[Container] signing \(bundleID) failed: \(error.localizedDescription)")
+                }
+            } else {
+                signNote = " No certificate imported, so it cannot launch yet."
             }
 
             let guest = ContainerGuest(
@@ -245,12 +292,14 @@ final class ContainerManager: ObservableObject {
                 folderName: folderName,
                 bundlePath: destination.path,
                 dataUUID: dataUUID,
-                patchRevision: -1,
+                patchRevision: patchRevision,
+                is32bit: is32bit,
+                signed: signed,
                 installedAt: Date()
             )
-            print("[Container] installed \(bundleID) (\(displayName) \(version)) — stored, NOT patched yet (patching lands in Phase 2).")
+            print("[Container] installed \(bundleID) (\(displayName) \(version)) — patched revision \(patchRevision), signed: \(signed).")
             await MainActor.run {
-                self.lastResult = "Install complete — the guest is stored but not patched yet."
+                self.lastResult = "Install complete — patched (revision 7).\(signNote)"
                 self.refresh()
             }
             return guest
@@ -313,22 +362,131 @@ final class ContainerManager: ObservableObject {
             print("[Container] deleting \(guest.bundleID) failed: \(error.localizedDescription)")
         }
     }
+    // MARK: - Sign / launch / certificate
+
+    /// The reason a guest launch failed, set by
+    /// ContainerLaunch.checkSelectedGuest() when LiveContainerMain
+    /// returns with an "error" key. The Containers page shows it
+    /// once and clears it.
+    static var launchError: String?
+
+    /// Published cert state for the view (refreshed on appear and
+    /// after import/remove).
+    @Published private(set) var certificate: ContainerCertificate?
+
+    /// Sign one installed guest with the stored certificate
+    /// (ZSigner, direct call — see LCContainerPatch.h).
+    private func signGuest(bundlePath: String, bundleID: String) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            LCContainerPatch.signGuestApp(atPath: bundlePath, bundleId: bundleID) { success, error in
+                if success {
+                    continuation.resume(returning: true)
+                } else {
+                    continuation.resume(throwing: ContainerError.message(error ?? "Signing failed."))
+                }
+            }
+        }
+    }
+
+    /// Update one key in a guest's LCAppInfo.plist
+    /// (read-modify-write, preserving the other keys).
+    private func setLCAppInfoFlag(bundlePath: String, key: String, value: Any) throws {
+        let url = URL(fileURLWithPath: bundlePath).appendingPathComponent("LCAppInfo.plist")
+        var info = (NSDictionary(contentsOfFile: url.path) as? [String: Any]) ?? [:]
+        info[key] = value
+        let data = try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+        try data.write(to: url)
+    }
+
+    /// Launch a guest JIT-less: select it and relaunch the host
+    /// into it (LCSharedUtils launchToGuestAppWithClassicMode).
+    /// The current process is killed by that call; the next launch
+    /// runs LiveContainerMain with this guest selected. Only
+    /// launchable guests (patched, 64-bit, signed) reach here —
+    /// the view enforces it and this refuses again.
+    func launch(_ guest: ContainerGuest) {
+        guard guest.isLaunchable else {
+            print("[Container] launch refused for \(guest.bundleID): patched=\(guest.isPatched) 32-bit=\(guest.is32bit) signed=\(guest.signed).")
+            return
+        }
+        print("[Container] launching \(guest.bundleID) — relaunching into the guest.")
+        LCContainerPatch.launchGuest(withFolderName: guest.folderName, dataUUID: guest.dataUUID)
+    }
+
+    /// The stored certificate, if one is imported: team ID + expiry.
+    struct ContainerCertificate: Equatable {
+        let teamID: String
+        let expirationDate: Date?
+    }
+
+    var hasCertificate: Bool { LCContainerPatch.hasCertificate() }
+
+    func certificateInfo() -> ContainerCertificate? {
+        guard let info = try? LCContainerPatch.certificateInfo() else { return nil }
+        return ContainerCertificate(
+            teamID: (info["teamId"] as? String) ?? "—",
+            expirationDate: info["expirationDate"] as? Date
+        )
+    }
+
+    /// Import a picked .p12 with its password (validated offline
+    /// by SecPKCS12Import — wrong password or a non-.p12 throws).
+    func importCertificate(data: Data, password: String) throws {
+        try LCContainerPatch.storeCertificateData(data, password: password)
+        print("[Container] certificate imported.")
+        refreshCertificate()
+    }
+
+    func removeCertificate() {
+        LCContainerPatch.removeCertificate()
+        print("[Container] certificate removed.")
+        refreshCertificate()
+    }
+
+    func refreshCertificate() {
+        certificate = certificateInfo()
+    }
 }
 
-// MARK: - Launch-path decision (Phase 1 stub)
+// MARK: - Launch-path bootstrap (Phase 2)
 //
 // LC relaunches the host with a guest selected: it stores the
-// guest's bundle id under the "selected" key in the standard
+// guest's folder name under the "selected" key in the standard
 // defaults and re-opens itself (LCSharedUtils
-// launchToGuestAppWithURL). WorkTweaksApp calls this from
-// init(): in Phase 1 the bootstrap itself is not linked yet
-// (litehook pending), so a selected guest is logged honestly
-// and the host UI opens normally. Phase 2 replaces the body
-// with the real bootstrap call.
+// launchToGuestAppWithClassicMode). WorkTweaksApp calls this from
+// init(): when a guest is selected, the process hands over to
+// LiveContainerMain, which dlopens the guest and jumps to its
+// main — on success this never returns. On failure
+// LiveContainerMain returns 1 and stores the reason under the
+// "error" key; the host UI then opens normally and the error is
+// surfaced on the Containers page (ContainerManager.launchError).
+// LiveContainerMain is called ONLY when a guest is selected: its
+// no-guest tail dlopens LiveContainerSwiftUI.framework, which
+// does not exist in WorkTweaks and must never run here.
 enum ContainerLaunch {
     static func checkSelectedGuest() {
         guard let selected = UserDefaults.standard.string(forKey: "selected"), !selected.isEmpty else { return }
-        print("[Container] guest selected at launch: \(selected) — launch unavailable: LC core not linked yet (litehook pending, Phase 2). Staying in WorkTweaks.")
+        print("[Container] guest selected at launch: \(selected) — entering LiveContainerMain.")
+        let args = CommandLine.arguments
+        let argc = Int32(args.count)
+        // strdup each arg; the copies are intentionally leaked —
+        // they must outlive this call for the guest's lifetime.
+        var cArgs: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) }
+        cArgs.append(nil)
+        let result = cArgs.withUnsafeMutableBufferPointer { buf in
+            LiveContainerMain(argc, buf.baseAddress)
+        }
+        // Returned: the guest did not launch (or its main returned).
+        // LiveContainerMain clears "selected" before attempting, so
+        // there is no relaunch loop; the failure reason, if any, is
+        // under the "error" key.
+        if let error = UserDefaults.standard.string(forKey: "error") {
+            UserDefaults.standard.removeObject(forKey: "error")
+            ContainerManager.launchError = error
+            print("[Container] guest launch failed: \(error)")
+        } else {
+            print("[Container] LiveContainerMain returned \(result) with no error recorded — staying in WorkTweaks.")
+        }
     }
 }
 
@@ -336,8 +494,9 @@ enum ContainerLaunch {
 //
 // LC's LCIsMachOEncrypted (LCMachOUtils.m) walks the load
 // commands for LC_ENCRYPTION_INFO(_64) with cryptid != 0.
-// Reimplemented here in Swift because the ObjC core is not
-// linked yet — same rule, same outcome.
+// Reimplemented here in Swift as the early pre-flight check
+// before install — the ObjC core does the authoritative check
+// again at patch time. Same rule, same outcome.
 
 enum ContainerMachO {
     struct SliceInfo {

@@ -152,6 +152,16 @@ struct LicenseView: View {
                     )
                     Divider()
                         .padding(.leading, 14)
+                    // litehook — LiveContainer's MIT hooking
+                    // library, vendored since Phase 2 (source
+                    // LiveContainer/litehook, commit a7e9f59).
+                    creditRow(
+                        title: "litehook — LiveContainer",
+                        detail: wtLang.tr("Hooking library the LiveContainer core uses to run guest apps (litehook)."),
+                        url: "https://github.com/LiveContainer/litehook"
+                    )
+                    Divider()
+                        .padding(.leading, 14)
                     // ZSign provenance (verified 2026-11-25):
                     // originally zhlynn/zsign (MIT); LiveContainer
                     // uses Feather's iOS adaptation, modified by
@@ -254,6 +264,11 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     LabeledContent("LiveContainer", value: "AGPL-3.0")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("litehook — LiveContainer", value: "MIT")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                     Divider()

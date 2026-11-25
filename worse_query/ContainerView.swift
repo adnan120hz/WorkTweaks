@@ -1,15 +1,15 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-// MARK: - Install IPA on Container (Phase 1)
+// MARK: - Install IPA on Container (Phase 2)
 //
-// The guest list + IPA import page. Phase 1 installs are stored
-// but NOT patched: the executable patching needs the LC ObjC
-// core (blocked on litehook — see
-// LiveContainerCore/README.LITEHOOK.md), signing lands in
-// Phase 2, and launch needs signing or a JIT session
-// (Phases 2–3). Every state on this page says that plainly:
-// no guest here is launchable yet, and none claims to be.
+// The guest list + IPA import page. Phase 2 installs are patched
+// (LCContainerPatch, revision 7) and signed when a certificate is
+// imported; launchable guests launch JIT-less. The JIT toggle
+// stays OFF/disabled until the Phase 3 JIT session exists.
+// Every state on this page says what is true: a guest without a
+// certificate is patched but not launchable, and none claims
+// otherwise.
 
 struct ContainerView: View {
     @EnvironmentObject private var wtLang: WTLangStore
@@ -18,15 +18,88 @@ struct ContainerView: View {
     @State private var importError: String?
     @State private var guestToDelete: ContainerGuest?
 
+    @State private var showCertImporter = false
+    @State private var certData: Data?
+    @State private var certFileName = ""
+    @State private var certPassword = ""
+    @State private var showPasswordPrompt = false
+    @State private var certError: String?
+    @State private var showRemoveCertConfirm = false
+    @State private var launchError: String?
+
     var body: some View {
         WTGlassPage {
             WTSectionCard {
-                Text(wtLang.tr("Guest apps live in the WorkTweaks App Group and run inside this app. Phase 1 installs and lists them; patching, signing and launch land in later phases."))
+                Text(wtLang.tr("Guest apps live in the WorkTweaks App Group and run inside this app. Decrypted IPAs are patched and signed here; a certificate is needed to launch on iOS 26+."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
+            }
+
+            // Certificate — the .p12 that signs guests. Without it,
+            // installs land patched but unsigned and unlaunchable.
+            WTSectionCard {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Label(wtLang.tr("Certificate"), systemImage: "key.fill")
+                            .font(.subheadline.weight(.semibold))
+                        Spacer(minLength: 0)
+                        if manager.hasCertificate, let cert = manager.certificate {
+                            Text(wtLang.tr("Team %@", cert.teamID))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.top, 10)
+
+                    if manager.hasCertificate, let cert = manager.certificate {
+                        if let expiry = cert.expirationDate {
+                            Text(wtLang.tr("Expires %@", expiry.formatted(date: .abbreviated, time: .omitted)))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.horizontal, 14)
+                        }
+                        Button {
+                            SoundEffects.playTap()
+                            showRemoveCertConfirm = true
+                        } label: {
+                            Label(wtLang.tr("Remove Certificate"), systemImage: "trash")
+                                .font(.subheadline)
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 10)
+                    } else {
+                        Text(wtLang.tr("No certificate imported — import a .p12 to sign and launch guests."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 14)
+                        Button {
+                            SoundEffects.playTap()
+                            showCertImporter = true
+                        } label: {
+                            HStack {
+                                Label(wtLang.tr("Import Certificate"), systemImage: "square.and.arrow.down")
+                                    .font(.subheadline.weight(.semibold))
+                                Spacer(minLength: 0)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(manager.isBusy)
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 10)
+                    }
+                }
             }
 
             WTSectionCard {
@@ -61,6 +134,14 @@ struct ContainerView: View {
                             .padding(.horizontal, 14)
                             .padding(.bottom, 10)
                     }
+                    if let launchError {
+                        Text(wtLang.tr("Launch failed: %@", launchError))
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 10)
+                    }
                 }
             }
 
@@ -81,39 +162,69 @@ struct ContainerView: View {
                                 Divider()
                                     .padding(.leading, 14)
                             }
-                            HStack(alignment: .top, spacing: 10) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(guest.displayName)
-                                        .font(.subheadline.weight(.semibold))
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    Text(guest.bundleID)
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack(alignment: .top, spacing: 10) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(guest.displayName)
+                                            .font(.subheadline.weight(.semibold))
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        Text(guest.bundleID)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        HStack(spacing: 6) {
+                                            Text(guest.version)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                            Text("•")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                            Text(guest.isPatched
+                                                 ? wtLang.tr("Patched")
+                                                 : wtLang.tr("Not patched yet"))
+                                                .font(.caption.weight(.semibold))
+                                                .foregroundStyle(guest.isPatched ? .green : .orange)
+                                            Text("•")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                            Text(guest.signed
+                                                 ? wtLang.tr("Signed")
+                                                 : wtLang.tr("Not signed"))
+                                                .font(.caption.weight(.semibold))
+                                                .foregroundStyle(guest.signed ? .green : .orange)
+                                        }
+                                    }
+                                    Spacer(minLength: 0)
+                                    Button {
+                                        SoundEffects.playTap()
+                                        guestToDelete = guest
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.red)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                if guest.isLaunchable {
+                                    Button {
+                                        SoundEffects.playTap()
+                                        manager.launch(guest)
+                                    } label: {
+                                        Label(wtLang.tr("Launch"), systemImage: "play.fill")
+                                            .font(.subheadline.weight(.semibold))
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 8)
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                } else if guest.is32bit {
+                                    Text(wtLang.tr("32-bit — needs JIT (Phase 3)"))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    HStack(spacing: 6) {
-                                        Text(guest.version)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                        Text("•")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                        Text(guest.isPatched
-                                             ? wtLang.tr("Patched")
-                                             : wtLang.tr("Not patched yet"))
-                                            .font(.caption.weight(.semibold))
-                                            .foregroundStyle(guest.isPatched ? .green : .orange)
-                                    }
+                                } else if !guest.signed {
+                                    Text(wtLang.tr("Needs certificate to launch"))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
                                 }
-                                Spacer(minLength: 0)
-                                Button {
-                                    SoundEffects.playTap()
-                                    guestToDelete = guest
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.red)
-                                }
-                                .buttonStyle(.plain)
                             }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
@@ -123,7 +234,7 @@ struct ContainerView: View {
             }
 
             WTSectionCard {
-                Text(wtLang.tr("Launch needs a certificate (Phase 2) or JIT (Phase 3)."))
+                Text(wtLang.tr("JIT is not available yet — it arrives in a later update."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -135,6 +246,11 @@ struct ContainerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             manager.refresh()
+            manager.refreshCertificate()
+            if let error = ContainerManager.launchError {
+                ContainerManager.launchError = nil
+                launchError = error
+            }
         }
         .fileImporter(
             isPresented: $showImporter,
@@ -155,6 +271,28 @@ struct ContainerView: View {
                 importError = error.localizedDescription
             }
         }
+        .fileImporter(
+            isPresented: $showCertImporter,
+            allowedContentTypes: [UTType(filenameExtension: "p12")!],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                guard let url = urls.first else { return }
+                let scoped = url.startAccessingSecurityScopedResource()
+                defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                do {
+                    certData = try Data(contentsOf: url)
+                    certFileName = url.lastPathComponent
+                    certPassword = ""
+                    showPasswordPrompt = true
+                } catch {
+                    certError = error.localizedDescription
+                }
+            case .failure(let error):
+                certError = error.localizedDescription
+            }
+        }
         .alert(wtLang.tr("Install failed"), isPresented: Binding(
             get: { importError != nil },
             set: { if !$0 { importError = nil } }
@@ -162,6 +300,53 @@ struct ContainerView: View {
             Button(wtLang.tr("OK"), role: .cancel) { importError = nil }
         } message: {
             Text(importError ?? "")
+        }
+        .alert(wtLang.tr("Import failed"), isPresented: Binding(
+            get: { certError != nil },
+            set: { if !$0 { certError = nil } }
+        )) {
+            Button(wtLang.tr("OK"), role: .cancel) { certError = nil }
+        } message: {
+            Text(certError ?? "")
+        }
+        .alert(
+            wtLang.tr("Certificate password"),
+            isPresented: $showPasswordPrompt
+        ) {
+            SecureField(wtLang.tr("Password"), text: $certPassword)
+            Button(wtLang.tr("Import Certificate")) {
+                guard let data = certData else { return }
+                Task {
+                    do {
+                        try manager.importCertificate(data: data, password: certPassword)
+                        certData = nil
+                        certPassword = ""
+                    } catch {
+                        certData = nil
+                        certPassword = ""
+                        certError = error.localizedDescription
+                    }
+                }
+            }
+            Button(wtLang.tr("Cancel"), role: .cancel) {
+                certData = nil
+                certPassword = ""
+            }
+        } message: {
+            Text(wtLang.tr("Enter the password for %@.", certFileName))
+        }
+        .alert(
+            wtLang.tr("Remove the certificate?"),
+            isPresented: $showRemoveCertConfirm
+        ) {
+            Button(wtLang.tr("Remove Certificate"), role: .destructive) {
+                manager.removeCertificate()
+            }
+            Button(wtLang.tr("Cancel"), role: .cancel) {
+                showRemoveCertConfirm = false
+            }
+        } message: {
+            Text(wtLang.tr("This removes the stored .p12 certificate. Guests already signed keep working; new installs will not be signed."))
         }
         .alert(
             wtLang.tr("Delete %@?", guestToDelete?.displayName ?? ""),

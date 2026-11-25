@@ -1028,6 +1028,29 @@ enum WTStrings {
 
         "ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis.": "Penandatanganan ZSign di perangkat — adaptasi iOS Feather atas zsign zhlynn, dimodifikasi oleh khcrysalis.",
 
+        "Guest apps live in the WorkTweaks App Group and run inside this app. Decrypted IPAs are patched and signed here; a certificate is needed to launch on iOS 26+.": "Aplikasi tamu tinggal di App Group WorkTweaks dan berjalan di dalam aplikasi ini. IPA yang sudah di-decrypt di-patch dan di-sign di sini; sertifikat dibutuhkan untuk launch di iOS 26+.",
+        "Import Certificate": "Impor Sertifikat",
+        "No certificate imported — import a .p12 to sign and launch guests.": "Belum ada sertifikat — impor .p12 untuk sign dan launch tamu.",
+        "Team %@": "Tim %@",
+        "Expires %@": "Berlaku sampai %@",
+        "Remove Certificate": "Hapus Sertifikat",
+        "Remove the certificate?": "Hapus sertifikat?",
+        "This removes the stored .p12 certificate. Guests already signed keep working; new installs will not be signed.": "Ini menghapus sertifikat .p12 yang tersimpan. Tamu yang sudah di-sign tetap jalan; instal baru tidak akan di-sign.",
+        "Launch": "Launch",
+        "Needs certificate to launch": "Butuh sertifikat untuk launch",
+        "32-bit — needs JIT (Phase 3)": "32-bit — butuh JIT (Fase 3)",
+        "Signed": "Sudah di-sign",
+        "Not signed": "Belum di-sign",
+        "Certificate password": "Password sertifikat",
+        "Enter the password for %@.": "Masukkan password untuk %@.",
+        "Password": "Password",
+        "Import failed": "Impor gagal",
+        "Launch failed: %@": "Launch gagal: %@",
+        "Install complete — patched (revision 7). Signed with your certificate — ready to launch.": "Instal selesai — sudah di-patch (revisi 7). Sudah di-sign dengan sertifikatmu — siap launch.",
+        "Install complete — patched (revision 7). No certificate imported, so it cannot launch yet.": "Instal selesai — sudah di-patch (revisi 7). Belum ada sertifikat, jadi belum bisa launch.",
+        "Install complete — patched (revision 7). This guest is 32-bit — it needs JIT + classic mode (Phase 3) to run.": "Instal selesai — sudah di-patch (revisi 7). Tamu ini 32-bit — butuh JIT + classic mode (Fase 3) untuk jalan.",
+        "Hooking library the LiveContainer core uses to run guest apps (litehook).": "Library hooking yang dipakai inti LiveContainer untuk menjalankan aplikasi tamu (litehook).",
+
     ]
 
     // Chinese (Simplified)
@@ -1941,6 +1964,29 @@ enum WTStrings {
         "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "访客应用在 WorkTweaks 内运行——IPA 安装、补丁与启动（LiveContainer 核心）。",
 
         "ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis.": "设备端 ZSign 签名——Feather 对 zhlynn zsign 的 iOS 改编，由 khcrysalis 修改。",
+
+        "Guest apps live in the WorkTweaks App Group and run inside this app. Decrypted IPAs are patched and signed here; a certificate is needed to launch on iOS 26+.": "访客应用位于 WorkTweaks App Group 内，并在本应用中运行。已解密的 IPA 在此打补丁并签名；在 iOS 26+ 上启动需要证书。",
+        "Import Certificate": "导入证书",
+        "No certificate imported — import a .p12 to sign and launch guests.": "尚未导入证书——导入 .p12 即可签名并启动访客应用。",
+        "Team %@": "团队 %@",
+        "Expires %@": "有效期至 %@",
+        "Remove Certificate": "删除证书",
+        "Remove the certificate?": "删除证书？",
+        "This removes the stored .p12 certificate. Guests already signed keep working; new installs will not be signed.": "这将删除已保存的 .p12 证书。已签名的访客应用仍可运行；新安装将不再签名。",
+        "Launch": "启动",
+        "Needs certificate to launch": "启动需要证书",
+        "32-bit — needs JIT (Phase 3)": "32 位——需要 JIT（第 3 阶段）",
+        "Signed": "已签名",
+        "Not signed": "未签名",
+        "Certificate password": "证书密码",
+        "Enter the password for %@.": "输入 %@ 的密码。",
+        "Password": "密码",
+        "Import failed": "导入失败",
+        "Launch failed: %@": "启动失败：%@",
+        "Install complete — patched (revision 7). Signed with your certificate — ready to launch.": "安装完成——已打补丁（修订版 7）。已用你的证书签名——可以启动了。",
+        "Install complete — patched (revision 7). No certificate imported, so it cannot launch yet.": "安装完成——已打补丁（修订版 7）。尚未导入证书，因此还无法启动。",
+        "Install complete — patched (revision 7). This guest is 32-bit — it needs JIT + classic mode (Phase 3) to run.": "安装完成——已打补丁（修订版 7）。此访客为 32 位——运行需要 JIT + 经典模式（第 3 阶段）。",
+        "Hooking library the LiveContainer core uses to run guest apps (litehook).": "LiveContainer 核心用于运行访客应用的 Hook 库（litehook）。",
 
     ]
 
@@ -2856,6 +2902,29 @@ enum WTStrings {
 
         "ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis.": "Ký ZSign trên thiết bị — bản chuyển thể iOS của Feather từ zsign của zhlynn, do khcrysalis chỉnh sửa.",
 
+        "Guest apps live in the WorkTweaks App Group and run inside this app. Decrypted IPAs are patched and signed here; a certificate is needed to launch on iOS 26+.": "Ứng dụng khách nằm trong App Group của WorkTweaks và chạy trong ứng dụng này. IPA đã giải mã được vá và ký tại đây; cần chứng chỉ để khởi chạy trên iOS 26+.",
+        "Import Certificate": "Nhập chứng chỉ",
+        "No certificate imported — import a .p12 to sign and launch guests.": "Chưa nhập chứng chỉ — nhập .p12 để ký và khởi chạy ứng dụng khách.",
+        "Team %@": "Nhóm %@",
+        "Expires %@": "Hết hạn %@",
+        "Remove Certificate": "Xóa chứng chỉ",
+        "Remove the certificate?": "Xóa chứng chỉ?",
+        "This removes the stored .p12 certificate. Guests already signed keep working; new installs will not be signed.": "Thao tác này sẽ xóa chứng chỉ .p12 đã lưu. Các ứng dụng khách đã ký vẫn chạy; bản cài mới sẽ không được ký.",
+        "Launch": "Khởi chạy",
+        "Needs certificate to launch": "Cần chứng chỉ để khởi chạy",
+        "32-bit — needs JIT (Phase 3)": "32-bit — cần JIT (Giai đoạn 3)",
+        "Signed": "Đã ký",
+        "Not signed": "Chưa ký",
+        "Certificate password": "Mật khẩu chứng chỉ",
+        "Enter the password for %@.": "Nhập mật khẩu cho %@.",
+        "Password": "Mật khẩu",
+        "Import failed": "Nhập thất bại",
+        "Launch failed: %@": "Khởi chạy thất bại: %@",
+        "Install complete — patched (revision 7). Signed with your certificate — ready to launch.": "Cài đặt xong — đã vá (bản sửa 7). Đã ký bằng chứng chỉ của bạn — sẵn sàng khởi chạy.",
+        "Install complete — patched (revision 7). No certificate imported, so it cannot launch yet.": "Cài đặt xong — đã vá (bản sửa 7). Chưa có chứng chỉ nên chưa thể khởi chạy.",
+        "Install complete — patched (revision 7). This guest is 32-bit — it needs JIT + classic mode (Phase 3) to run.": "Cài đặt xong — đã vá (bản sửa 7). Ứng dụng khách này là 32-bit — cần JIT + chế độ cổ điển (Giai đoạn 3) để chạy.",
+        "Hooking library the LiveContainer core uses to run guest apps (litehook).": "Thư viện hook mà lõi LiveContainer dùng để chạy ứng dụng khách (litehook).",
+
     ]
 
     // Russian
@@ -3769,6 +3838,29 @@ enum WTStrings {
         "Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core).": "Гостевые приложения работают внутри WorkTweaks — установка IPA, патчинг и запуск (ядро LiveContainer).",
 
         "ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis.": "Подпись ZSign на устройстве — iOS-адаптация Feather для zsign от zhlynn, изменённая khcrysalis.",
+
+        "Guest apps live in the WorkTweaks App Group and run inside this app. Decrypted IPAs are patched and signed here; a certificate is needed to launch on iOS 26+.": "Гостевые приложения находятся в App Group WorkTweaks и запускаются внутри этого приложения. Расшифрованные IPA патчатся и подписываются здесь; для запуска на iOS 26+ нужен сертификат.",
+        "Import Certificate": "Импорт сертификата",
+        "No certificate imported — import a .p12 to sign and launch guests.": "Сертификат не импортирован — импортируйте .p12, чтобы подписывать и запускать гостей.",
+        "Team %@": "Команда %@",
+        "Expires %@": "Действует до %@",
+        "Remove Certificate": "Удалить сертификат",
+        "Remove the certificate?": "Удалить сертификат?",
+        "This removes the stored .p12 certificate. Guests already signed keep working; new installs will not be signed.": "Это удалит сохранённый сертификат .p12. Уже подписанные гости продолжат работать; новые установки подписываться не будут.",
+        "Launch": "Запустить",
+        "Needs certificate to launch": "Для запуска нужен сертификат",
+        "32-bit — needs JIT (Phase 3)": "32-бит — нужен JIT (фаза 3)",
+        "Signed": "Подписано",
+        "Not signed": "Не подписано",
+        "Certificate password": "Пароль сертификата",
+        "Enter the password for %@.": "Введите пароль для %@.",
+        "Password": "Пароль",
+        "Import failed": "Импорт не удался",
+        "Launch failed: %@": "Запуск не удался: %@",
+        "Install complete — patched (revision 7). Signed with your certificate — ready to launch.": "Установка завершена — пропатчено (ревизия 7). Подписано твоим сертификатом — готово к запуску.",
+        "Install complete — patched (revision 7). No certificate imported, so it cannot launch yet.": "Установка завершена — пропатчено (ревизия 7). Сертификат не импортирован, поэтому запуск пока невозможен.",
+        "Install complete — patched (revision 7). This guest is 32-bit — it needs JIT + classic mode (Phase 3) to run.": "Установка завершена — пропатчено (ревизия 7). Этот гость 32-битный — для работы нужен JIT + классический режим (фаза 3).",
+        "Hooking library the LiveContainer core uses to run guest apps (litehook).": "Библиотека хуков, которую ядро LiveContainer использует для запуска гостевых приложений (litehook).",
 
     ]
 }
