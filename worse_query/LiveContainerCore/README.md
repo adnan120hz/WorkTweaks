@@ -38,7 +38,19 @@ Sub-component licenses, from LiveContainer's README:
   `Localization.m`, private headers (`FoundationPrivate.h`,
   `UIKitPrivate.h`, `XPCPrivate.h`), and `Tweaks/` (the guest
   hooks: Dyld, NSFileManager+GuestHooks, NSUserDefaults,
-  SecItem, IDFV, Dead10ccFix, mach_excServer).
+  SecItem, IDFV, Dead10ccFix, mach_excServer), and
+  `LivePlugInSupport/` (guest-extension support:
+  `NSExtension+GuestHooks.m` defines `NSExtensionGuestHooksInit`,
+  called by `LCBootstrap` at guest launch, plus `LivePlugInServer.m`,
+  the XPC server for guest extensions). This directory was MISSED
+  by the Phase 1 vendoring and added with the link fix: without it
+  the link failed (`_NSExtensionGuestHooksInit`, referenced from
+  `_invokeAppMain` in `LCBootstrap.o`). Both files have no
+  constructor/`+load` — everything is explicit-init, so compiling
+  them into the host is safe. One-line deviation from upstream in
+  `NSExtension+GuestHooks.m`: `#import "Tweaks.h"` became
+  `#import "../Tweaks/Tweaks.h"` (upstream relies on Xcode header
+  maps for that include).
 - `TweakLoader/` — the dylib injected into the guest process
   (`TweakLoader.m` + `UIKit+GuestHooks.m`, `BackgroundTasks.m`,
   `DocumentPicker.m`, `Notification.m`). At runtime LC symlinks
