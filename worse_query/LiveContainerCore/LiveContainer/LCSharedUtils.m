@@ -124,7 +124,22 @@ NSString* FBSOpenApplicationOptionKeyPayloadURL = @"__PayloadURL";
 }
 
 + (BOOL)launchToGuestAppWithClassicMode:(NSUInteger)classicMode {
-    void (^completionHandler)(BOOL) = ^(BOOL success) {
+    // Kill this process ONLY when iOS reports the self-open actually
+    // succeeded. The old code SIGKILLed on every completion, so a
+    // refused/failed self-open just made the app vanish — a
+    // force-close with no relaunch and no crash log (notably when
+    // turning JIT on: the relaunch is the whole mechanism, and the
+    // open is what can fail). On failure stay alive and log loudly;
+    // the Swift callers already treat a returning launch as "didn't
+    // launch" and reset their armed state (ContainerJITManager.enable
+    // clears the pending JIT, disarms, and shows lastError).
+    // PT_DENY_ATTACH stays on the kill path only: a surviving process
+    // may still need debugger attachment for a later JIT attempt.
+    void (^killIfLaunched)(BOOL, NSError *) = ^(BOOL success, NSError *error) {
+        if (!success) {
+            NSLog(@"[LiveContainer] launchToGuestAppWithClassicMode: self-open FAILED (error: %@) — staying alive instead of SIGKILL.", error);
+            return;
+        }
         // syscall(SYS_ptrace, PT_DENY_ATTACH, 0, 0, 0);
         __asm__ __volatile__ (
                               "mov x0, #31\n"
@@ -133,18 +148,20 @@ NSString* FBSOpenApplicationOptionKeyPayloadURL = @"__PayloadURL";
                               );
         raise(SIGKILL);
     };
-    
+
     if (!self.certificatePassword) {
         NSString *urlScheme = nil;
         NSString *tsPath = [NSString stringWithFormat:@"%@/../_TrollStore", NSBundle.mainBundle.bundlePath];
         if (!access(tsPath.UTF8String, F_OK)) {
             urlScheme = @"apple-magnifier://enable-jit?bundle-id=%@";
         }
-        
+
         if(urlScheme) {
             NSURL *launchURL = [NSURL URLWithString:[NSString stringWithFormat:urlScheme, NSBundle.mainBundle.bundleIdentifier]];
             UIApplication *application = [NSClassFromString(@"UIApplication") sharedApplication];
-            [application openURL:launchURL options:@{} completionHandler:completionHandler];
+            [application openURL:launchURL options:@{} completionHandler:^(BOOL success) {
+                killIfLaunched(success, nil);
+            }];
             return YES;
         }
     }
@@ -162,7 +179,7 @@ NSString* FBSOpenApplicationOptionKeyPayloadURL = @"__PayloadURL";
         [workspace openApplicationWithBundleIdentifier:NSUserDefaults.lcMainBundle.bundleIdentifier
                                          configuration:configuration
                                      completionHandler:^(BOOL success, NSError* error) {
-            completionHandler(success);
+            killIfLaunched(success, error);
         }];
     }
     return YES;
