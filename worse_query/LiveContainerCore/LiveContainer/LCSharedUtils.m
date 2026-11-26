@@ -2,6 +2,7 @@
 #import "FoundationPrivate.h"
 #import "UIKitPrivate.h"
 #import "utils.h"
+#import "LCContainerPatch.h"
 @import MachO;
 
 extern NSUserDefaults *lcUserDefaults;
@@ -145,6 +146,11 @@ NSString* FBSOpenApplicationOptionKeyPayloadURL = @"__PayloadURL";
         // handleAttemptOutcome), so no locking is needed here.
         if (outcomeReported) return;
         outcomeReported = YES;
+        // Persistent JIT diagnostics: the failure line goes to
+        // the file as well as the Log (which dies with the
+        // process only on the success path — but the file is
+        // the single record either way).
+        WTJITDiagAppend("self-open", [[NSString stringWithFormat:@"FAILED: %@", error ? error.localizedDescription : @"no error reported"] UTF8String]);
         NSLog(@"[LiveContainer] launchToGuestAppWithClassicMode: self-open FAILED (error: %@) — staying alive instead of SIGKILL.", error);
         if (completion) completion(NO, error);
     };
@@ -159,6 +165,18 @@ NSString* FBSOpenApplicationOptionKeyPayloadURL = @"__PayloadURL";
     void (^handleAttemptOutcome)(BOOL, NSError *) = ^(BOOL success, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if (success) {
+                // Persistent JIT diagnostics — CRITICAL: this
+                // line MUST be written from the ObjC side BEFORE
+                // the SIGKILL below. The process dies in this
+                // handler, so no Swift-side write can ever happen
+                // after a successful open; this line is the only
+                // record that the self-open worked (H1 dead) and
+                // the new process must have died later, during
+                // startup attach (H2). The write is synchronous
+                // (open/write/fsync/close), so it is on disk
+                // before raise() runs.
+                BOOL jitArmed = [[NSUserDefaults standardUserDefaults] objectForKey:@"wtJitPending"] != nil;
+                WTJITDiagAppend("self-open", jitArmed ? "success (JIT armed) — SIGKILL next" : "success (no JIT armed) — SIGKILL next");
                 // syscall(SYS_ptrace, PT_DENY_ATTACH, 0, 0, 0);
                 __asm__ __volatile__ (
                                       "mov x0, #31\n"
@@ -171,6 +189,7 @@ NSString* FBSOpenApplicationOptionKeyPayloadURL = @"__PayloadURL";
             if (remainingAttempts <= 0) {
                 reportFailure(error);
             } else {
+                WTJITDiagAppend("self-open", [[NSString stringWithFormat:@"attempt failed (%d left): %@", remainingAttempts, error ? error.localizedDescription : @"no error reported"] UTF8String]);
                 NSLog(@"[LiveContainer] launchToGuestAppWithClassicMode: self-open attempt failed (%d attempt(s) left): %@", remainingAttempts, error);
             }
         });

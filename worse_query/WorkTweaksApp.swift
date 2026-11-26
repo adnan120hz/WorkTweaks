@@ -19,6 +19,11 @@ struct WorkTweaksApp: App {
         // so the check only logs honestly and the host UI
         // opens normally. Phase 2 replaces it with the real
         // LiveContainerMain call.
+        // Persistent JIT diagnostics: hand the App Group log
+        // path to the C helper BEFORE the resume path runs, so
+        // the ObjC self-open handler (which SIGKILLs) writes to
+        // the same file the Swift side logs to.
+        WTJITDiag.setPathIfNeeded()
         // Install IPA on Container (Phase 3, JIT): if JIT was armed
         // for a guest, attach the debugserver session to our own pid
         // BEFORE the guest bootstrap runs — the guest must never make

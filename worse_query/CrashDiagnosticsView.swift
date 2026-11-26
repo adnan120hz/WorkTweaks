@@ -12,6 +12,16 @@ struct CrashDiagnosticsView: View {
     @StateObject private var manager = CrashDiagnostics()
     @State private var selected: CrashReport?
     @State private var showCleanConfirm = false
+    /// Persistent JIT diagnostics (WTJITDiag): the file's
+    /// contents, the prepared share URL, and the last
+    /// viewer action's result. Lives next to the .ips
+    /// reports — it is the other half of the same question
+    /// ("why did the app die?"), and the in-app Log does
+    /// not survive a force-close, so this file is the only
+    /// record of a JIT relaunch that killed the process.
+    @State private var jitText: String?
+    @State private var jitShareURL: URL?
+    @State private var jitResult: String?
 
     var body: some View {
         WTGlassPage {
@@ -21,6 +31,66 @@ struct CrashDiagnosticsView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
+            }
+
+            WTSectionCard(header: wtLang.tr("JIT Diagnostics"), footer: wtLang.tr("JIT Diagnostics records every step of the JIT relaunch — enable, self-open, attach — in a file that survives a force-close. After a crash, open it here to see how far the launch got.")) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 10) {
+                        Button {
+                            SoundEffects.playTap()
+                            refreshJIT()
+                        } label: {
+                            Label(wtLang.tr("Refresh"), systemImage: "arrow.clockwise")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .buttonStyle(.bordered)
+                        Button {
+                            SoundEffects.playTap()
+                            WTJITDiag.clear()
+                            jitShareURL = nil
+                            jitResult = wtLang.tr("JIT log cleared.")
+                            refreshJIT()
+                        } label: {
+                            Label(wtLang.tr("Clear JIT Log"), systemImage: "trash")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .buttonStyle(.bordered)
+                        Spacer(minLength: 0)
+                        if let url = jitShareURL {
+                            ShareLink(item: url) {
+                                Label(wtLang.tr("Share JIT Log"), systemImage: "square.and.arrow.up")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                            .buttonStyle(.borderedProminent)
+                        } else {
+                            Button {
+                                SoundEffects.playTap()
+                                if let url = WTJITDiag.shareURL() {
+                                    jitShareURL = url
+                                } else {
+                                    jitResult = wtLang.tr("Could not read the JIT log.")
+                                }
+                            } label: {
+                                Label(wtLang.tr("Share JIT Log"), systemImage: "square.and.arrow.up")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                    if let result = jitResult {
+                        Text(result)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text(jitText ?? wtLang.tr("No JIT diagnostics yet — turn JIT on for a guest first."))
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
             }
 
             WTSectionCard(header: wtLang.tr("Reports (%d)", manager.reports.count)) {
@@ -170,7 +240,14 @@ struct CrashDiagnosticsView: View {
             if case .idle = manager.state {
                 manager.load()
             }
+            refreshJIT()
         }
+    }
+
+    /// Re-read the JIT diagnostics file (nil = nothing yet).
+    private func refreshJIT() {
+        jitShareURL = nil
+        jitText = WTJITDiag.readText()
     }
 }
 

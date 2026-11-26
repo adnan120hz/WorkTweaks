@@ -140,6 +140,9 @@ final class ContainerJITManager: ObservableObject {
     /// runs (see `resumePendingSessionIfNeeded`).
     func enable(_ guest: ContainerGuest) {
         guard !isBusy else { return }
+        // Persistent JIT diagnostics: the tap + the gate
+        // result, with the booleans that explain it.
+        WTJITDiag.append(step: "enable", detail: "tap \(guest.bundleID) jitLaunchable=\(guest.isJITLaunchable) patched=\(guest.isPatched) 32bit=\(guest.is32bit) signed=\(guest.signed) certStored=\(LCContainerPatch.hasCertificate())")
         // JIT-scoped gate: an unsigned guest may arm JIT when a
         // certificate is stored (LC's iOS 26 gate only checks a cert
         // IS stored; the debugger attaches before the guest runs).
@@ -152,6 +155,7 @@ final class ContainerJITManager: ObservableObject {
             } else {
                 lastError = "Needs certificate to launch — import a .p12 first."
             }
+            WTJITDiag.append(step: "enable", detail: "gate refused for \(guest.bundleID): \(lastError ?? "unknown reason")")
             return
         }
         lastError = nil
@@ -161,8 +165,19 @@ final class ContainerJITManager: ObservableObject {
         print("[JIT] === JIT: \(guest.displayName) (\(guest.bundleID), \(jitProtocol.logName)) ===")
         Task {
             do {
-                try await getReady()
+                do {
+                    try await getReady()
+                } catch {
+                    // Diagnostics only: the outer catch below
+                    // still handles the failure (clears the
+                    // pending JIT, reports it). This inner catch
+                    // just records which phase failed.
+                    WTJITDiag.append(step: "getReady", detail: "error: \((error as? LocalizedError)?.errorDescription ?? String(describing: error))")
+                    throw error
+                }
+                WTJITDiag.append(step: "getReady", detail: "ok")
                 Self.persistPending(guest: guest, jitProtocol: jitProtocol, regions: regions)
+                WTJITDiag.append(step: "pending", detail: "persisted \(guest.bundleID) protocol=\(jitProtocol.logName)")
                 isArmed = true
                 isPreparing = false
                 // Relaunch into the guest. On success the process
@@ -194,6 +209,7 @@ final class ContainerJITManager: ObservableObject {
                 isPreparing = false
                 let message = (error as? LocalizedError)?.errorDescription ?? String(describing: error)
                 lastError = message
+                WTJITDiag.append(step: "enable", detail: "failed: \(message)")
                 print("[JIT] ⛔️ JIT: \(message)")
             }
         }
@@ -289,23 +305,32 @@ final class ContainerJITManager: ObservableObject {
     @MainActor
     private static func resumeOnMainThread() {
         guard let pending = UserDefaults.standard.dictionary(forKey: pendingKey) as? [String: String],
-              let bundleID = pending["bundleID"], !bundleID.isEmpty else { return }
+              let bundleID = pending["bundleID"], !bundleID.isEmpty else {
+            // Diagnostics: one line per launch even when
+            // nothing is armed — it proves the app actually
+            // relaunched (vs never relaunching at all).
+            WTJITDiag.append(step: "resume", detail: "no pending JIT")
+            return
+        }
         // Consumed once: a crash must not re-arm forever.
         UserDefaults.standard.removeObject(forKey: pendingKey)
         shared.isArmed = false
         let name = pending["name"] ?? bundleID
+        let jitProtocol = decodePendingProtocol(pending)
+        WTJITDiag.append(step: "resume", detail: "pending JIT found \(bundleID) name=\(name) protocol=\(jitProtocol.logName)")
         guard let selected = UserDefaults.standard.string(forKey: "selected"), !selected.isEmpty else {
             // No guest is about to run — the relaunch didn't happen.
             // Attaching would serve nothing.
             recordOutcome(guestName: name, outcome: "failed",
                           detail: "JIT was armed, but no guest was selected when the app launched, so the session never started.",
                           preparedBytes: 0)
+            WTJITDiag.append(step: "resume", detail: "no guest selected — pending dropped, session never started")
             print("[JIT] Pending JIT dropped: no guest selected at launch.")
             return
         }
         _ = selected
-        let jitProtocol = decodePendingProtocol(pending)
         print("[JIT] === JIT (startup): \(name) (\(bundleID), \(jitProtocol.logName)) — attaching to own pid before the guest runs ===")
+        WTJITDiag.append(step: "attach", detail: "start for \(name) (\(bundleID)) timeout=\(Int(attachTimeout))s")
         shared.keepAlive.startAudio()
         let session = WTJITSession(bundleID: bundleID, name: name, jitProtocol: jitProtocol,
                                    deviceIP: deviceIP,
@@ -313,10 +338,24 @@ final class ContainerJITManager: ObservableObject {
             Self.handleSessionEvent(event, guestName: name)
         }
         activeSession = session
+        // Watchdog-relevant timing: how long the init-time
+        // attach wait took. The guest never starts before this
+        // returns, so a wait near the 15 s timeout is the prime
+        // suspect if the new process dies at startup (H2).
+        let attachStart = Date()
         let attached = session.attachAndWait(timeout: attachTimeout)
+        let attachElapsed = Date().timeIntervalSince(attachStart)
         if attached {
+            WTJITDiag.append(step: "attach", detail: "attached in \(String(format: "%.1f", attachElapsed))s")
             print("[JIT] JIT attached at startup for \(name) — the guest runs under the debugger now.")
         } else {
+            // A wait that ran the full timeout vs one that
+            // failed early are different failures: the session
+            // thread signals failure promptly when it knows,
+            // so elapsed << timeout means "failed", elapsed ~=
+            // timeout means "timed out".
+            let outcome = attachElapsed >= attachTimeout - 0.5 ? "timed out" : "failed"
+            WTJITDiag.append(step: "attach", detail: "\(outcome) after \(String(format: "%.1f", attachElapsed))s — guest launches without JIT")
             // The session thread is still running and will report its
             // own failure via onEvent; this records the timeout so the
             // section has something to show even if the thread never
@@ -374,6 +413,7 @@ final class ContainerJITManager: ObservableObject {
                 activeSession = nil
                 switch outcome {
                 case .detached(let afterServing):
+                    WTJITDiag.append(step: "session", detail: "ended: detached for \(guestName)")
                     recordOutcome(guestName: guestName, outcome: "detached",
                                   detail: afterServing
                                     ? "\(guestName) has the JIT memory it asked for, so WorkTweaks let go of it. JIT stays on until it quits."
@@ -381,11 +421,13 @@ final class ContainerJITManager: ObservableObject {
                                   preparedBytes: shared.lastPreparedBytes)
                     print("[JIT] JIT: on for \(guestName).")
                 case .appEnded:
+                    WTJITDiag.append(step: "session", detail: "ended: guest quit \(guestName)")
                     recordOutcome(guestName: guestName, outcome: "appEnded",
                                   detail: "\(guestName) quit, so the JIT session ended.",
                                   preparedBytes: shared.lastPreparedBytes)
                     print("[JIT] JIT: session for \(guestName) ended.")
                 case .failed(let message):
+                    WTJITDiag.append(step: "session", detail: "ended: failed for \(guestName): \(message)")
                     recordOutcome(guestName: guestName, outcome: "failed",
                                   detail: message,
                                   preparedBytes: shared.lastPreparedBytes)

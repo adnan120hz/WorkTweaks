@@ -515,6 +515,10 @@ final class ContainerManager: ObservableObject {
     /// (`try?`); the JIT caller treats a throw as "the launch
     /// didn't take" and clears the pending JIT.
     func launch(_ guest: ContainerGuest, jit: Bool = false) async throws {
+        // Persistent JIT diagnostics: hand the resolved log
+        // path to the C helper before any relaunch, so the
+        // ObjC self-open handler writes to the same file.
+        WTJITDiag.setPathIfNeeded()
         // Validate (and re-sign when needed) before the signed
         // gate, like LC does on every launch: a guest whose
         // signature stopped validating since install gets one
@@ -529,6 +533,8 @@ final class ContainerManager: ObservableObject {
             print("[Container] launch refused for \(guest.bundleID) (jit=\(jit)): patched=\(current.isPatched) 32-bit=\(current.is32bit) signed=\(current.signed).")
             throw ContainerError.message("The guest can't launch right now — it isn't patched, or it still needs a certificate.")
         }
+        // Mirror the stdout line to the diagnostics file.
+        WTJITDiag.append(step: "launch", detail: "called for \(guest.bundleID) jit=\(jit)")
         print("[Container] launching \(guest.bundleID) — relaunching into the guest.")
         try await launchGuestReportingOutcome(folderName: current.folderName, dataUUID: current.dataUUID)
     }
@@ -557,6 +563,9 @@ final class ContainerManager: ObservableObject {
             Task {
                 try? await Task.sleep(nanoseconds: UInt64(ContainerManager.launchOutcomeTimeout * 1_000_000_000))
                 guard outcome.claim() else { return }
+                // Diagnostics: the open completion never fired
+                // at all — the relaunch request went unanswered.
+                WTJITDiag.append(step: "launch", detail: "timeout: no self-open outcome in \(Int(ContainerManager.launchOutcomeTimeout))s")
                 continuation.resume(throwing: ContainerError.message("The guest didn't launch — iOS never answered the relaunch request. Try again."))
             }
             LCContainerPatch.launchGuest(withFolderName: folderName, dataUUID: dataUUID) { success, error in
@@ -570,6 +579,10 @@ final class ContainerManager: ObservableObject {
                     return
                 }
                 guard outcome.claim() else { return }
+                // Diagnostics: the Swift-side view of the failure.
+                // (The ObjC side already wrote its own "self-open
+                // FAILED" line with the same error.)
+                WTJITDiag.append(step: "launch", detail: "self-open failed: \(error?.localizedDescription ?? "unknown error")")
                 continuation.resume(throwing: ContainerError.message(error?.localizedDescription ?? "The guest didn't launch."))
             }
         }
@@ -674,6 +687,14 @@ private final class LaunchOutcomeGate: @unchecked Sendable {
 enum ContainerLaunch {
     static func checkSelectedGuest() {
         guard let selected = UserDefaults.standard.string(forKey: "selected"), !selected.isEmpty else { return }
+        // Diagnostics: the guest-launch result is written when
+        // LiveContainerMain returns — which is when the guest
+        // quits, or when it failed to start. Together with the
+        // "self-open success" line (written before the SIGKILL
+        // in the old process), this line separates H1 from H2:
+        // self-open success + no guest-launch line = the new
+        // process died before reaching here.
+        WTJITDiag.append(step: "guest-launch", detail: "selected \(selected) — entering LiveContainerMain")
         print("[Container] guest selected at launch: \(selected) — entering LiveContainerMain.")
         let args = CommandLine.arguments
         let argc = Int32(args.count)
@@ -691,8 +712,10 @@ enum ContainerLaunch {
         if let error = UserDefaults.standard.string(forKey: "error") {
             UserDefaults.standard.removeObject(forKey: "error")
             ContainerManager.launchError = error
+            WTJITDiag.append(step: "guest-launch", detail: "LiveContainerMain returned — failed: \(error)")
             print("[Container] guest launch failed: \(error)")
         } else {
+            WTJITDiag.append(step: "guest-launch", detail: "LiveContainerMain returned \(result) with no error recorded — staying in WorkTweaks")
             print("[Container] LiveContainerMain returned \(result) with no error recorded — staying in WorkTweaks.")
         }
     }

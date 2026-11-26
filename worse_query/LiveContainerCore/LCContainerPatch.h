@@ -97,3 +97,25 @@ int LiveContainerMain(int argc, char *argv[]);
 + (void)launchGuestWithFolderName:(NSString *)folderName dataUUID:(NSString *)dataUUID completion:(void (^)(BOOL success, NSError * _Nullable error))completion;
 
 @end
+
+// MARK: - Persistent JIT diagnostics (WTJITDiag)
+//
+// One timestamped line per risky step of the JIT relaunch /
+// attach path, appended to <AppGroup>/LiveContainer/
+// jit-diagnostics.log — a file that survives a SIGKILL /
+// force-close, unlike the in-app Log (in-memory only) and
+// stderr (never captured). The path is set from Swift
+// (WTJITDiag.setPathIfNeeded, the same LiveContainer root
+// guests live in); until then the implementation falls back
+// to resolving the App Group the LC way. Writes are
+// synchronous open / write / fsync / close, so a line
+// written in the self-open handler lands on disk BEFORE the
+// raise(SIGKILL) that follows it. The file is capped at
+// 64 KB — when an append would pass the cap, the oldest
+// lines are dropped first (kept tail ~32 KB, cut at a line
+// boundary). Never logs passwords, tokens, or cert material
+// — step names, bundle IDs, booleans, error descriptions,
+// and timings only. Logging only: no gate, timing, or
+// launch logic lives here.
+void WTJITDiagSetPath(const char *path);
+void WTJITDiagAppend(const char *step, const char *detail);
