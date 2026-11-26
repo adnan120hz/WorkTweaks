@@ -9,12 +9,10 @@
 /* Begin PBXFileReference section */
 		3657C2D9303730E800908AE2 /* worse_query.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = worse_query.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D3A243CE36F84FEDACB5046F /* AirliftFFI.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = worse_query/AirliftFFI.xcframework; sourceTree = "<group>"; };
-		51E11489281149BBA677F4F6 /* WTIDevice.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = worse_query/WTIDevice.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXBuildFile section */
 		029B5ED6420541498F75A3FF /* AirliftFFI.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D3A243CE36F84FEDACB5046F /* AirliftFFI.xcframework */; };
-		3653502062824D809899E8F1 /* WTIDevice.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51E11489281149BBA677F4F6 /* WTIDevice.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,18 +30,6 @@
 		A1B2C3D4E5F60718293A4B5C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"LiveContainerCore/LCUtils.m",
-				"LiveContainerCore/TweakLoader/BackgroundTasks.m",
-				"LiveContainerCore/TweakLoader/DocumentPicker.m",
-				"LiveContainerCore/TweakLoader/Notification.m",
-				"LiveContainerCore/TweakLoader/TweakLoader.m",
-				"LiveContainerCore/TweakLoader/UIKit+GuestHooks.m",
-				"LiveContainerCore/LICENSE",
-				"LiveContainerCore/README.md",
-				"LiveContainerCore/README.LITEHOOK.md",
-				"LiveContainerCore/entitlements-reference.xml",
-				"LiveContainerCore/litehook/LICENSE",
-				"LiveContainerCore/litehook/README.md",
 			);
 			target = 3657C2D8303730E800908AE2 /* worse_query */;
 		};
@@ -55,7 +41,6 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				029B5ED6420541498F75A3FF /* AirliftFFI.xcframework in Frameworks */,
-				3653502062824D809899E8F1 /* WTIDevice.xcframework in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -285,24 +270,15 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/Dependencies/OpenSSL.xcframework/ios-arm64",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/worse_query/LiveContainerCore",
-					"$(SRCROOT)/worse_query/LiveContainerCore/LiveContainer",
-					"$(SRCROOT)/worse_query/LiveContainerCore/ZSign/common",
-					"$(SRCROOT)/worse_query/LiveContainerCore/litehook/src",
-					"$(SRCROOT)/worse_query/LiveContainerCore/litehook/external/include",
-					"$(SRCROOT)/Dependencies/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/Headers",
-					"$(SRCROOT)/rust-core/include",
 				);
 				INFOPLIST_KEY_CFBundleDisplayName = WorkTweaks;
 				INFOPLIST_KEY_NSBonjourServices = (
 					"_remotepairing-pairable-host._tcp",
-					"_remotepairing._tcp",
 					"_worktweaksprobe._tcp",
 				);
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WorkTweaks needs Local Network access to pair this iPhone on-device and obtain the pairing file.";
@@ -326,8 +302,6 @@
 					IOKit,
 					"-framework",
 					Security,
-					"-framework",
-					OpenSSL,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "cc.forcequit.worse-query";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -362,24 +336,15 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/Dependencies/OpenSSL.xcframework/ios-arm64",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/worse_query/LiveContainerCore",
-					"$(SRCROOT)/worse_query/LiveContainerCore/LiveContainer",
-					"$(SRCROOT)/worse_query/LiveContainerCore/ZSign/common",
-					"$(SRCROOT)/worse_query/LiveContainerCore/litehook/src",
-					"$(SRCROOT)/worse_query/LiveContainerCore/litehook/external/include",
-					"$(SRCROOT)/Dependencies/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/Headers",
-					"$(SRCROOT)/rust-core/include",
 				);
 				INFOPLIST_KEY_CFBundleDisplayName = WorkTweaks;
 				INFOPLIST_KEY_NSBonjourServices = (
 					"_remotepairing-pairable-host._tcp",
-					"_remotepairing._tcp",
 					"_worktweaksprobe._tcp",
 				);
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WorkTweaks needs Local Network access to pair this iPhone on-device and obtain the pairing file.";
@@ -403,8 +368,6 @@
 					IOKit,
 					"-framework",
 					Security,
-					"-framework",
-					OpenSSL,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "cc.forcequit.worse-query";
 				PRODUCT_NAME = "$(TARGET_NAME)";

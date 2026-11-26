@@ -25,59 +25,7 @@ jobs:
             "https://raw.githubusercontent.com/adnan120hz/aircard-ios/40640c4d827aeab8d798285b57d24fcf6be070d0/AirliftFFI.xcframework/ios-arm64/libairlift_ffi.a"
           ls -lh worse_query/AirliftFFI.xcframework/ios-arm64/libairlift_ffi.a
 
-      - name: Fetch OpenSSL
-        run: |
-          set -euo pipefail
-          # ZSign needs OpenSSL headers + lib at compile time.
-          # Pinned to krzyzanowskim/OpenSSL 3.6.5000, matching
-          # LiveContainer's prepare_dependencies.sh pattern
-          # (curl -LO .../OpenSSL.xcframework.zip, unzip, move to
-          # Dependencies/OpenSSL.xcframework).
-          mkdir -p Dependencies
-          curl -sL -o /tmp/OpenSSL.xcframework.zip "https://github.com/krzyzanowskim/OpenSSL/releases/download/3.6.5000/OpenSSL.xcframework.zip"
-          unzip -q -o /tmp/OpenSSL.xcframework.zip -d Dependencies
-          rm /tmp/OpenSSL.xcframework.zip
-          ls Dependencies/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/Headers/opensslv.h
 
-      - name: Build WTIDevice (Rust FFI)
-        run: |
-          set -euo pipefail
-          # JIT transport (Install IPA on Container, Phase 3): idevice's C
-          # FFI as a staticlib, packed as worse_query/WTIDevice.xcframework
-          # so the pbxproj reference resolves. Only idevice/idevice-ffi are
-          # vendored (rust-core/vendor/); the rest of the dep tree resolves
-          # from crates.io. Device slice only — the tunnel talks to a real
-          # iPhone over the Local Dev VPN, so there is no simulator slice.
-          # IPHONEOS_DEPLOYMENT_TARGET matches the app target (26.0) — NOT
-          # SideInstaller's 17.4.
-          if ! command -v cargo >/dev/null && [ -f "$HOME/.cargo/env" ]; then
-            set +u
-            source "$HOME/.cargo/env" || true
-            set -u
-          fi
-          rustup target add aarch64-apple-ios
-          export IPHONEOS_DEPLOYMENT_TARGET=26.0
-          cd rust-core
-          cargo build --release --target aarch64-apple-ios
-          cd ..
-          # cbindgen regenerates vendor/idevice-ffi/idevice.h in place during
-          # the build (feature-gated subset). It is NOT shipped: the
-          # xcframework headers are the minimal hand-written wtidevice.h +
-          # plist.h from rust-core/include — WITHOUT module.modulemap.
-          # AirliftFFI's xcframework already provides
-          # include/module.modulemap, and two xcframeworks shipping one
-          # each collide ("Multiple commands produce
-          # .../include/module.modulemap", run 45605996210). Swift imports
-          # WTIDevice through the module.modulemap in rust-core/include,
-          # found via the HEADER_SEARCH_PATHS entry in the pbxproj.
-          mkdir -p /tmp/wtidevice-headers
-          cp rust-core/include/wtidevice.h rust-core/include/plist.h /tmp/wtidevice-headers/
-          xcodebuild -create-xcframework \
-            -library rust-core/target/aarch64-apple-ios/release/libwt_idevice_ffi.a \
-            -headers /tmp/wtidevice-headers \
-            -output worse_query/WTIDevice.xcframework
-          ls -lh worse_query/WTIDevice.xcframework/ios-arm64/libwt_idevice_ffi.a
-          ls worse_query/WTIDevice.xcframework/ios-arm64/Headers/
 
       - name: Show toolchain
         run: |
@@ -99,48 +47,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build
 
-      - name: Build TweakLoader.dylib
-        run: |
-          set -euo pipefail
-          # The guest-side loader dylib. Its 5 sources carry
-          # __attribute__((constructor)) hooks that must run inside
-          # the GUEST, never inside WorkTweaks, so they are excluded
-          # from the app target (pbxproj exception set) and built
-          # here as a separate dylib. -undefined dynamic_lookup lets
-          # its references to the host's LC symbols (utils,
-          # LCSharedUtils categories) resolve at dlopen time.
-          # It is unsigned in CI; the user's signing flow signs the
-          # whole bundle (including Frameworks/) at install time.
-          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
-          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
-          mkdir -p "$APP_PATH/Frameworks"
-          clang -dynamiclib -arch arm64 -isysroot "$SDK" -miphoneos-version-min=15.0 \
-            -fobjc-arc -fmodules \
-            -I worse_query/LiveContainerCore/LiveContainer \
-            -I worse_query/LiveContainerCore/litehook/src \
-            -I worse_query/LiveContainerCore/litehook/external/include \
-            -framework Foundation -framework UIKit -framework UniformTypeIdentifiers \
-            -framework LocalAuthentication -framework UserNotifications -framework Security \
-            -undefined dynamic_lookup \
-            -install_name @rpath/TweakLoader.dylib \
-            worse_query/LiveContainerCore/TweakLoader/*.m \
-            -o "$APP_PATH/Frameworks/TweakLoader.dylib"
-          ls -lh "$APP_PATH/Frameworks/TweakLoader.dylib"
 
-      - name: Embed OpenSSL.framework
-        run: |
-          set -euo pipefail
-          # ZSign links OpenSSL dynamically (@rpath/OpenSSL.framework/OpenSSL).
-          # The linker finds it via FRAMEWORK_SEARCH_PATHS at build time,
-          # but dyld needs the framework inside the bundle at launch:
-          # b3ae457e shipped without it and force-closed at launch
-          # ("Library not loaded: @rpath/OpenSSL.framework/OpenSSL").
-          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
-          mkdir -p "$APP_PATH/Frameworks"
-          cp -R Dependencies/OpenSSL.xcframework/ios-arm64/OpenSSL.framework "$APP_PATH/Frameworks/OpenSSL.framework"
-          ls -lh "$APP_PATH/Frameworks/OpenSSL.framework/OpenSSL"
-          file "$APP_PATH/Frameworks/OpenSSL.framework/OpenSSL"
-          otool -L "$APP_PATH/worse_query" | grep -F OpenSSL || true
 
       - name: Inject Info.plist keys
         run: |
@@ -152,33 +59,9 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSBonjourServices array" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:0 string _remotepairing-pairable-host._tcp" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:1 string _worktweaksprobe._tcp" "$PLIST"
-          # JIT (Phase 3): the Bonjour browse for this iPhone's remote-pairing
-          # listener (`WTNetworkStatus.ownRemotePairingAdvert`) needs the
-          # listener's own service type, not just the pairable-host one the
-          # pairing host publishes. Mirrors the pbxproj INFOPLIST_KEY entry.
-          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:2 string _remotepairing._tcp" "$PLIST"
           /usr/libexec/PlistBuddy -c "Delete :UIBackgroundModes" "$PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$PLIST"
-          # Install IPA on Container (Phase 1, LiveContainer host):
-          # LC's background modes beyond audio, the livecontainer
-          # URL scheme, and the schemes WorkTweaks may open.
-          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:1 string bluetooth-central" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:2 string external-accessory" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:3 string fetch" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:4 string location" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$PLIST" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string LiveContainer" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string livecontainer" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Delete :LSApplicationQueriesSchemes" "$PLIST" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes array" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:0 string sidestore" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:1 string livecontainer" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:2 string livecontainer2" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:3 string livecontainer3" "$PLIST"
           # Alternate app icons (v7.0 language themes): the
           # recolored 1024x1024 PNGs live at the bundle root
           # (worse_query/AppIcon-{ID,CN,VN,RU,AR,BR,ES,FR}.png,
@@ -200,8 +83,6 @@ jobs:
           done
           /usr/libexec/PlistBuddy -c "Print :NSBonjourServices" "$PLIST"
           /usr/libexec/PlistBuddy -c "Print :UIBackgroundModes" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Print :LSApplicationQueriesSchemes" "$PLIST"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundleAlternateIcons" "$PLIST"
 
       - name: Package IPA

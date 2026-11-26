@@ -141,77 +141,6 @@ struct LicenseView: View {
                     )
                     Divider()
                         .padding(.leading, 14)
-                    // LiveContainer core is vendored from the
-                    // user's fork adnan120hz/livecontainer
-                    // (byte-identical to upstream main); the
-                    // upstream URL is the credit.
-                    creditRow(
-                        title: "LiveContainer",
-                        detail: wtLang.tr("Guest apps run inside WorkTweaks — IPA install, patching and launch (LiveContainer core)."),
-                        url: "https://github.com/LiveContainer/LiveContainer"
-                    )
-                    Divider()
-                        .padding(.leading, 14)
-                    // litehook — LiveContainer's MIT hooking
-                    // library, vendored since Phase 2 (source
-                    // LiveContainer/litehook, commit a7e9f59).
-                    creditRow(
-                        title: "litehook — LiveContainer",
-                        detail: wtLang.tr("Hooking library the LiveContainer core uses to run guest apps (litehook)."),
-                        url: "https://github.com/LiveContainer/litehook"
-                    )
-                    Divider()
-                        .padding(.leading, 14)
-                    // ZSign provenance (verified 2026-11-25):
-                    // originally zhlynn/zsign (MIT); LiveContainer
-                    // uses Feather's iOS adaptation, modified by
-                    // khcrysalis (Feather itself is GPL-3.0).
-                    // khcrysalis/Feather now redirects to
-                    // claration/Feather — the current URL is used.
-                    creditRow(
-                        title: "Feather — khcrysalis",
-                        detail: wtLang.tr("ZSign on-device signing — Feather's iOS adaptation of zhlynn's zsign, modified by khcrysalis."),
-                        url: "https://github.com/claration/Feather"
-                    )
-                    Divider()
-                        .padding(.leading, 14)
-                    // SideInstaller — FrizzleM: the sign-in /
-                    // provisioning system the Container's Apple ID
-                    // login ports (GrandSlam auth, teams,
-                    // certificates, App IDs, App Groups, profiles).
-                    // Custom license: personal/non-commercial use
-                    // only; §4 requires the attribution
-                    // "SideInstaller by FrizzleM" + link, which
-                    // this row is.
-                    creditRow(
-                        title: "SideInstaller by FrizzleM",
-                        detail: wtLang.tr("Apple ID sign-in, provisioning and signing — and the JIT session, developer disk image download and device transport this build derives from"),
-                        url: "https://github.com/FrizzleM/SideInstaller"
-                    )
-                    Divider()
-                        .padding(.leading, 14)
-                    // isideload — Nicholas Sharp (MIT): the Rust
-                    // core whose GrandSlam + developer-services
-                    // protocol the sign-in and provisioning flow
-                    // follows (via Signed Apps).
-                    creditRow(
-                        title: "isideload — Nicholas Sharp",
-                        detail: wtLang.tr("Apple ID auth + developer-services protocol the Container's sign-in and provisioning follow."),
-                        url: "https://github.com/nab138/isideload"
-                    )
-                    Divider()
-                        .padding(.leading, 14)
-                    // idevice — Jackson Coxson (jkcoxson, MIT):
-                    // the RPPairing tunnel + RSD services the JIT
-                    // session's device transport uses (vendored
-                    // under rust-core/vendor, idevice 7bd551c).
-                    creditRow(
-                        title: "idevice — Jackson Coxson (jkcoxson)",
-                        detail: wtLang.tr("RPPairing tunnel + RSD services (lockdown, AMFI, debugserver, developer disk image) — the JIT transport"),
-                        url: "https://github.com/jkcoxson/idevice"
-                    )
-                    Divider()
-                        .padding(.leading, 14)
                     // Toto is credited without a link: the
                     // user named the person only, no URL was given.
                     VStack(alignment: .leading, spacing: 3) {
@@ -296,41 +225,6 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     LabeledContent("3105 — YangJiii", value: "GPL-3.0")
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                    Divider()
-                        .padding(.leading, 14)
-                    LabeledContent("LiveContainer", value: "AGPL-3.0")
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                    Divider()
-                        .padding(.leading, 14)
-                    LabeledContent("litehook — LiveContainer", value: "MIT")
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                    Divider()
-                        .padding(.leading, 14)
-                    LabeledContent("ZSign — zhlynn", value: "MIT")
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                    Divider()
-                        .padding(.leading, 14)
-                    LabeledContent("Feather — khcrysalis", value: "GPL-3.0")
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                    Divider()
-                        .padding(.leading, 14)
-                    LabeledContent("SideInstaller by FrizzleM", value: "Custom")
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                    Divider()
-                        .padding(.leading, 14)
-                    LabeledContent("isideload — Nicholas Sharp", value: "MIT")
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                    Divider()
-                        .padding(.leading, 14)
-                    LabeledContent("idevice — Jackson Coxson (jkcoxson)", value: "MIT")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }
