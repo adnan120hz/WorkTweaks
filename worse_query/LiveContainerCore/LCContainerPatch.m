@@ -13,6 +13,7 @@
 #import <Security/Security.h>
 #import <fcntl.h>
 #import <limits.h>
+#import <sys/stat.h>
 #import <time.h>
 #import <unistd.h>
 
