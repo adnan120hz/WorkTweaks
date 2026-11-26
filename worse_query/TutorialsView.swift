@@ -82,7 +82,7 @@ struct TutorialsView: View {
                     Divider().padding(.leading, 14)
                     step(7, wtLang.tr("Open Settings → Apple Intelligence & Siri and tap Join Waitlist. Wait about 15 minutes for it to be accepted."))
                     Divider().padding(.leading, 14)
-                    step(8, wtLang.tr("Connect your iPhone to power, connect to Wi-Fi, and leave the Settings → General → iPhone Storage tab open for about 1 hour while the model downloads."))
+                    step(8, wtLang.tr("If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it."))
                 }
                 .padding(.vertical, 4)
             }

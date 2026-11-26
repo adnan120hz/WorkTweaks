@@ -1113,6 +1113,8 @@ enum WTStrings {
         "Apple ID sign-in, provisioning and signing — and the JIT session, developer disk image download and device transport this build derives from": "Sign-in Apple ID, provisioning dan signing — serta sesi JIT, unduhan developer disk image, dan transport perangkat yang dipakai build ini",
         "RPPairing tunnel + RSD services (lockdown, AMFI, debugserver, developer disk image) — the JIT transport": "Tunnel RPPairing + layanan RSD (lockdown, AMFI, debugserver, developer disk image) — transport JIT",
 
+        "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "Kalau Siri mentok di 'Adding support for Siri is in progress' padahal modelnya sudah terunduh, itu masalah yang berbeda — metode ini tidak memperbaikinya.",
+
     ]
 
     // Chinese (Simplified)
@@ -2111,6 +2113,8 @@ enum WTStrings {
         "%@ of JIT memory prepared": "已准备 %@ 的 JIT 内存",
         "Apple ID sign-in, provisioning and signing — and the JIT session, developer disk image download and device transport this build derives from": "Apple ID 登录、预配与签名——以及本版本所基于的 JIT 会话、开发者磁盘映像下载与设备传输层",
         "RPPairing tunnel + RSD services (lockdown, AMFI, debugserver, developer disk image) — the JIT transport": "RPPairing 隧道 + RSD 服务（lockdown、AMFI、debugserver、开发者磁盘映像）——JIT 传输层",
+
+        "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "如果 Siri 卡在“Adding support for Siri is in progress”而模型已经下载，那是另一个问题——此方法无法解决。",
 
     ]
 
@@ -3111,6 +3115,8 @@ enum WTStrings {
         "Apple ID sign-in, provisioning and signing — and the JIT session, developer disk image download and device transport this build derives from": "Đăng nhập Apple ID, cấp phép và ký — cùng phiên JIT, tải ảnh đĩa nhà phát triển và tầng truyền tải thiết bị mà bản dựng này dựa trên",
         "RPPairing tunnel + RSD services (lockdown, AMFI, debugserver, developer disk image) — the JIT transport": "Đường hầm RPPairing + các dịch vụ RSD (lockdown, AMFI, debugserver, ảnh đĩa nhà phát triển) — tầng truyền tải JIT",
 
+        "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "Nếu Siri kẹt ở 'Adding support for Siri is in progress' trong khi mô hình đã tải xuống, đó là một vấn đề khác — phương pháp này không khắc phục được.",
+
     ]
 
     // Russian
@@ -4109,6 +4115,8 @@ enum WTStrings {
         "%@ of JIT memory prepared": "Подготовлено %@ JIT-памяти",
         "Apple ID sign-in, provisioning and signing — and the JIT session, developer disk image download and device transport this build derives from": "Вход Apple ID, provisioning и подпись — а также сеанс JIT, загрузка образа диска разработчика и транспорт устройства, на которых основана эта сборка",
         "RPPairing tunnel + RSD services (lockdown, AMFI, debugserver, developer disk image) — the JIT transport": "Туннель RPPairing + службы RSD (lockdown, AMFI, debugserver, образ диска разработчика) — транспорт JIT",
+
+        "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "Если Siri зависла на 'Adding support for Siri is in progress', хотя модель уже загружена, это другая проблема — этот метод её не решает.",
 
     ]
 }
