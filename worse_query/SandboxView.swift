@@ -627,7 +627,7 @@ struct AppGroupPage: View {
 
 // MARK: - Language picker sheet (v7.0)
 //
-// The five languages, shown by name text only (no flag
+// The nine languages, shown by name text only (no flag
 // graphics). Tapping one switches the language
 // immediately — the whole app re-translates and
 // re-themes with no restart.
