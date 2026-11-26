@@ -504,7 +504,17 @@ final class ContainerManager: ObservableObject {
     /// certificate is stored, because the debugger attaches before
     /// the guest runs. JIT-less launch (`jit: false`, the default)
     /// stays signed-gated.
-    func launch(_ guest: ContainerGuest, jit: Bool = false) async {
+    ///
+    /// Throws when the launch didn't take: the gate refused, the
+    /// self-open was refused by iOS, or iOS never answered the
+    /// self-open within `launchOutcomeTimeout`. On success this
+    /// never returns — the process is SIGKILLed once iOS confirms
+    /// the self-open, so the caller's continuation never resumes
+    /// and (on the JIT path) the pending JIT stays armed for the
+    /// next process. The JIT-less caller ignores the error
+    /// (`try?`); the JIT caller treats a throw as "the launch
+    /// didn't take" and clears the pending JIT.
+    func launch(_ guest: ContainerGuest, jit: Bool = false) async throws {
         // Validate (and re-sign when needed) before the signed
         // gate, like LC does on every launch: a guest whose
         // signature stopped validating since install gets one
@@ -517,10 +527,52 @@ final class ContainerManager: ObservableObject {
         let launchable = jit ? current.isJITLaunchable : current.isLaunchable
         guard launchable else {
             print("[Container] launch refused for \(guest.bundleID) (jit=\(jit)): patched=\(current.isPatched) 32-bit=\(current.is32bit) signed=\(current.signed).")
-            return
+            throw ContainerError.message("The guest can't launch right now — it isn't patched, or it still needs a certificate.")
         }
         print("[Container] launching \(guest.bundleID) — relaunching into the guest.")
-        LCContainerPatch.launchGuest(withFolderName: current.folderName, dataUUID: current.dataUUID)
+        try await launchGuestReportingOutcome(folderName: current.folderName, dataUUID: current.dataUUID)
+    }
+
+    /// How long launch() waits for iOS to answer the self-open
+    /// before treating the launch as failed (see
+    /// launchGuestReportingOutcome). The open completion normally
+    /// arrives in milliseconds; 10 s only ever fires when the XPC
+    /// round trip itself is dead.
+    static let launchOutcomeTimeout: TimeInterval = 10
+
+    /// Awaits the self-open outcome through the completion-taking
+    /// launch chain (LCContainerPatch → LCSharedUtils). On success
+    /// this never resumes: the process SIGKILLs inside the ObjC
+    /// open completion, before the Swift completion block is ever
+    /// invoked. On failure the completion resumes with the error
+    /// and this throws it. If the open completion never fires at
+    /// all, the timeout below resumes with a failure instead, so
+    /// the await cannot hang the toggle in "Preparing..." forever.
+    /// The gate makes the resume exactly once: the open completion
+    /// and the timeout race, and whichever fires first wins (a
+    /// checked continuation traps on a second resume).
+    private func launchGuestReportingOutcome(folderName: String, dataUUID: String) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let outcome = LaunchOutcomeGate()
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(ContainerManager.launchOutcomeTimeout * 1_000_000_000))
+                guard outcome.claim() else { return }
+                continuation.resume(throwing: ContainerError.message("The guest didn't launch — iOS never answered the relaunch request. Try again."))
+            }
+            LCContainerPatch.launchGuest(withFolderName: folderName, dataUUID: dataUUID) { success, error in
+                // Success never reaches here: the process SIGKILLs
+                // inside the ObjC open completion before this block
+                // is invoked. If it ever did, NOT resuming is still
+                // correct — the kill is imminent, and the timeout
+                // above reports a failure if it somehow never lands.
+                guard !success else {
+                    print("[Container] launch open reported success without the process dying — waiting for the SIGKILL (the timeout reports a failure if it never lands).")
+                    return
+                }
+                guard outcome.claim() else { return }
+                continuation.resume(throwing: ContainerError.message(error?.localizedDescription ?? "The guest didn't launch."))
+            }
+        }
     }
 
     /// The stored certificate, if one is imported: team ID + expiry.
@@ -582,6 +634,25 @@ final class ContainerManager: ObservableObject {
 
     func refreshCertificate() {
         certificate = certificateInfo()
+    }
+}
+
+/// One-shot gate for the relaunch await (ContainerManager.
+/// launchGuestReportingOutcome): the LS open completion and the
+/// timeout race, and whichever fires first claims the resume —
+/// exactly once. A checked continuation traps on a second resume,
+/// so the gate, not hope, enforces it. Sendable via its lock.
+private final class LaunchOutcomeGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var done = false
+
+    /// True only for the first caller; every later caller is ignored.
+    func claim() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !done else { return false }
+        done = true
+        return true
     }
 }
 

@@ -6,6 +6,7 @@
 + (NSURL*) appGroupPath;
 + (NSString *)certificatePassword;
 + (BOOL)launchToGuestAppWithClassicMode:(NSUInteger)classicMode;
++ (void)launchToGuestAppWithClassicMode:(NSUInteger)classicMode completion:(void (^)(BOOL success, NSError * _Nullable error))completion;
 + (BOOL)launchToGuestAppWithURL:(NSURL *)url;
 + (void)setWebPageUrlForNextLaunch:(NSString*)urlString;
 + (BOOL)isLCSchemeInUse:(NSString*)lc;

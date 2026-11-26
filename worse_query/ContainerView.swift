@@ -488,7 +488,7 @@ struct ContainerView: View {
                                 if guest.isLaunchable {
                                     Button {
                                         SoundEffects.playTap()
-                                        Task { await manager.launch(guest) }
+                                        Task { try? await manager.launch(guest) }
                                     } label: {
                                         Label(wtLang.tr("Launch"), systemImage: "play.fill")
                                             .font(.subheadline.weight(.semibold))

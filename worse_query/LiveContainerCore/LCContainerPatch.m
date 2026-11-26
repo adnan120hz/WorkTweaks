@@ -263,10 +263,14 @@ static const int kCurrentPatchRevision = 7;
 }
 
 + (void)launchGuestWithFolderName:(NSString *)folderName dataUUID:(NSString *)dataUUID {
+    [self launchGuestWithFolderName:folderName dataUUID:dataUUID completion:nil];
+}
+
++ (void)launchGuestWithFolderName:(NSString *)folderName dataUUID:(NSString *)dataUUID completion:(void (^)(BOOL success, NSError *error))completion {
     NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
     [defaults setObject:folderName forKey:@"selected"];
     [defaults setObject:dataUUID forKey:@"selectedContainer"];
-    [LCSharedUtils launchToGuestAppWithClassicMode:0];
+    [LCSharedUtils launchToGuestAppWithClassicMode:0 completion:completion];
 }
 
 @end

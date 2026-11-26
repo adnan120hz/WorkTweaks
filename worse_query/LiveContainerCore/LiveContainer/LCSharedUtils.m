@@ -124,29 +124,56 @@ NSString* FBSOpenApplicationOptionKeyPayloadURL = @"__PayloadURL";
 }
 
 + (BOOL)launchToGuestAppWithClassicMode:(NSUInteger)classicMode {
-    // Kill this process ONLY when iOS reports the self-open actually
-    // succeeded. The old code SIGKILLed on every completion, so a
-    // refused/failed self-open just made the app vanish — a
-    // force-close with no relaunch and no crash log (notably when
-    // turning JIT on: the relaunch is the whole mechanism, and the
-    // open is what can fail). On failure stay alive and log loudly;
-    // the Swift callers already treat a returning launch as "didn't
-    // launch" and reset their armed state (ContainerJITManager.enable
-    // clears the pending JIT, disarms, and shows lastError).
+    [self launchToGuestAppWithClassicMode:classicMode completion:nil];
+    return YES;
+}
+
++ (void)launchToGuestAppWithClassicMode:(NSUInteger)classicMode completion:(void (^)(BOOL success, NSError *error))completion {
+    // Outcome reporting, for the Swift JIT arm path only (see
+    // ContainerJITManager.enable / ContainerManager.launch): the
+    // completion is invoked AT MOST once, and ONLY on failure. On
+    // success this process SIGKILLs inside the open completion
+    // handler (below), so the caller's continuation never resumes —
+    // the pending JIT stays armed for the next process to consume,
+    // instead of being cleared microseconds after the open was
+    // merely *requested*. The fire-and-forget callers (in-guest
+    // return/switch via UIKit+GuestHooks, launchToGuestAppWithURL)
+    // pass nil and behave exactly as before.
+    __block BOOL outcomeReported = NO;
+    void (^reportFailure)(NSError *) = ^(NSError *error) {
+        // Always reached from the main queue (see
+        // handleAttemptOutcome), so no locking is needed here.
+        if (outcomeReported) return;
+        outcomeReported = YES;
+        NSLog(@"[LiveContainer] launchToGuestAppWithClassicMode: self-open FAILED (error: %@) — staying alive instead of SIGKILL.", error);
+        if (completion) completion(NO, error);
+    };
+    // The self-open is issued twice (tries=2 below) and the two
+    // completions may arrive on any queue, so the attempt counting
+    // runs serialized on the main queue: only when EVERY attempt
+    // has failed is the failure reported. Any success SIGKILLs
+    // before the remaining attempts can report anything.
     // PT_DENY_ATTACH stays on the kill path only: a surviving process
     // may still need debugger attachment for a later JIT attempt.
-    void (^killIfLaunched)(BOOL, NSError *) = ^(BOOL success, NSError *error) {
-        if (!success) {
-            NSLog(@"[LiveContainer] launchToGuestAppWithClassicMode: self-open FAILED (error: %@) — staying alive instead of SIGKILL.", error);
-            return;
-        }
-        // syscall(SYS_ptrace, PT_DENY_ATTACH, 0, 0, 0);
-        __asm__ __volatile__ (
-                              "mov x0, #31\n"
-                              "mov x16, #26\n"
-                              "svc #0x80"
-                              );
-        raise(SIGKILL);
+    __block int remainingAttempts = 1;
+    void (^handleAttemptOutcome)(BOOL, NSError *) = ^(BOOL success, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (success) {
+                // syscall(SYS_ptrace, PT_DENY_ATTACH, 0, 0, 0);
+                __asm__ __volatile__ (
+                                      "mov x0, #31\n"
+                                      "mov x16, #26\n"
+                                      "svc #0x80"
+                                      );
+                raise(SIGKILL);
+            }
+            remainingAttempts -= 1;
+            if (remainingAttempts <= 0) {
+                reportFailure(error);
+            } else {
+                NSLog(@"[LiveContainer] launchToGuestAppWithClassicMode: self-open attempt failed (%d attempt(s) left): %@", remainingAttempts, error);
+            }
+        });
     };
 
     if (!self.certificatePassword) {
@@ -160,13 +187,14 @@ NSString* FBSOpenApplicationOptionKeyPayloadURL = @"__PayloadURL";
             NSURL *launchURL = [NSURL URLWithString:[NSString stringWithFormat:urlScheme, NSBundle.mainBundle.bundleIdentifier]];
             UIApplication *application = [NSClassFromString(@"UIApplication") sharedApplication];
             [application openURL:launchURL options:@{} completionHandler:^(BOOL success) {
-                killIfLaunched(success, nil);
+                handleAttemptOutcome(success, nil);
             }];
-            return YES;
+            return;
         }
     }
 
     int tries = 2;
+    remainingAttempts = tries;
     _LSOpenConfiguration *configuration = [[PrivClass(_LSOpenConfiguration) alloc] init];
     if(classicMode) {
         NSMutableDictionary* dict = [NSMutableDictionary new];
@@ -174,15 +202,14 @@ NSString* FBSOpenApplicationOptionKeyPayloadURL = @"__PayloadURL";
         configuration.frontBoardOptions = dict;
     }
     LSApplicationWorkspace* workspace = [PrivClass(LSApplicationWorkspace) defaultWorkspace];
-    
+
     for (int i = 0; i < tries; i++) {
         [workspace openApplicationWithBundleIdentifier:NSUserDefaults.lcMainBundle.bundleIdentifier
                                          configuration:configuration
                                      completionHandler:^(BOOL success, NSError* error) {
-            killIfLaunched(success, error);
+            handleAttemptOutcome(success, error);
         }];
     }
-    return YES;
 }
 
 + (BOOL)launchToGuestAppWithURL:(NSURL *)url {

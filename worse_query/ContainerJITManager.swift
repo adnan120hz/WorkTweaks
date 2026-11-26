@@ -165,16 +165,32 @@ final class ContainerJITManager: ObservableObject {
                 Self.persistPending(guest: guest, jitProtocol: jitProtocol, regions: regions)
                 isArmed = true
                 isPreparing = false
-                // Relaunch into the guest. The process dies here on
-                // success; the code after this only runs if the launch
-                // didn't take. JIT path: an unsigned guest may
-                // relaunch when a certificate is stored.
-                await containerManager.launch(guest, jit: true)
+                // Relaunch into the guest. On success the process
+                // dies inside launch() (SIGKILL once iOS confirms
+                // the self-open), so launch() never returns and the
+                // lines after it never run — the pending JIT stays
+                // armed for the next process to consume. launch()
+                // returns or throws ONLY when the launch didn't
+                // take; the catch below then clears the pending JIT
+                // and reports the failure honestly. (The old code
+                // awaited a fire-and-forget launch that returned
+                // the moment the open was *requested*, so the
+                // cleanup below ran in microseconds and cleared
+                // the pending JIT before the SIGKILL landed.)
+                try await containerManager.launch(guest, jit: true)
+                // Defensive only: launch() should never return on
+                // success. If it ever does, the launch didn't take
+                // — route through the same failure path as a throw,
+                // so the catch below clears the pending JIT.
+                throw ContainerError.message("The guest didn't launch — JIT was not armed.")
+            } catch {
+                // The launch didn't take (or getReady() failed
+                // first, in which case nothing was persisted and
+                // this is a no-op): the pending JIT must not survive
+                // into the next host-UI launch, so clear it and
+                // disarm now.
                 Self.clearPending()
                 isArmed = false
-                lastError = "The guest didn't launch — JIT was not armed."
-                print("[JIT] launch returned without relaunching; pending JIT cleared.")
-            } catch {
                 isPreparing = false
                 let message = (error as? LocalizedError)?.errorDescription ?? String(describing: error)
                 lastError = message

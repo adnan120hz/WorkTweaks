@@ -84,4 +84,16 @@ int LiveContainerMain(int argc, char *argv[]);
 /// LiveContainerMain with this guest selected.
 + (void)launchGuestWithFolderName:(NSString *)folderName dataUUID:(NSString *)dataUUID;
 
+/// Completion-taking variant of launchGuestWithFolderName:dataUUID:,
+/// for the Swift JIT arm path only (ContainerManager.launch). The
+/// completion is invoked at most once, and only when the self-open
+/// FAILED (every attempt refused). On success the process SIGKILLs
+/// inside the open completion handler, so the completion never runs
+/// and a Swift caller awaiting it never resumes — the pending JIT
+/// stays armed for the next process. If the open completion never
+/// fires at all, the completion never runs either; the Swift side
+/// bounds that with its own timeout. Other callers keep using the
+/// fire-and-forget variant above, unchanged.
++ (void)launchGuestWithFolderName:(NSString *)folderName dataUUID:(NSString *)dataUUID completion:(void (^)(BOOL success, NSError * _Nullable error))completion;
+
 @end
