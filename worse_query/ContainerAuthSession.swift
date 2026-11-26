@@ -403,6 +403,9 @@ final class ContainerAuthSession: ObservableObject {
         try LCContainerPatch.storeCertificateData(p12, password: password)
         ContainerManager.shared.refreshCertificate()
         log("certificate stored — guests can now be signed and launched")
+        // Guests installed before this certificate existed are
+        // re-signed with it right away — no delete + re-import.
+        await ContainerManager.shared.reSignAllGuests()
     }
 
     /// 7460 ("Maximum number of certificates generated") is the

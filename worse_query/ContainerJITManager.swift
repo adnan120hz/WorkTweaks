@@ -164,7 +164,7 @@ final class ContainerJITManager: ObservableObject {
                 // Relaunch into the guest. The process dies here on
                 // success; the code after this only runs if the launch
                 // didn't take.
-                containerManager.launch(guest)
+                await containerManager.launch(guest)
                 Self.clearPending()
                 isArmed = false
                 lastError = "The guest didn't launch — JIT was not armed."

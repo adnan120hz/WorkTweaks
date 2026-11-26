@@ -18,6 +18,10 @@ import Compression
 // executable (LCContainerPatch — LCMachOUtils, currentPatchRev 7),
 // sign the guest with an imported .p12 certificate (ZSigner,
 // called directly), and launch it JIT-less (LiveContainerMain).
+// Guests installed before any certificate was stored are
+// re-signed on demand (LC parity: validate first, sign only
+// when invalid) when a certificate is stored or at launch, so
+// they do not need delete + re-import.
 // The JIT toggle stays OFF/disabled until the Phase 3 JIT session
 // exists; no fake "JIT on" anywhere. A certificate is required
 // to launch on iOS 26+ (LCBootstrap refuses without one), so
@@ -398,19 +402,111 @@ final class ContainerManager: ObservableObject {
         try data.write(to: url)
     }
 
+    // MARK: - Re-sign on demand (LC parity)
+    //
+    // Mirrors LiveContainer's LCAppInfo.patchExecAndSignIfNeed
+    // (LCAppInfo.m): validate the guest's existing signature first
+    // (checkCodeSignature) and skip signing when iOS already
+    // considers it valid; otherwise sign with the stored
+    // certificate and flip WTSigned. This unblocks guests that
+    // were installed before any certificate was stored — they no
+    // longer need delete + re-import to become launchable.
+
+    /// Re-sign one guest when needed. Returns true when the guest
+    /// ends up validly signed (already valid, or signed now).
+    /// Every outcome is logged honestly; a failed re-sign never
+    /// claims success, and lastResult carries the user-facing
+    /// outcome for the Containers page.
+    @discardableResult
+    func reSignGuest(_ guest: ContainerGuest) async -> Bool {
+        guard guest.isPatched else {
+            print("[Container] re-sign skipped for \(guest.bundleID): not patched yet.")
+            return false
+        }
+        guard !guest.is32bit else {
+            print("[Container] re-sign skipped for \(guest.bundleID): 32-bit guests need JIT + classic mode.")
+            return false
+        }
+        guard LCContainerPatch.hasCertificate() else {
+            print("[Container] re-sign skipped for \(guest.bundleID): no certificate stored.")
+            return false
+        }
+        if LCContainerPatch.isGuestSignatureValid(atPath: guest.bundlePath, executableName: guest.executableName) {
+            if !guest.signed {
+                try? setLCAppInfoFlag(bundlePath: guest.bundlePath, key: "WTSigned", value: true)
+            }
+            print("[Container] \(guest.bundleID) signature already valid — skipped re-signing.")
+            await MainActor.run { self.refresh() }
+            return true
+        }
+        do {
+            let signed = try await signGuest(bundlePath: guest.bundlePath, bundleID: guest.bundleID)
+            guard signed else { return false }
+            try setLCAppInfoFlag(bundlePath: guest.bundlePath, key: "WTSigned", value: true)
+            print("[Container] re-signed \(guest.bundleID) with the stored certificate.")
+            await MainActor.run {
+                self.lastResult = "Re-signed \(guest.displayName) — ready to launch."
+                self.refresh()
+            }
+            return true
+        } catch {
+            print("[Container] re-signing \(guest.bundleID) failed: \(error.localizedDescription)")
+            await MainActor.run {
+                self.lastResult = "Re-signing \(guest.displayName) failed: \(error.localizedDescription)"
+            }
+            return false
+        }
+    }
+
+    /// Re-sign every installed guest that is not signed yet,
+    /// now that a certificate is stored. Guests whose signature
+    /// is already valid keep it (reSignGuest skips the signing
+    /// step and just flips WTSigned). Called automatically after
+    /// a certificate is stored — manual .p12 import and
+    /// Provision alike.
+    func reSignAllGuests() async {
+        let pending = await MainActor.run {
+            guests.filter { $0.isPatched && !$0.is32bit && !$0.signed }
+        }
+        guard !pending.isEmpty else {
+            print("[Container] re-sign: no unsigned guests to re-sign.")
+            return
+        }
+        print("[Container] re-signing \(pending.count) guest(s) with the stored certificate…")
+        var signedCount = 0
+        for guest in pending {
+            if await reSignGuest(guest) { signedCount += 1 }
+        }
+        print("[Container] re-sign finished: \(signedCount)/\(pending.count) guest(s) signed.")
+        await MainActor.run { self.refresh() }
+    }
+
     /// Launch a guest JIT-less: select it and relaunch the host
     /// into it (LCSharedUtils launchToGuestAppWithClassicMode).
     /// The current process is killed by that call; the next launch
-    /// runs LiveContainerMain with this guest selected. Only
-    /// launchable guests (patched, 64-bit, signed) reach here —
-    /// the view enforces it and this refuses again.
-    func launch(_ guest: ContainerGuest) {
-        guard guest.isLaunchable else {
-            print("[Container] launch refused for \(guest.bundleID): patched=\(guest.isPatched) 32-bit=\(guest.is32bit) signed=\(guest.signed).")
+    /// runs LiveContainerMain with this guest selected. Before the
+    /// signed gate, one automatic re-sign is attempted: a
+    /// certificate may have been stored after this guest was
+    /// installed, and the guest must not stay unlaunchable for
+    /// that. Only launchable guests (patched, 64-bit, signed)
+    /// reach the relaunch — the view enforces it and this refuses
+    /// again.
+    func launch(_ guest: ContainerGuest) async {
+        // Validate (and re-sign when needed) before the signed
+        // gate, like LC does on every launch: a guest whose
+        // signature stopped validating since install gets one
+        // automatic re-sign attempt instead of a silent refusal.
+        _ = await reSignGuest(guest)
+        let current = await MainActor.run {
+            self.refresh()
+            return guests.first(where: { $0.bundleID == guest.bundleID }) ?? guest
+        }
+        guard current.isLaunchable else {
+            print("[Container] launch refused for \(guest.bundleID): patched=\(current.isPatched) 32-bit=\(current.is32bit) signed=\(current.signed).")
             return
         }
         print("[Container] launching \(guest.bundleID) — relaunching into the guest.")
-        LCContainerPatch.launchGuest(withFolderName: guest.folderName, dataUUID: guest.dataUUID)
+        LCContainerPatch.launchGuest(withFolderName: current.folderName, dataUUID: current.dataUUID)
     }
 
     /// The stored certificate, if one is imported: team ID + expiry.
@@ -431,10 +527,13 @@ final class ContainerManager: ObservableObject {
 
     /// Import a picked .p12 with its password (validated offline
     /// by SecPKCS12Import — wrong password or a non-.p12 throws).
+    /// Guests installed before this certificate existed are
+    /// re-signed with it right away — no delete + re-import.
     func importCertificate(data: Data, password: String) throws {
         try LCContainerPatch.storeCertificateData(data, password: password)
         print("[Container] certificate imported.")
         refreshCertificate()
+        Task { await reSignAllGuests() }
     }
 
     func removeCertificate() {

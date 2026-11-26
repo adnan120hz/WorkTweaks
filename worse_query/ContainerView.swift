@@ -434,7 +434,7 @@ struct ContainerView: View {
                                 if guest.isLaunchable {
                                     Button {
                                         SoundEffects.playTap()
-                                        manager.launch(guest)
+                                        Task { await manager.launch(guest) }
                                     } label: {
                                         Label(wtLang.tr("Launch"), systemImage: "play.fill")
                                             .font(.subheadline.weight(.semibold))
@@ -447,9 +447,21 @@ struct ContainerView: View {
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 } else if !guest.signed {
-                                    Text(wtLang.tr("Needs certificate to launch"))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                    HStack(spacing: 8) {
+                                        Text(wtLang.tr("Needs certificate to launch"))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        if guest.isPatched && manager.hasCertificate {
+                                            Button {
+                                                SoundEffects.playTap()
+                                                Task { await manager.reSignGuest(guest) }
+                                            } label: {
+                                                Label(wtLang.tr("Re-sign"), systemImage: "arrow.triangle.2.circlepath")
+                                                    .font(.caption.weight(.semibold))
+                                            }
+                                            .buttonStyle(.bordered)
+                                        }
+                                    }
                                 }
                             }
                             .padding(.horizontal, 14)

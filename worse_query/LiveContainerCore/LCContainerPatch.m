@@ -247,6 +247,17 @@ static const int kCurrentPatchRevision = 7;
 
 // MARK: - Launch
 
+/// Validate one guest's current signature without signing it
+/// (LCAppInfo.patchExecAndSignIfNeed's skip-if-valid step).
++ (BOOL)isGuestSignatureValidAtPath:(NSString *)appPath
+                    executableName:(NSString *)executableName {
+    NSDictionary *plist = [NSDictionary dictionaryWithContentsOfFile:[appPath stringByAppendingPathComponent:@"Info.plist"]];
+    NSString *executable = plist[@"CFBundleExecutable"];
+    if (!executable) return NO;
+    NSString *executablePath = [appPath stringByAppendingPathComponent:executable];
+    return checkCodeSignature(executablePath.UTF8String);
+}
+
 + (void)launchGuestWithFolderName:(NSString *)folderName dataUUID:(NSString *)dataUUID {
     NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
     [defaults setObject:folderName forKey:@"selected"];

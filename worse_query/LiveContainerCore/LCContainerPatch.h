@@ -52,6 +52,14 @@ int LiveContainerMain(int argc, char *argv[]);
                   bundleId:(NSString *)bundleId
                 completion:(void (^)(BOOL success, NSString * _Nullable error))completion;
 
+/// YES when the guest executable's current signature passes iOS
+/// validation (checkCodeSignature — the same F_ADDFILESIGS_RETURN /
+/// F_CHECK_LV check signing runs after ZSign). The re-sign path
+/// uses this to skip guests that are already validly signed
+/// instead of signing them again.
++ (BOOL)isGuestSignatureValidAtPath:(NSString *)appPath
+                    executableName:(NSString *)executableName;
+
 /// Validate a picked .p12 with its password (SecPKCS12Import — offline)
 /// and store it the LC way: the raw .p12 data under "LCCertificateData"
 /// in the App Group defaults, the password under "LCCertificatePassword"
