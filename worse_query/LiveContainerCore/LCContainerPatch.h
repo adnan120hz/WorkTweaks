@@ -40,6 +40,14 @@ int LiveContainerMain(int argc, char *argv[]);
 /// YES when a .p12 certificate is stored (data + password both present).
 + (BOOL)hasCertificate;
 
+/// The stored .p12 blob, if one is stored.
++ (NSData * _Nullable)certificateData;
+
+/// The stored .p12's password, if one is stored. Only ever used
+/// in-memory to open the stored blob (signing, export) — never
+/// logged, never written anywhere else.
++ (NSString * _Nullable)certificatePassword;
+
 /// Stored certificate info: teamId (OU) + expirationDate, read offline
 /// from the stored .p12 via SecPKCS12Import. Nil + error when none stored
 /// or the stored data no longer parses.

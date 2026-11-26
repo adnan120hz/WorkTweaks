@@ -26,4 +26,17 @@
                                             password:(NSString *)password
                                                error:(NSError * _Nullable * _Nullable)outError;
 
+/// Re-wrap an existing .p12 under a NEW password: parse the
+/// blob with its stored password, rebuild it with the new one.
+/// The stored blob is never returned — only the fresh .p12,
+/// which opens with the new password. The new password may be
+/// empty (no password). Returns nil + error when the stored
+/// blob can't be opened (wrong stored password, or not a .p12)
+/// or the fresh .p12 can't be built. The passwords are used
+/// only in-memory here — never logged, never stored.
++ (nullable NSData *)rewrapPKCS12:(NSData *)p12Data
+                   storedPassword:(NSString *)storedPassword
+                      newPassword:(NSString *)newPassword
+                            error:(NSError * _Nullable * _Nullable)outError;
+
 @end

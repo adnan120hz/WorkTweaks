@@ -214,6 +214,14 @@ final class ContainerAuthSession: ObservableObject {
         }
     }
 
+    /// Reload the saved provisioning profiles from disk — the
+    /// export UI needs them even when signed out (a saved profile
+    /// outlives the Apple ID session; sign-out removes the
+    /// certificate but not the profile file).
+    func refreshSavedProfiles() {
+        savedProfiles = ProfileStore.loadAll()
+    }
+
     /// Fill the certificate state from the portal: our
     /// certificate if one already matches our key, plus the
     /// team's certificate list (for the 7460 recovery UI).

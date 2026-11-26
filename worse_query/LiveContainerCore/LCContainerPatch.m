@@ -159,6 +159,10 @@ static const int kCurrentPatchRevision = 7;
     return [[self groupDefaults] objectForKey:kLCCertificateDataKey];
 }
 
++ (NSString *)certificatePassword {
+    return [LCSharedUtils certificatePassword];
+}
+
 + (BOOL)hasCertificate {
     return [self certificateData] != nil && [LCSharedUtils certificatePassword] != nil;
 }

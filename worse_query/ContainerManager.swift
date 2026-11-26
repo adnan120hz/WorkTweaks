@@ -550,6 +550,30 @@ final class ContainerManager: ObservableObject {
         Task { await reSignAllGuests() }
     }
 
+    /// Export the stored signing identity as a fresh .p12 wrapped
+    /// with the user's chosen password (empty = no password).
+    ///
+    /// The stored blob is NEVER handed out as-is: its password is
+    /// an unshown random UUID (provisioned) or whatever was typed
+    /// at import, so the blob is parsed with its stored password
+    /// and re-wrapped (WTPKCS12Export) under the password the user
+    /// just chose — the file the user gets opens with that
+    /// password. The password is never logged. Works for a
+    /// provisioned certificate and a manually imported one alike:
+    /// both live in the same stored blob, and the keychain
+    /// private key exists only for the provisioned one.
+    func exportCertificate(password: String) throws -> Data {
+        guard let stored = LCContainerPatch.certificateData(),
+              let storedPassword = LCContainerPatch.certificatePassword() else {
+            throw ContainerError.message("No certificate stored to export.")
+        }
+        do {
+            return try WTPKCS12Export.rewrapPKCS12(stored, storedPassword: storedPassword, newPassword: password)
+        } catch {
+            throw ContainerError.message(error.localizedDescription)
+        }
+    }
+
     func removeCertificate() {
         LCContainerPatch.removeCertificate()
         print("[Container] certificate removed.")

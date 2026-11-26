@@ -1139,6 +1139,12 @@ enum WTStrings {
 
         "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Belum ditandatangani — hanya bisa jalan dengan JIT. Meluncurkan tanpa JIT tetap diblokir sampai ditandatangani.",
 
+        "Export Certificate (.p12)": "Ekspor Sertifikat (.p12)",
+        "Export Certificate": "Ekspor Sertifikat",
+        "Set a password for the exported .p12 — you will need it to import the file in another app. Leave it empty for no password.": "Atur kata sandi untuk .p12 yang diekspor — Anda membutuhkannya untuk mengimpor file di aplikasi lain. Biarkan kosong untuk tanpa kata sandi.",
+        "Export failed": "Ekspor gagal",
+        "Share Provisioning Profile": "Bagikan Profil Provisioning",
+
     ]
 
     // Chinese (Simplified)
@@ -2143,6 +2149,12 @@ enum WTStrings {
         "Re-sign": "重新签名",
 
         "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "尚未签名——只能通过 JIT 运行。在签名之前，不使用 JIT 启动仍会被阻止。",
+
+        "Export Certificate (.p12)": "导出证书 (.p12)",
+        "Export Certificate": "导出证书",
+        "Set a password for the exported .p12 — you will need it to import the file in another app. Leave it empty for no password.": "为导出的 .p12 设置密码——在其他应用中导入此文件时需要用到。留空则不设密码。",
+        "Export failed": "导出失败",
+        "Share Provisioning Profile": "分享配置文件",
 
     ]
 
@@ -3149,6 +3161,12 @@ enum WTStrings {
 
         "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Chưa được ký — chỉ chạy được với JIT. Khởi chạy không có JIT vẫn bị chặn cho đến khi được ký.",
 
+        "Export Certificate (.p12)": "Xuất chứng chỉ (.p12)",
+        "Export Certificate": "Xuất chứng chỉ",
+        "Set a password for the exported .p12 — you will need it to import the file in another app. Leave it empty for no password.": "Đặt mật khẩu cho tệp .p12 đã xuất — bạn sẽ cần nó để nhập tệp trong ứng dụng khác. Để trống nếu không đặt mật khẩu.",
+        "Export failed": "Xuất không thành công",
+        "Share Provisioning Profile": "Chia sẻ hồ sơ cấp phép",
+
     ]
 
     // Russian
@@ -4154,6 +4172,12 @@ enum WTStrings {
 
         "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Ещё не подписано — запускается только с JIT. Запуск без JIT останется заблокированным, пока приложение не будет подписано.",
 
+        "Export Certificate (.p12)": "Экспорт сертификата (.p12)",
+        "Export Certificate": "Экспорт сертификата",
+        "Set a password for the exported .p12 — you will need it to import the file in another app. Leave it empty for no password.": "Задайте пароль для экспортируемого .p12 — он понадобится для импорта файла в другом приложении. Оставьте пустым, чтобы обойтись без пароля.",
+        "Export failed": "Экспорт не удался",
+        "Share Provisioning Profile": "Поделиться профилем обеспечения",
+
     ]
 
     // ar
@@ -5149,6 +5173,12 @@ enum WTStrings {
         "Re-sign": "إعادة التوقيع",
 
         "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "غير موقّع بعد — يعمل مع JIT فقط. التشغيل بدون JIT يبقى محظورًا حتى يتم توقيعه.",
+
+        "Export Certificate (.p12)": "تصدير الشهادة (.p12)",
+        "Export Certificate": "تصدير الشهادة",
+        "Set a password for the exported .p12 — you will need it to import the file in another app. Leave it empty for no password.": "عيّن كلمة مرور لملف .p12 المُصدَّر — ستحتاج إليها لاستيراد الملف في تطبيق آخر. اتركها فارغة لعدم تعيين كلمة مرور.",
+        "Export failed": "فشل التصدير",
+        "Share Provisioning Profile": "مشاركة ملف التوفير",
 
     ]
 
@@ -6146,6 +6176,12 @@ enum WTStrings {
 
         "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Ainda não assinado — só funciona com JIT. Iniciar sem JIT continua bloqueado até ser assinado.",
 
+        "Export Certificate (.p12)": "Exportar certificado (.p12)",
+        "Export Certificate": "Exportar certificado",
+        "Set a password for the exported .p12 — you will need it to import the file in another app. Leave it empty for no password.": "Defina uma senha para o .p12 exportado — você precisará dela para importar o arquivo em outro app. Deixe em branco para não usar senha.",
+        "Export failed": "Falha na exportação",
+        "Share Provisioning Profile": "Compartilhar perfil de provisionamento",
+
     ]
 
     // es
@@ -7142,6 +7178,12 @@ enum WTStrings {
 
         "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Aún no está firmado — solo puede ejecutarse con JIT. Iniciarlo sin JIT seguirá bloqueado hasta que se firme.",
 
+        "Export Certificate (.p12)": "Exportar certificado (.p12)",
+        "Export Certificate": "Exportar certificado",
+        "Set a password for the exported .p12 — you will need it to import the file in another app. Leave it empty for no password.": "Elige una contraseña para el .p12 exportado: la necesitarás para importar el archivo en otra app. Déjala vacía para no usar contraseña.",
+        "Export failed": "Error al exportar",
+        "Share Provisioning Profile": "Compartir perfil de aprovisionamiento",
+
     ]
 
     // fr
@@ -8137,6 +8179,12 @@ enum WTStrings {
         "Re-sign": "Signer à nouveau",
 
         "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Pas encore signé — il ne peut fonctionner qu'avec JIT. Le lancer sans JIT reste bloqué jusqu'à sa signature.",
+
+        "Export Certificate (.p12)": "Exporter le certificat (.p12)",
+        "Export Certificate": "Exporter le certificat",
+        "Set a password for the exported .p12 — you will need it to import the file in another app. Leave it empty for no password.": "Choisissez un mot de passe pour le .p12 exporté — il vous faudra pour importer le fichier dans une autre app. Laissez vide pour aucun mot de passe.",
+        "Export failed": "Échec de l'exportation",
+        "Share Provisioning Profile": "Partager le profil de provisionnement",
 
     ]
 }

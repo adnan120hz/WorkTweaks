@@ -33,6 +33,21 @@ struct ContainerView: View {
     @State private var showRemoveCertConfirm = false
     @State private var launchError: String?
 
+    @State private var showExportPasswordPrompt = false
+    @State private var exportPassword = ""
+    @State private var exportURL: URL?
+    @State private var showExportSheet = false
+    @State private var exportError: String?
+
+    /// The saved provisioning profile to share: the host bundle's,
+    /// else the first saved one. Nil when nothing was ever saved —
+    /// the profile row is then hidden, never offered empty.
+    private var profileToShare: SavedProfile? {
+        let bundleId = Bundle.main.bundleIdentifier ?? ""
+        return auth.savedProfiles.first { $0.bundleId == bundleId }
+            ?? auth.savedProfiles.first
+    }
+
     var body: some View {
         WTGlassPage {
             WTSectionCard {
@@ -289,6 +304,33 @@ struct ContainerView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                                 .padding(.horizontal, 14)
                         }
+                        // Export: the stored identity re-wrapped as
+                        // a fresh .p12 under a password the user
+                        // chooses — the file they get opens with
+                        // that password in another app. On-device
+                        // only; the staged temp file is deleted
+                        // when the share sheet closes.
+                        Button {
+                            SoundEffects.playTap()
+                            exportPassword = ""
+                            showExportPasswordPrompt = true
+                        } label: {
+                            Label(wtLang.tr("Export Certificate (.p12)"), systemImage: "square.and.arrow.up")
+                                .font(.subheadline)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 14)
+                        if let exportURL {
+                            Button {
+                                SoundEffects.playTap()
+                                showExportSheet = true
+                            } label: {
+                                Label(wtLang.tr("Share %@", exportURL.lastPathComponent), systemImage: "square.and.arrow.up")
+                                    .font(.subheadline)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 14)
+                        }
                         Button {
                             SoundEffects.playTap()
                             showRemoveCertConfirm = true
@@ -299,7 +341,6 @@ struct ContainerView: View {
                         }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 14)
-                        .padding(.bottom, 10)
                     } else {
                         Text(wtLang.tr("No certificate imported — import a .p12 to sign and launch guests."))
                             .font(.caption)
@@ -323,9 +364,22 @@ struct ContainerView: View {
                         .buttonStyle(.borderedProminent)
                         .disabled(manager.isBusy)
                         .padding(.horizontal, 14)
-                        .padding(.bottom, 10)
+                    }
+                    // The saved provisioning profile, shared as-is
+                    // from ProfileStore. Shown whenever one is
+                    // saved — even with no certificate (sign-out
+                    // removes the cert but not the profile file) —
+                    // and hidden when none is stored.
+                    if let profile = profileToShare {
+                        ShareLink(item: profile.fileURL) {
+                            Label(wtLang.tr("Share Provisioning Profile"), systemImage: "square.and.arrow.up")
+                                .font(.subheadline)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 14)
                     }
                 }
+                .padding(.bottom, 10)
             }
 
             WTSectionCard {
@@ -478,6 +532,7 @@ struct ContainerView: View {
         .onAppear {
             manager.refresh()
             manager.refreshCertificate()
+            auth.refreshSavedProfiles()
             if case .signedIn = auth.signInState {
                 auth.refreshCertificateInfo()
             }
@@ -583,6 +638,35 @@ struct ContainerView: View {
             Text(wtLang.tr("This removes the stored .p12 certificate. Guests already signed keep working; new installs will not be signed."))
         }
         .alert(
+            wtLang.tr("Export Certificate"),
+            isPresented: $showExportPasswordPrompt
+        ) {
+            SecureField(wtLang.tr("Password"), text: $exportPassword)
+            Button(wtLang.tr("Export")) {
+                exportCertificateFile()
+            }
+            Button(wtLang.tr("Cancel"), role: .cancel) {
+                exportPassword = ""
+            }
+        } message: {
+            Text(wtLang.tr("Set a password for the exported .p12 — you will need it to import the file in another app. Leave it empty for no password."))
+        }
+        .alert(wtLang.tr("Export failed"), isPresented: Binding(
+            get: { exportError != nil },
+            set: { if !$0 { exportError = nil } }
+        )) {
+            Button(wtLang.tr("OK"), role: .cancel) { exportError = nil }
+        } message: {
+            Text(exportError ?? "")
+        }
+        .sheet(isPresented: $showExportSheet) {
+            if let exportURL {
+                CertificateExportSheet(url: exportURL) {
+                    deleteExportFile()
+                }
+            }
+        }
+        .alert(
             wtLang.tr("Sign out?"),
             isPresented: $showSignOutConfirm
         ) {
@@ -630,4 +714,53 @@ struct ContainerView: View {
             Text(wtLang.tr("This deletes the guest app and its data container."))
         }
     }
+
+    /// Build the fresh .p12 with the user's chosen password and
+    /// stage it as a temp file for the share sheet. The password
+    /// is cleared the moment it is copied — never stored, never
+    /// logged.
+    private func exportCertificateFile() {
+        let password = exportPassword
+        exportPassword = ""
+        do {
+            let data = try manager.exportCertificate(password: password)
+            if let old = exportURL {
+                try? FileManager.default.removeItem(at: old)
+            }
+            let url = FileManager.default.temporaryDirectory
+                .appendingPathComponent("WorkTweaks-Certificate.p12")
+            try data.write(to: url, options: .atomic)
+            exportURL = url
+            showExportSheet = true
+        } catch {
+            exportError = error.localizedDescription
+        }
+    }
+
+    /// Delete the staged export after the share sheet closes —
+    /// the .p12 never lingers on disk.
+    private func deleteExportFile() {
+        if let url = exportURL {
+            try? FileManager.default.removeItem(at: url)
+        }
+        exportURL = nil
+    }
+}
+
+// MARK: - Certificate export share sheet
+//
+// UIActivityViewController with a completion handler: the
+// exported .p12 lives in a temp file, and the file is deleted
+// once the sheet is dismissed — the .p12 never lingers on disk.
+private struct CertificateExportSheet: UIViewControllerRepresentable {
+    let url: URL
+    let onDismiss: () -> Void
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        controller.completionWithItemsHandler = { _, _, _, _ in onDismiss() }
+        return controller
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
