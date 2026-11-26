@@ -114,8 +114,8 @@ enum SiriPatchState {
 enum SiriManualGuide {
     static let plistSteps: [String] = [
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".",
-        "Use the find field to jump to line 104 — the viewer shows the exact Siri line number for this device.",
-        "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.",
+        "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).",
+        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.",
     ]
 
     static let thenLine = "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri."

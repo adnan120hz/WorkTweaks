@@ -1015,8 +1015,6 @@ enum WTStrings {
         "Reload MobileGestalt": "Muat Ulang MobileGestalt",
         "Loading MobileGestalt.plist…": "Memuat MobileGestalt.plist…",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".": "Buka \"Mobile Gestalt.plist\" di tab Tweaks (di bawah kartu Siri AI Cache Patch), lalu ketuk \"Open with Text Editor\".",
-        "Use the find field to jump to line 104 — the viewer shows the exact Siri line number for this device.": "Pakai kolom find untuk lompat ke baris 104 — viewer menampilkan nomor baris Siri yang tepat untuk perangkat ini.",
-        "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "Di baris itu, ubah karakter base64 ke-30 dari A menjadi g (ini membalik byte 21 CacheData dari 0x00 ke 0x02). Untuk mematikan patch lagi, ubah kembali dari g ke A. Lalu ketuk Save — backup asli dibuat sebelum penyimpanan pertama.",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "Lalu nyalakan toggle Apple Intelligence dan Charge Limit Menu, atur Spoofing ke iPhone 17 Pro, Apply, respring lalu restart — Join Waitlist akan muncul di Settings > Apple Intelligence & Siri.",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "Nyalakan toggle Apple Intelligence dan Charge Limit Menu (bagian Add feature).",
 
@@ -1048,6 +1046,9 @@ enum WTStrings {
 
 
 
+
+        "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Ketuk \"Jump to Siri line\" — tombol itu langsung lompat ke baris Siri yang tepat untuk perangkat ini (biasanya baris 104).",
+        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Pilih seluruh baris lalu ganti dengan: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Untuk mematikan patch lagi, ganti kembali dengan: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Lalu ketuk Save — backup asli dibuat sebelum penyimpanan pertama.",
 
     ]
 
@@ -1930,8 +1931,6 @@ enum WTStrings {
         "Reload MobileGestalt": "重新加载 MobileGestalt",
         "Loading MobileGestalt.plist…": "正在加载 MobileGestalt.plist…",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".": "在 Tweaks 标签页中打开“Mobile Gestalt.plist”（位于 Siri AI Cache Patch 卡片下方），然后点击“Open with Text Editor”。",
-        "Use the find field to jump to line 104 — the viewer shows the exact Siri line number for this device.": "使用查找栏跳转到第 104 行——查看器会显示此设备的准确 Siri 行号。",
-        "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "在该行，将第 30 个 base64 字符从 A 改为 g（这会将 CacheData 第 21 个字节从 0x00 翻转为 0x02）。要再次关闭补丁，请将其从 g 改回 A。然后点击 Save——首次保存前会创建原始备份。",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "然后打开 Apple Intelligence 和 Charge Limit Menu 开关，将 Spoofing 设为 iPhone 17 Pro，点击 Apply、重新启动 SpringBoard 并重启设备——“加入候补名单”将出现在“设置”>“Apple Intelligence 与 Siri”中。",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "打开 Apple Intelligence 开关和 Charge Limit Menu 开关（Add feature 部分）。",
 
@@ -1963,6 +1962,9 @@ enum WTStrings {
 
 
 
+
+        "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "点按“Jump to Siri line”——它会直接跳到此设备的准确 Siri 行（通常是第 104 行）。",
+        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "选中整行并替换为：AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA。要再次关闭补丁，请将其替换回：AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA。然后点击 Save——首次保存前会创建原始备份。",
 
     ]
 
@@ -2845,8 +2847,6 @@ enum WTStrings {
         "Reload MobileGestalt": "Tải lại MobileGestalt",
         "Loading MobileGestalt.plist…": "Đang tải MobileGestalt.plist…",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".": "Mở “Mobile Gestalt.plist” trong tab Tweaks (bên dưới thẻ Siri AI Cache Patch), rồi chạm “Open with Text Editor”.",
-        "Use the find field to jump to line 104 — the viewer shows the exact Siri line number for this device.": "Dùng ô tìm kiếm để nhảy tới dòng 104 — trình xem hiển thị số dòng Siri chính xác cho thiết bị này.",
-        "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "Trên dòng đó, đổi ký tự base64 thứ 30 từ A thành g (thao tác này lật byte 21 của CacheData từ 0x00 thành 0x02). Để tắt bản vá, đổi lại từ g thành A. Sau đó chạm Save — bản sao lưu gốc được tạo trước lần lưu đầu tiên.",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "Sau đó bật Apple Intelligence và nút Charge Limit Menu, đặt Spoofing thành iPhone 17 Pro, Apply, respring rồi khởi động lại — Join Waitlist sẽ xuất hiện trong Cài đặt > Apple Intelligence & Siri.",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "Bật nút Apple Intelligence và nút Charge Limit Menu (mục Add feature).",
 
@@ -2878,6 +2878,9 @@ enum WTStrings {
 
 
 
+
+        "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Chạm \"Jump to Siri line\" — nó sẽ nhảy tới đúng dòng Siri cho thiết bị này (thường là dòng 104).",
+        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Chọn toàn bộ dòng và thay bằng: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Để tắt bản vá, thay lại bằng: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Sau đó chạm Save — bản sao lưu gốc được tạo trước lần lưu đầu tiên.",
 
     ]
 
@@ -3760,8 +3763,6 @@ enum WTStrings {
         "Reload MobileGestalt": "Перезагрузить MobileGestalt",
         "Loading MobileGestalt.plist…": "Загрузка MobileGestalt.plist…",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".": "Откройте «Mobile Gestalt.plist» на вкладке Tweaks (под карточкой Siri AI Cache Patch), затем нажмите «Open with Text Editor».",
-        "Use the find field to jump to line 104 — the viewer shows the exact Siri line number for this device.": "Используйте поле поиска, чтобы перейти к строке 104 — просмотрщик покажет точный номер строки Siri для этого устройства.",
-        "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "В этой строке измените 30-й символ base64 с A на g (это переключит 21-й байт CacheData с 0x00 на 0x02). Чтобы снова выключить патч, верните с g на A. Затем нажмите Save — перед первым сохранением создаётся исходная резервная копия.",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "Затем включите Apple Intelligence и переключатель Charge Limit Menu, установите Spoofing на iPhone 17 Pro, нажмите Apply, выполните respring и перезагрузите устройство — кнопка Join Waitlist появится в «Настройки» > «Apple Intelligence и Siri».",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "Включите переключатели Apple Intelligence и Charge Limit Menu (раздел Add feature).",
 
@@ -3793,6 +3794,9 @@ enum WTStrings {
 
 
 
+
+        "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Нажмите \"Jump to Siri line\" — кнопка перейдёт к точной строке Siri для этого устройства (обычно строка 104).",
+        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Выделите всю строку и замените её на: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Чтобы снова выключить патч, замените обратно на: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Затем нажмите Save — перед первым сохранением создаётся исходная резервная копия.",
 
     ]
 
@@ -4674,8 +4678,6 @@ enum WTStrings {
         "Reload MobileGestalt": "إعادة تحميل MobileGestalt",
         "Loading MobileGestalt.plist…": "جار تحميل MobileGestalt.plist…",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".": "افتح «Mobile Gestalt.plist» في تبويب Tweaks (أسفل بطاقة Siri AI Cache Patch)، ثم اضغط على «Open with Text Editor».",
-        "Use the find field to jump to line 104 — the viewer shows the exact Siri line number for this device.": "استخدم حقل البحث للانتقال إلى السطر 104 — يعرض العارض رقم سطر Siri الدقيق لهذا الجهاز.",
-        "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "في ذلك السطر، غير الحرف الثلاثين من base64 من A إلى g (فيقلب هذا بايت CacheData رقم 21 من 0x00 إلى 0x02). ولإيقاف التصحيح مجددا، أعد تغييره من g إلى A. ثم اضغط على «حفظ» — تنشأ نسخة احتياطية أصلية قبل أول حفظ.",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "ثم فعل Apple Intelligence ومبدل قائمة حد الشحن، واضبط الانتحال على iPhone 17 Pro، وطبق، وأعد تشغيل الواجهة وأعد التشغيل — وينبغي أن يظهر Join Waitlist في Settings > Apple Intelligence & Siri.",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "فعل مبدل Apple Intelligence ومبدل قائمة حد الشحن (قسم «إضافة ميزة»).",
         "Edit the Siri line": "تحرير سطر Siri",
@@ -4699,6 +4701,9 @@ enum WTStrings {
         "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "إذا كان Siri عالقا على «Adding support for Siri is in progress» مع تنزيل النموذج بالفعل، فهذه مشكلة مختلفة — لا تحلها هذه الطريقة.",
 
 
+
+        "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "اضغط على \"Jump to Siri line\" — سينتقل مباشرة إلى سطر Siri الصحيح لهذا الجهاز (عادة السطر 104).",
+        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "حدد السطر كاملا واستبدله بـ: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. ولإيقاف التصحيح مجددا، أعد استبداله بـ: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. ثم اضغط على Save — تنشأ نسخة احتياطية أصلية قبل أول حفظ.",
 
     ]
 
@@ -5580,8 +5585,6 @@ enum WTStrings {
         "Reload MobileGestalt": "Recarregar MobileGestalt",
         "Loading MobileGestalt.plist…": "Carregando MobileGestalt.plist…",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".": "Abra \"Mobile Gestalt.plist\" na aba Tweaks (abaixo do cartão Siri AI Cache Patch) e toque em \"Abrir com Editor de Texto\".",
-        "Use the find field to jump to line 104 — the viewer shows the exact Siri line number for this device.": "Use o campo de busca para ir para a linha 104 — o visualizador mostra o número exato da linha da Siri neste dispositivo.",
-        "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "Nessa linha, altere o 30º caractere base64 de A para g (isso inverte o byte 21 do CacheData de 0x00 para 0x02). Para desativar o patch novamente, altere-o de volta de g para A. Depois toque em Salvar — um backup original é feito antes do primeiro salvamento.",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "Depois ative o Apple Intelligence e o botão Charge Limit Menu, defina Falsificação como iPhone 17 Pro, toque em Aplicar, faça respring e reinicie — Entrar na Lista de Espera deve aparecer em Ajustes > Apple Intelligence e Siri.",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "Ative o botão Apple Intelligence e o botão Charge Limit Menu (seção Adicionar recurso).",
         "Edit the Siri line": "Editar a linha da Siri",
@@ -5605,6 +5608,9 @@ enum WTStrings {
         "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "Se a Siri estiver travada em 'Adding support for Siri is in progress' com o modelo já baixado, isso é outro problema — este método não o corrige.",
 
 
+
+        "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Toque em \"Jump to Siri line\" — ele pula direto para a linha exata da Siri neste dispositivo (geralmente a linha 104).",
+        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Selecione a linha inteira e substitua por: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Para desativar o patch novamente, substitua de volta por: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Depois toque em Salvar — um backup original é feito antes do primeiro salvamento.",
 
     ]
 
@@ -6486,8 +6492,6 @@ enum WTStrings {
         "Reload MobileGestalt": "Recargar MobileGestalt",
         "Loading MobileGestalt.plist…": "Cargando MobileGestalt.plist…",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".": "Abre \"Mobile Gestalt.plist\" en la pestaña Tweaks (debajo de la tarjeta Siri AI Cache Patch) y luego toca \"Abrir con el editor de texto\".",
-        "Use the find field to jump to line 104 — the viewer shows the exact Siri line number for this device.": "Usa el campo de búsqueda para ir a la línea 104 — el visor muestra el número exacto de la línea de Siri para este dispositivo.",
-        "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "En esa línea, cambia el carácter base64 número 30 de A a g (esto invierte el byte 21 de CacheData de 0x00 a 0x02). Para desactivar el parche de nuevo, cámbialo de g a A. Luego toca Guardar — se hace una copia de seguridad original antes del primer guardado.",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "Luego activa Apple Intelligence y el interruptor del menú de límite de carga, establece Suplantación en iPhone 17 Pro, Aplica, haz respring y reinicia — Unirse a la lista de espera debería aparecer en Ajustes > Apple Intelligence y Siri.",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "Activa el interruptor de Apple Intelligence y el interruptor del menú de límite de carga (sección Añadir función).",
         "Edit the Siri line": "Editar la línea de Siri",
@@ -6511,6 +6515,9 @@ enum WTStrings {
         "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "Si Siri está atascada en 'Adding support for Siri is in progress' con el modelo ya descargado, ese es un problema diferente — este método no lo soluciona.",
 
 
+
+        "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Toca \"Jump to Siri line\" — salta directamente a la línea exacta de Siri para este dispositivo (normalmente la línea 104).",
+        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Selecciona toda la línea y reemplázala con: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Para desactivar el parche de nuevo, reemplázala de nuevo con: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Luego toca Guardar — se hace una copia de seguridad original antes del primer guardado.",
 
     ]
 
@@ -7392,8 +7399,6 @@ enum WTStrings {
         "Reload MobileGestalt": "Recharger MobileGestalt",
         "Loading MobileGestalt.plist…": "Chargement de MobileGestalt.plist…",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".": "Ouvrez « Mobile Gestalt.plist » dans l'onglet Tweaks (sous la carte Siri AI Cache Patch), puis touchez « Open with Text Editor ».",
-        "Use the find field to jump to line 104 — the viewer shows the exact Siri line number for this device.": "Utilisez le champ de recherche pour aller à la ligne 104 — la visionneuse indique le numéro exact de la ligne Siri pour cet appareil.",
-        "On that line, change the 30th base64 character from A to g (this flips CacheData byte 21 from 0x00 to 0x02). To turn the patch off again, change it back from g to A. Then tap Save — a pristine backup is made before the first save.": "Sur cette ligne, changez le 30e caractère base64 de A à g (cela inverse l'octet 21 de CacheData de 0x00 à 0x02). Pour désactiver à nouveau le correctif, remettez-le de g à A. Puis touchez Enregistrer — une sauvegarde d'origine est effectuée avant le premier enregistrement.",
         "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri.": "Activez ensuite Apple Intelligence et le commutateur Charge Limit Menu, réglez Spoofing sur iPhone 17 Pro, Appliquer, respring et redémarrage — Rejoindre la liste d'attente devrait apparaître dans Réglages > Apple Intelligence et Siri.",
         "Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section).": "Activez le commutateur Apple Intelligence et le commutateur Charge Limit Menu (section Add feature).",
         "Edit the Siri line": "Modifier la ligne Siri",
@@ -7417,6 +7422,9 @@ enum WTStrings {
         "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "Si Siri est bloqué sur « Adding support for Siri is in progress » alors que le modèle est déjà téléchargé, c'est un problème différent — cette méthode ne le résout pas.",
 
 
+
+        "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Touchez « Jump to Siri line » — le bouton va directement à la ligne Siri exacte pour cet appareil (généralement la ligne 104).",
+        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Sélectionnez toute la ligne et remplacez-la par : AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Pour désactiver à nouveau le correctif, remplacez-la par : AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Puis touchez Enregistrer — une sauvegarde d'origine est effectuée avant le premier enregistrement.",
 
     ]
 }
