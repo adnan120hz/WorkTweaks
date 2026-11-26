@@ -1137,6 +1137,8 @@ enum WTStrings {
 
         "Re-sign": "Tanda tangani ulang",
 
+        "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Belum ditandatangani — hanya bisa jalan dengan JIT. Meluncurkan tanpa JIT tetap diblokir sampai ditandatangani.",
+
     ]
 
     // Chinese (Simplified)
@@ -2139,6 +2141,8 @@ enum WTStrings {
         "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "如果 Siri 卡在“Adding support for Siri is in progress”而模型已经下载，那是另一个问题——此方法无法解决。",
 
         "Re-sign": "重新签名",
+
+        "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "尚未签名——只能通过 JIT 运行。在签名之前，不使用 JIT 启动仍会被阻止。",
 
     ]
 
@@ -3143,6 +3147,8 @@ enum WTStrings {
 
         "Re-sign": "Ký lại",
 
+        "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Chưa được ký — chỉ chạy được với JIT. Khởi chạy không có JIT vẫn bị chặn cho đến khi được ký.",
+
     ]
 
     // Russian
@@ -4146,6 +4152,8 @@ enum WTStrings {
 
         "Re-sign": "Переподписать",
 
+        "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Ещё не подписано — запускается только с JIT. Запуск без JIT останется заблокированным, пока приложение не будет подписано.",
+
     ]
 
     // ar
@@ -5139,6 +5147,8 @@ enum WTStrings {
         "RPPairing tunnel + RSD services (lockdown, AMFI, debugserver, developer disk image) — the JIT transport": "نفق RPPairing + خدمات RSD (lockdown وAMFI وdebugserver وصورة قرص المطور) — وسيلة نقل JIT",
         "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "إذا كان Siri عالقا على «Adding support for Siri is in progress» مع تنزيل النموذج بالفعل، فهذه مشكلة مختلفة — لا تحلها هذه الطريقة.",
         "Re-sign": "إعادة التوقيع",
+
+        "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "غير موقّع بعد — يعمل مع JIT فقط. التشغيل بدون JIT يبقى محظورًا حتى يتم توقيعه.",
 
     ]
 
@@ -6134,6 +6144,8 @@ enum WTStrings {
         "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "Se a Siri estiver travada em 'Adding support for Siri is in progress' com o modelo já baixado, isso é outro problema — este método não o corrige.",
         "Re-sign": "Assinar novamente",
 
+        "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Ainda não assinado — só funciona com JIT. Iniciar sem JIT continua bloqueado até ser assinado.",
+
     ]
 
     // es
@@ -7128,6 +7140,8 @@ enum WTStrings {
         "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "Si Siri está atascada en 'Adding support for Siri is in progress' con el modelo ya descargado, ese es un problema diferente — este método no lo soluciona.",
         "Re-sign": "Volver a firmar",
 
+        "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Aún no está firmado — solo puede ejecutarse con JIT. Iniciarlo sin JIT seguirá bloqueado hasta que se firme.",
+
     ]
 
     // fr
@@ -8121,6 +8135,8 @@ enum WTStrings {
         "RPPairing tunnel + RSD services (lockdown, AMFI, debugserver, developer disk image) — the JIT transport": "Tunnel RPPairing + services RSD (lockdown, AMFI, debugserver, image disque développeur) — le transport JIT",
         "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it.": "Si Siri est bloqué sur « Adding support for Siri is in progress » alors que le modèle est déjà téléchargé, c'est un problème différent — cette méthode ne le résout pas.",
         "Re-sign": "Signer à nouveau",
+
+        "Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed.": "Pas encore signé — il ne peut fonctionner qu'avec JIT. Le lancer sans JIT reste bloqué jusqu'à sa signature.",
 
     ]
 }

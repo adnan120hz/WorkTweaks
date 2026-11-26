@@ -19,8 +19,10 @@ import SwiftUI
 // fails, with the reason + the external-enabler fallback.
 //
 // Guest picker: installed guests only. The toggle is disabled for
-// guests that can't launch (not patched / not signed / 32-bit) with
-// the reason next to it.
+// guests that can't run with JIT (not patched / 32-bit / no
+// certificate stored) with the reason next to it. An unsigned guest
+// WITH a stored certificate can arm JIT — it just can't launch
+// JIT-less, and the section says so.
 
 struct ContainerJITSection: View {
     @EnvironmentObject private var wtLang: WTLangStore
@@ -191,7 +193,7 @@ struct ContainerJITSection: View {
                 Label(wtLang.tr("JIT for %@", guest.displayName), systemImage: "bolt.fill")
                     .font(.subheadline.weight(.semibold))
             }
-            .disabled(!guest.isLaunchable || jitManager.isBusy)
+            .disabled(!guest.isJITLaunchable || jitManager.isBusy)
 
             if jitManager.isPreparing {
                 HStack(spacing: 8) {
@@ -206,8 +208,15 @@ struct ContainerJITSection: View {
                     .foregroundStyle(.secondary)
             }
 
-            if !guest.isLaunchable {
+            if !guest.isJITLaunchable {
                 Text(launchBlockerReason(for: guest))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if !guest.signed {
+                // Cert stored, guest unsigned: JIT may run it, but
+                // JIT-less launch stays blocked until it is signed.
+                Text(wtLang.tr("Not signed yet — it can only run with JIT. Launching it without JIT stays blocked until it is signed."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -226,6 +235,9 @@ struct ContainerJITSection: View {
         } else if !guest.isPatched {
             return wtLang.tr("Not patched yet — install it again before enabling JIT.")
         } else {
+            // Only reachable when no certificate is stored: a
+            // patched 64-bit guest with a stored cert is
+            // JIT-launchable, so this never shows for it.
             return wtLang.tr("Needs certificate to launch — import a .p12 first.")
         }
     }

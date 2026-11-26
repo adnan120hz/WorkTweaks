@@ -60,6 +60,13 @@ struct ContainerGuest: Identifiable {
     /// cert gate lives in LCBootstrap: on iOS 26+ launch is
     /// refused outright without a certificate.)
     var isLaunchable: Bool { isPatched && !is32bit && signed }
+    /// Launchable with JIT: patched, 64-bit, and (signed OR a
+    /// certificate is stored). LiveContainer's iOS 26 gate only
+    /// checks a certificate IS stored, not that the guest's
+    /// signature validates against the host's team — once the
+    /// debugger attaches, init_bypassDyldLibValidation lets the
+    /// guest load. JIT-less launch still needs `isLaunchable`.
+    var isJITLaunchable: Bool { isPatched && !is32bit && (signed || LCContainerPatch.hasCertificate()) }
 }
 
 enum ContainerError: LocalizedError {
@@ -491,7 +498,13 @@ final class ContainerManager: ObservableObject {
     /// that. Only launchable guests (patched, 64-bit, signed)
     /// reach the relaunch — the view enforces it and this refuses
     /// again.
-    func launch(_ guest: ContainerGuest) async {
+    ///
+    /// `jit: true` (the JIT arm path only) relaxes the gate to
+    /// `isJITLaunchable`: an unsigned guest may relaunch when a
+    /// certificate is stored, because the debugger attaches before
+    /// the guest runs. JIT-less launch (`jit: false`, the default)
+    /// stays signed-gated.
+    func launch(_ guest: ContainerGuest, jit: Bool = false) async {
         // Validate (and re-sign when needed) before the signed
         // gate, like LC does on every launch: a guest whose
         // signature stopped validating since install gets one
@@ -501,8 +514,9 @@ final class ContainerManager: ObservableObject {
             self.refresh()
             return guests.first(where: { $0.bundleID == guest.bundleID }) ?? guest
         }
-        guard current.isLaunchable else {
-            print("[Container] launch refused for \(guest.bundleID): patched=\(current.isPatched) 32-bit=\(current.is32bit) signed=\(current.signed).")
+        let launchable = jit ? current.isJITLaunchable : current.isLaunchable
+        guard launchable else {
+            print("[Container] launch refused for \(guest.bundleID) (jit=\(jit)): patched=\(current.isPatched) 32-bit=\(current.is32bit) signed=\(current.signed).")
             return
         }
         print("[Container] launching \(guest.bundleID) — relaunching into the guest.")

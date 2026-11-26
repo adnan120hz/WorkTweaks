@@ -18,7 +18,7 @@ import Darwin
 //   1. `enable(guest)` (this process, host UI): `getReady()` checks
 //      Developer Mode + pairing file + VPN tunnel + DDI downloaded +
 //      DDI mounted, then persists the pending JIT
-//      (`wtJitPending`) and calls `ContainerManager.launch(guest)`.
+//      (`wtJitPending`) and calls `ContainerManager.launch(guest, jit: true)`.
 //      The process dies; the guest is selected for the next launch.
 //   2. `resumePendingSessionIfNeeded()` (next process, App.init,
 //      BEFORE `ContainerLaunch.checkSelectedGuest()`): starts the
@@ -140,7 +140,11 @@ final class ContainerJITManager: ObservableObject {
     /// runs (see `resumePendingSessionIfNeeded`).
     func enable(_ guest: ContainerGuest) {
         guard !isBusy else { return }
-        guard guest.isLaunchable else {
+        // JIT-scoped gate: an unsigned guest may arm JIT when a
+        // certificate is stored (LC's iOS 26 gate only checks a cert
+        // IS stored; the debugger attaches before the guest runs).
+        // "Needs certificate" is only honest when NO cert is stored.
+        guard guest.isJITLaunchable else {
             if guest.is32bit {
                 lastError = "32-bit — needs JIT + classic mode, which is not in this build."
             } else if !guest.isPatched {
@@ -163,8 +167,9 @@ final class ContainerJITManager: ObservableObject {
                 isPreparing = false
                 // Relaunch into the guest. The process dies here on
                 // success; the code after this only runs if the launch
-                // didn't take.
-                await containerManager.launch(guest)
+                // didn't take. JIT path: an unsigned guest may
+                // relaunch when a certificate is stored.
+                await containerManager.launch(guest, jit: true)
                 Self.clearPending()
                 isArmed = false
                 lastError = "The guest didn't launch — JIT was not armed."
