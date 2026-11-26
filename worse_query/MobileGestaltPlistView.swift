@@ -120,12 +120,19 @@ enum SiriManualGuide {
 
     static let thenLine = "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri."
 
+    /// Caveat appended to every rendering of the guide (same
+    /// sentence as Guide C step 8): the stuck-on-"Adding
+    /// support..." state is a different problem this method
+    /// does not fix. Kept as a separate constant so thenLine's
+    /// existing translations stay valid.
+    static let stuckDisclaimer = "If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it."
+
     /// The full guide as one text (Old UI alert).
     static func fullText(wtLang: WTLangStore) -> String {
         let steps = plistSteps.enumerated()
             .map { "\($0.offset + 1). \(wtLang.tr($0.element))" }
             .joined(separator: "\n")
-        return steps + "\n\n" + wtLang.tr(thenLine)
+        return steps + "\n\n" + wtLang.tr(thenLine) + "\n\n" + wtLang.tr(stuckDisclaimer)
     }
 }
 
@@ -906,6 +913,9 @@ struct SiriGuideCard: View {
                         }
                     }
                     Text(wtLang.tr(SiriManualGuide.thenLine))
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(wtLang.tr(SiriManualGuide.stuckDisclaimer))
                         .font(.caption).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     NavigationLink {
