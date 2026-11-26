@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import UIKit
 
 // MARK: - Container Apple ID auth: session
 //
@@ -18,8 +19,9 @@ import Foundation
 //   LCContainerPatch from the stored certificate), and with it
 //   the importPickedIPA bundle-ID-reset bug — there is no
 //   signingBundleIdOverride here to reset.
-// - device registration (provision() never did it; the user's
-//   device is already registered on the team).
+// - device registration is done by provision() itself (see
+//   registerDeviceIfNeeded), not by InstallerSession's manual
+//   Register-device button — there is no such button here.
 // - nothing is ever revoked on its own: a revoke happens only
 //   from the user's confirmed tap in the 7460 recovery UI, and
 //   creation is retried once after the slot frees.
@@ -312,6 +314,60 @@ final class ContainerAuthSession: ObservableObject {
         }
     }
 
+    /// Register this iPhone on the team, mirroring Signed Apps'
+    /// InstallerSession.registerDevice (pinned 61d013e8): list the
+    /// team's devices, add this one when missing, and treat Apple's
+    /// error 35 as "already registered". The downloaded team profile
+    /// only covers devices registered on the team, so this runs
+    /// before the profile is downloaded.
+    ///
+    /// UDID source: the pairing file's `UDID` key, read through
+    /// `WTPairingFileKind.of(PairingController.pairingFilePath())`
+    /// (WTDeviceConnection.swift:106). That key is only present when
+    /// the pairing file is a lockdown-format record (e.g. imported
+    /// from a computer with idevice_pair) — the RPPairing file
+    /// WorkTweaks creates on-device carries only
+    /// public_key/private_key/identifier/alt_irk (see
+    /// RpPairingFile.to_bytes), and the pairing flow itself learns
+    /// only the device's name, never its UDID. `identifierForVendor`
+    /// is NOT a UDID and is never used here. When no UDID is
+    /// available the step is skipped with an honest Log line.
+    ///
+    /// A registration failure never fails provisioning: the real
+    /// error is logged and provisioning continues, so the Log shows
+    /// whether the device was registered or not.
+    private func registerDeviceIfNeeded(dev: DeveloperSession, team: DeveloperTeam) async {
+        guard let udid = WTPairingFileKind.of(path: PairingController.pairingFilePath()).udid,
+              !udid.isEmpty else {
+            log("device registration skipped: the pairing file carries no UDID — on-device pairing files don't include one, so import a lockdown pairing file from a computer to register this device")
+            return
+        }
+        let shortUDID = "…\(udid.suffix(8))"
+        do {
+            let devices = try await dev.listDevices(team: team)
+            if devices.contains(where: { $0.deviceNumber == udid }) {
+                log("device is already registered on the team (\(devices.count) registered device(s))")
+                return
+            }
+            let name = UIDevice.current.name.trimmingCharacters(in: .whitespaces)
+            let deviceName = name.isEmpty ? "iPhone" : name
+            log("registering device \(deviceName) (\(shortUDID))…")
+            do {
+                _ = try await dev.addDevice(team: team, name: deviceName, udid: udid)
+            } catch {
+                if (error as? DeveloperError)?.serverCode == 35 {
+                    log("device is already registered on the team")
+                    return
+                }
+                throw error
+            }
+            let count = try await dev.listDevices(team: team).count
+            log("device registered — team has \(count) registered device(s)")
+        } catch {
+            log("device registration failed: \(error.localizedDescription) — provisioning continues without it")
+        }
+    }
+
     /// The full provisioning chain, as isideload runs it: our
     /// certificate, the App ID for the HOST bundle (registered
     /// if missing), the App Group (ensured and assigned, with
@@ -332,6 +388,7 @@ final class ContainerAuthSession: ObservableObject {
                   let team = team else { return }
             do {
                 log("provisioning \(bundleId)…")
+                await registerDeviceIfNeeded(dev: dev, team: team)
                 let identity = try await CertificateIdentity.retrieve(
                     dev: dev, team: team, email: email, log: makeLog())
                 certificateIdentity = identity
