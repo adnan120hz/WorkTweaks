@@ -662,7 +662,13 @@ struct ContainerView: View {
         .sheet(isPresented: $showExportSheet) {
             if let exportURL {
                 CertificateExportSheet(url: exportURL) {
-                    deleteExportFile()
+                    // Do not mutate presentation state
+                    // synchronously inside the sheet's dismissal
+                    // completion — defer so the dismissal
+                    // finishes first, then clean up the file.
+                    DispatchQueue.main.async {
+                        deleteExportFile()
+                    }
                 }
             }
         }
@@ -731,9 +737,25 @@ struct ContainerView: View {
                 .appendingPathComponent("WorkTweaks-Certificate.p12")
             try data.write(to: url, options: .atomic)
             exportURL = url
-            showExportSheet = true
+            // Do NOT present the share sheet synchronously here:
+            // this runs from the Export alert's button action,
+            // and a modal transition begun while the alert is
+            // still dismissing is aborted by UIKit with
+            // NSInternalInconsistencyException (force-close).
+            // Defer until the alert's dismissal animation has
+            // finished; a bare main.async can still land inside
+            // it, so use a short fixed delay.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                showExportSheet = true
+            }
         } catch {
-            exportError = error.localizedDescription
+            let message = error.localizedDescription
+            // Same race for the error alert: presenting it
+            // synchronously from inside the Export alert's
+            // action collides with the dismissal — defer it too.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                exportError = message
+            }
         }
     }
 
