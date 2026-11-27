@@ -1,11 +1,13 @@
 import SwiftUI
 
-// MARK: - Welcome (v7.0 three-page Introducing, redesigned)
+// MARK: - Welcome (v7.0 four-page Introducing, redesigned)
 //
 // Shown exactly once per install: the first time WorkTweaks is
-// opened. Three swipeable pages with a smooth slide per page:
-// 1. the developer (Adnan, GitHub, TikTok), 2. every feature
-// in v7.0, 3. license & credits. "Next" advances, and on the
+// opened. Four swipeable pages with a smooth slide per page:
+// 1. the developer (Adnan, GitHub, TikTok), 2. Terms &
+// Conditions (English only, with the sign-in notice for the
+// official web page), 3. every feature in v7.0, 4. license &
+// credits. "Next" advances, and on the
 // last page it becomes "Get Started" — that is the only way
 // out. There is NO Skip anywhere: the user asked for the Skip
 // menu to be gone entirely, so the welcome must be walked
@@ -60,18 +62,48 @@ struct WelcomeView: View {
             TabView(selection: $page) {
                 DeveloperPage(versionText: versionText)
                     .tag(0)
-                FeaturesPage()
+                TermsPage()
                     .tag(1)
-                CreditsPage(onShowFullLicense: { showLicense = true })
+                FeaturesPage()
                     .tag(2)
+                CreditsPage(onShowFullLicense: { showLicense = true })
+                    .tag(3)
             }
             // The system page dots are off: the floating
-            // control below draws its own three dots, so the
+            // control below draws its own four dots, so the
             // dots and the pill move as one unit with no bar.
             .tabViewStyle(.page(indexDisplayMode: .never))
             // The slide between pages is the animation the user
             // asked for: one smooth ease per page, swipe or tap.
             .animation(.easeInOut(duration: 0.35), value: page)
+            // Room at the top for the corner mascots below:
+            // without it the top pair would sit on the hero
+            // icon and the page titles.
+            .padding(.top, 40)
+
+            // Four small Tweaky mascots, one in each corner of
+            // the onboarding pages — decoration only, never
+            // intercepting taps. The top pair sits in the band
+            // the TabView's top padding leaves open; the
+            // bottom pair floats just above the floating pill
+            // and dots.
+            VStack {
+                HStack {
+                    TweakyMascot(size: 30)
+                    Spacer()
+                    TweakyMascot(size: 30)
+                }
+                Spacer()
+                HStack {
+                    TweakyMascot(size: 30)
+                    Spacer()
+                    TweakyMascot(size: 30)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 2)
+            .padding(.bottom, 118)
+            .allowsHitTesting(false)
 
             floatingControls
         }
@@ -90,7 +122,7 @@ struct WelcomeView: View {
 
     // MARK: Floating controls — no bar, no background
 
-    /// The only navigation: three dots plus one pill button,
+    /// The only navigation: four dots plus one pill button,
     /// floating over the page content with transparent
     /// surroundings. No material, no solid color, no panel —
     /// nothing behind the button can cover content, because
@@ -98,7 +130,7 @@ struct WelcomeView: View {
     private var floatingControls: some View {
         VStack(spacing: 12) {
             HStack(spacing: 7) {
-                ForEach(0..<3, id: \.self) { index in
+                ForEach(0..<4, id: \.self) { index in
                     Circle()
                         .fill(index == page ? Color.accentColor : Color.secondary.opacity(0.35))
                         .frame(width: 7, height: 7)
@@ -107,7 +139,7 @@ struct WelcomeView: View {
                 }
             }
 
-            if page < 2 {
+            if page < 3 {
                 Button {
                     page += 1
                 } label: {
@@ -274,7 +306,36 @@ private struct DeveloperPage: View {
     }
 }
 
-// MARK: - Page 2: Features
+// MARK: - Page 2: Terms & Conditions
+//
+// English only, by the user's order — the title and the whole
+// content are hardcoded in TermsContent, with no wtLang.tr
+// calls and no WTLang keys. The page shares TermsContent with
+// the standalone TermsView (linked from the Tweaks tab footer),
+// so the wording never drifts. This is NOT a login gate: the
+// sign-in notice is about the official web page, and the app
+// itself never signs anyone in.
+
+private struct TermsPage: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Terms & Conditions")
+                    .font(.largeTitle.weight(.bold))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 16)
+
+                TermsContent()
+            }
+            .padding(.horizontal, 20)
+            // Taller than the floating pill + dots, so the
+            // last clause is never hidden behind them.
+            .padding(.bottom, 120)
+        }
+    }
+}
+
+// MARK: - Page 3: Features
 //
 // The same 18 v7.0 features, now grouped into four glass
 // cards instead of one flat list — Tweaks & System, Files &
@@ -387,7 +448,7 @@ private struct FeaturesPage: View {
     }
 }
 
-// MARK: - Page 3: License & Credits
+// MARK: - Page 4: License & Credits
 //
 // Mirrors LicenseView.swift: the same projects, the same
 // licenses, the same role wording. LicenseView stays the full

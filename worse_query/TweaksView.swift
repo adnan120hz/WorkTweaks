@@ -1007,6 +1007,16 @@ struct TweaksView: View {
             }
             .buttonStyle(.plain)
 
+            // English only, like the terms themselves: the
+            // standalone TermsView (same content as onboarding
+            // page 2) so users can re-read the terms later.
+            NavigationLink {
+                TermsView()
+            } label: {
+                footerLinkLabel(title: "Terms & Conditions", systemImage: "doc.plaintext")
+            }
+            .buttonStyle(.plain)
+
             Text(wtLang.tr("Built on the worse_query core system by ForceQuit OS, with CacheExtra key knowledge from mond by rooootdev (AGPL-3.0)."))
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
