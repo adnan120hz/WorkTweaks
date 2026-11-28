@@ -116,7 +116,7 @@ enum SiriManualGuide {
         "First, back up MobileGestalt in the Backup tab — tap \"Back Up Now\" before changing anything.",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".",
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).",
-        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.",
+        "Tap \"Flip the Siri letter\" in the editor — it changes only the one letter on the Siri line: A becomes g to turn the patch on, g becomes A to turn it off. Then tap Save — a pristine backup is made before the first save.",
         "Turn on the Charge Limit Menu toggle (Add feature section).",
         "Now apply both changes together: go to the Apply/Revert section and tap Apply Tweaks, then choose Restart Device (or Respring first, then restart your iPhone).",
     ]
@@ -124,7 +124,7 @@ enum SiriManualGuide {
     static let thenLine = "Then turn on the Apple Intelligence toggle and set the Spoofing picker (under Apple Intelligence) to iPhone 17 Pro — Join Waitlist should appear in Settings > Apple Intelligence & Siri."
 
     /// Caveat appended to every rendering of the guide (same
-    /// sentence as Guide C step 8): the stuck-on-"Adding
+    /// sentence as Guide C's last step): the stuck-on-"Adding
     /// support..." state is a different problem this method
     /// does not fix. Kept as a separate constant so thenLine's
     /// existing translations stay valid.
@@ -704,6 +704,7 @@ struct MobileGestaltPlistEditorView: View {
     @State private var jumpToSiriCharLine: Int?
     @State private var findRequest: FindRequest?
     @State private var matchInfo = ""
+    @State private var flipNote: String?
     @State private var focusEditor = false
     @State private var showSaveConfirm = false
     @State private var saveMessage: String?
@@ -842,6 +843,29 @@ struct MobileGestaltPlistEditorView: View {
                 }
                 Spacer(minLength: 0)
             }
+            // One-letter flip: changes only the Siri letter on
+            // the Siri line ('A' -> 'g' turns the patch on, 'g'
+            // -> 'A' turns it off) and selects it, so the user
+            // sees exactly the one character that changed —
+            // no whole-line paste needed. Nothing is written
+            // until Save, and Save still refuses anything but
+            // a CacheData-only change.
+            if let line = store.siriLine {
+                HStack(spacing: 8) {
+                    Button(wtLang.tr("Flip the Siri letter")) {
+                        flipSiriLetter(line: line)
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+                    .buttonStyle(.plain)
+                    Spacer(minLength: 0)
+                }
+                if let note = flipNote {
+                    Text(note)
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
     }
@@ -858,6 +882,51 @@ struct MobileGestaltPlistEditorView: View {
     private func submitFind(direction: Int) {
         guard !findText.isEmpty else { return }
         findRequest = FindRequest(query: findText, direction: direction, nonce: UUID())
+    }
+
+    /// Flips only the one Siri letter on the Siri line: 'A'
+    /// becomes 'g' (patch on), 'g' becomes 'A' (patch off).
+    /// The letter is the 30th character of the line's content
+    /// (same offset selectSiriChar uses); leading whitespace
+    /// is preserved. Any other letter leaves the text
+    /// untouched and says so — the user then checks the line
+    /// instead of saving a wrong edit. Only the in-memory
+    /// text changes here; Save still validates (CacheData
+    /// only, pristine backup first) before writing.
+    private func flipSiriLetter(line: Int) {
+        var lines = editedText.components(separatedBy: "\n")
+        guard line >= 1, line <= lines.count else {
+            flipNote = wtLang.tr("The Siri letter is not A or g — check the Siri line before saving.")
+            return
+        }
+        let lineText = lines[line - 1]
+        let leading = lineText.prefix(while: { $0 == " " || $0 == "\t" }).count
+        let content = lineText.trimmingCharacters(in: .whitespaces)
+        guard content.count > 29 else {
+            flipNote = wtLang.tr("The Siri letter is not A or g — check the Siri line before saving.")
+            return
+        }
+        let idx = content.index(content.startIndex, offsetBy: 29)
+        let replacement: Character
+        switch content[idx] {
+        case "A":
+            replacement = "g"
+            flipNote = wtLang.tr("The letter is now g — the patch is on. Tap Save to write it.")
+        case "g":
+            replacement = "A"
+            flipNote = wtLang.tr("The letter is now A — the patch is off. Tap Save to write it.")
+        default:
+            flipNote = wtLang.tr("The Siri letter is not A or g — check the Siri line before saving.")
+            return
+        }
+        var newContent = content
+        newContent.replaceSubrange(idx...idx, with: String(replacement))
+        lines[line - 1] = String(lineText.prefix(leading)) + newContent
+        editedText = lines.joined(separator: "\n")
+        // Show the flipped letter, selected, like "Jump to
+        // Siri line" does — the user sees exactly the one
+        // character that changed.
+        jumpToSiriCharLine = line
     }
 }
 

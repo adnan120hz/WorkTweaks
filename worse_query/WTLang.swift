@@ -1060,7 +1060,11 @@ enum WTStrings {
 
 
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Ketuk \"Jump to Siri line\" — tombol itu langsung lompat ke baris Siri yang tepat untuk perangkat ini (biasanya baris 104).",
-        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Pilih seluruh baris lalu ganti dengan: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Untuk mematikan patch lagi, ganti kembali dengan: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Lalu ketuk Save — backup asli dibuat sebelum penyimpanan pertama.",
+        "Tap \"Flip the Siri letter\" in the editor — it changes only the one letter on the Siri line: A becomes g to turn the patch on, g becomes A to turn it off. Then tap Save — a pristine backup is made before the first save.": "Ketuk \"Flip the Siri letter\" di editor — tombol itu hanya mengubah satu huruf di baris Siri: A menjadi g untuk menyalakan patch, g menjadi A untuk mematikannya. Lalu ketuk Save — backup asli dibuat sebelum penyimpanan pertama.",
+        "Flip the Siri letter": "Balik Huruf Siri",
+        "The letter is now g — the patch is on. Tap Save to write it.": "Hurufnya sekarang g — patch sudah nyala. Ketuk Save untuk menyimpannya.",
+        "The letter is now A — the patch is off. Tap Save to write it.": "Hurufnya sekarang A — patch sudah mati. Ketuk Save untuk menyimpannya.",
+        "The Siri letter is not A or g — check the Siri line before saving.": "Huruf Siri bukan A atau g — periksa baris Siri sebelum menyimpan.",
 
         "adnan120hz": "adnan120hz",
 
@@ -2027,7 +2031,11 @@ enum WTStrings {
 
 
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "点按“Jump to Siri line”——它会直接跳到此设备的准确 Siri 行（通常是第 104 行）。",
-        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "选中整行并替换为：AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA。要再次关闭补丁，请将其替换回：AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA。然后点击 Save——首次保存前会创建原始备份。",
+        "Tap \"Flip the Siri letter\" in the editor — it changes only the one letter on the Siri line: A becomes g to turn the patch on, g becomes A to turn it off. Then tap Save — a pristine backup is made before the first save.": "在编辑器中点击“Flip the Siri letter”——它只会更改 Siri 行上的一个字母：A 变成 g 表示开启补丁，g 变成 A 表示关闭补丁。然后点击 Save——首次保存前会创建原始备份。",
+        "Flip the Siri letter": "翻转 Siri 字母",
+        "The letter is now g — the patch is on. Tap Save to write it.": "字母现在是 g——补丁已开启。点击 Save 写入。",
+        "The letter is now A — the patch is off. Tap Save to write it.": "字母现在是 A——补丁已关闭。点击 Save 写入。",
+        "The Siri letter is not A or g — check the Siri line before saving.": "Siri 字母不是 A 或 g——请在保存前检查 Siri 行。",
 
         "adnan120hz": "adnan120hz",
 
@@ -2994,7 +3002,11 @@ enum WTStrings {
 
 
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Chạm \"Jump to Siri line\" — nó sẽ nhảy tới đúng dòng Siri cho thiết bị này (thường là dòng 104).",
-        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Chọn toàn bộ dòng và thay bằng: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Để tắt bản vá, thay lại bằng: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Sau đó chạm Save — bản sao lưu gốc được tạo trước lần lưu đầu tiên.",
+        "Tap \"Flip the Siri letter\" in the editor — it changes only the one letter on the Siri line: A becomes g to turn the patch on, g becomes A to turn it off. Then tap Save — a pristine backup is made before the first save.": "Chạm “Flip the Siri letter” trong trình chỉnh sửa — nó chỉ thay đổi một chữ cái trên dòng Siri: A thành g để bật bản vá, g thành A để tắt bản vá. Sau đó chạm Save — bản sao lưu gốc được tạo trước lần lưu đầu tiên.",
+        "Flip the Siri letter": "Đổi chữ cái Siri",
+        "The letter is now g — the patch is on. Tap Save to write it.": "Chữ cái giờ là g — bản vá đã bật. Chạm Save để ghi lại.",
+        "The letter is now A — the patch is off. Tap Save to write it.": "Chữ cái giờ là A — bản vá đã tắt. Chạm Save để ghi lại.",
+        "The Siri letter is not A or g — check the Siri line before saving.": "Chữ cái Siri không phải A hay g — hãy kiểm tra dòng Siri trước khi lưu.",
 
         "adnan120hz": "adnan120hz",
 
@@ -3961,7 +3973,11 @@ enum WTStrings {
 
 
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Нажмите \"Jump to Siri line\" — кнопка перейдёт к точной строке Siri для этого устройства (обычно строка 104).",
-        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Выделите всю строку и замените её на: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Чтобы снова выключить патч, замените обратно на: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Затем нажмите Save — перед первым сохранением создаётся исходная резервная копия.",
+        "Tap \"Flip the Siri letter\" in the editor — it changes only the one letter on the Siri line: A becomes g to turn the patch on, g becomes A to turn it off. Then tap Save — a pristine backup is made before the first save.": "Нажмите «Flip the Siri letter» в редакторе — она меняет только одну букву в строке Siri: A становится g, чтобы включить патч, а g становится A, чтобы выключить его. Затем нажмите Save — перед первым сохранением создаётся исходная резервная копия.",
+        "Flip the Siri letter": "Сменить букву Siri",
+        "The letter is now g — the patch is on. Tap Save to write it.": "Теперь буква g — патч включён. Нажмите Save, чтобы записать.",
+        "The letter is now A — the patch is off. Tap Save to write it.": "Теперь буква A — патч выключен. Нажмите Save, чтобы записать.",
+        "The Siri letter is not A or g — check the Siri line before saving.": "Буква Siri — не A и не g: проверьте строку Siri перед сохранением.",
 
         "adnan120hz": "adnan120hz",
 
@@ -4919,7 +4935,11 @@ enum WTStrings {
 
 
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "اضغط على \"Jump to Siri line\" — سينتقل مباشرة إلى سطر Siri الصحيح لهذا الجهاز (عادة السطر 104).",
-        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "حدد السطر كاملا واستبدله بـ: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. ولإيقاف التصحيح مجددا، أعد استبداله بـ: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. ثم اضغط على Save — تنشأ نسخة احتياطية أصلية قبل أول حفظ.",
+        "Tap \"Flip the Siri letter\" in the editor — it changes only the one letter on the Siri line: A becomes g to turn the patch on, g becomes A to turn it off. Then tap Save — a pristine backup is made before the first save.": "اضغط على «Flip the Siri letter» في المحرر — فهو يغير حرفا واحدا فقط في سطر Siri: يصبح A هو g لتشغيل التصحيح، ويصبح g هو A لإيقافه. ثم اضغط على Save — تنشأ نسخة احتياطية أصلية قبل أول حفظ.",
+        "Flip the Siri letter": "اقلب حرف Siri",
+        "The letter is now g — the patch is on. Tap Save to write it.": "الحرف الآن هو g — التصحيح مفعّل. اضغط على Save لكتابته.",
+        "The letter is now A — the patch is off. Tap Save to write it.": "الحرف الآن هو A — التصحيح متوقف. اضغط على Save لكتابته.",
+        "The Siri letter is not A or g — check the Siri line before saving.": "حرف Siri ليس A أو g — تحقق من سطر Siri قبل الحفظ.",
 
         "adnan120hz": "adnan120hz",
 
@@ -5877,7 +5897,11 @@ enum WTStrings {
 
 
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Toque em \"Jump to Siri line\" — ele pula direto para a linha exata da Siri neste dispositivo (geralmente a linha 104).",
-        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Selecione a linha inteira e substitua por: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Para desativar o patch novamente, substitua de volta por: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Depois toque em Salvar — um backup original é feito antes do primeiro salvamento.",
+        "Tap \"Flip the Siri letter\" in the editor — it changes only the one letter on the Siri line: A becomes g to turn the patch on, g becomes A to turn it off. Then tap Save — a pristine backup is made before the first save.": "Toque em “Flip the Siri letter” no editor — ele altera apenas uma letra na linha Siri: A vira g para ativar o patch, g vira A para desativá-lo. Depois toque em Salvar — um backup original é feito antes do primeiro salvamento.",
+        "Flip the Siri letter": "Inverter a letra Siri",
+        "The letter is now g — the patch is on. Tap Save to write it.": "A letra agora é g — o patch está ativado. Toque em Salvar para gravar.",
+        "The letter is now A — the patch is off. Tap Save to write it.": "A letra agora é A — o patch está desativado. Toque em Salvar para gravar.",
+        "The Siri letter is not A or g — check the Siri line before saving.": "A letra Siri não é A nem g — confira a linha Siri antes de salvar.",
 
         "adnan120hz": "adnan120hz",
 
@@ -6835,7 +6859,11 @@ enum WTStrings {
 
 
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Toca \"Jump to Siri line\" — salta directamente a la línea exacta de Siri para este dispositivo (normalmente la línea 104).",
-        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Selecciona toda la línea y reemplázala con: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Para desactivar el parche de nuevo, reemplázala de nuevo con: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Luego toca Guardar — se hace una copia de seguridad original antes del primer guardado.",
+        "Tap \"Flip the Siri letter\" in the editor — it changes only the one letter on the Siri line: A becomes g to turn the patch on, g becomes A to turn it off. Then tap Save — a pristine backup is made before the first save.": "Toca “Flip the Siri letter” en el editor — solo cambia una letra de la línea Siri: A pasa a ser g para activar el parche, g pasa a ser A para desactivarlo. Luego toca Guardar — se hace una copia de seguridad original antes del primer guardado.",
+        "Flip the Siri letter": "Cambiar la letra Siri",
+        "The letter is now g — the patch is on. Tap Save to write it.": "La letra ahora es g — el parche está activado. Toca Guardar para escribirlo.",
+        "The letter is now A — the patch is off. Tap Save to write it.": "La letra ahora es A — el parche está desactivado. Toca Guardar para escribirlo.",
+        "The Siri letter is not A or g — check the Siri line before saving.": "La letra Siri no es A ni g — revisa la línea Siri antes de guardar.",
 
         "adnan120hz": "adnan120hz",
 
@@ -7793,7 +7821,11 @@ enum WTStrings {
 
 
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Touchez « Jump to Siri line » — le bouton va directement à la ligne Siri exacte pour cet appareil (généralement la ligne 104).",
-        "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Sélectionnez toute la ligne et remplacez-la par : AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Pour désactiver à nouveau le correctif, remplacez-la par : AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Puis touchez Enregistrer — une sauvegarde d'origine est effectuée avant le premier enregistrement.",
+        "Tap \"Flip the Siri letter\" in the editor — it changes only the one letter on the Siri line: A becomes g to turn the patch on, g becomes A to turn it off. Then tap Save — a pristine backup is made before the first save.": "Touchez « Flip the Siri letter » dans l'éditeur — il ne change qu'une seule lettre sur la ligne Siri : A devient g pour activer le correctif, g devient A pour le désactiver. Puis touchez Enregistrer — une sauvegarde d'origine est effectuée avant le premier enregistrement.",
+        "Flip the Siri letter": "Inverser la lettre Siri",
+        "The letter is now g — the patch is on. Tap Save to write it.": "La lettre est maintenant g — le correctif est activé. Touchez Enregistrer pour l'écrire.",
+        "The letter is now A — the patch is off. Tap Save to write it.": "La lettre est maintenant A — le correctif est désactivé. Touchez Enregistrer pour l'écrire.",
+        "The Siri letter is not A or g — check the Siri line before saving.": "La lettre Siri n'est ni A ni g — vérifiez la ligne Siri avant d'enregistrer.",
 
         "adnan120hz": "adnan120hz",
 
