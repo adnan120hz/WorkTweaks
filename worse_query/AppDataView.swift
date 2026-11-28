@@ -244,12 +244,6 @@ struct AppDataDirectoryView: View {
                     } label: {
                         Label(wtLang.tr("Largest Files"), systemImage: "arrow.down.circle")
                     }
-                    Divider()
-                    NavigationLink {
-                        DeployView(appDataManager: manager, preselectedTarget: container)
-                    } label: {
-                        Label(wtLang.tr("Deploy Package…"), systemImage: "shippingbox")
-                    }
                 } label: {
                     Image(systemName: "plus")
                 }

@@ -405,6 +405,7 @@ enum WTStrings {
         "Eligibility": "Kelayakan",
         "Empty": "Kosong",
         "Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.": "Masukkan PIN ini di Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.",
+        "Enumerating containers with pathleak — this can take a while.": "Mendaftar container dengan pathleak — ini bisa memakan waktu.",
         "Enumeration": "Enumerasi",
         "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.": "Error -1 berarti app yang ditandatangani tidak bisa mengakses container App Group-nya. Diagnostik membaca grup dari provisioning profile yang ditandatangani dan memeriksa semuanya. Jika tidak ada grup bertanda tangan yang dilaporkan, IPA ditandatangani tanpa App Group dan harus ditandatangani ulang dengan App Group — nama apa pun yang diketik di sini tidak bisa memperbaikinya.",
         "Escape": "Escape",
@@ -698,6 +699,8 @@ enum WTStrings {
         "Requires iOS %.1f+": "Memerlukan iOS %.1f+",
         "Rescan": "Pindai Ulang",
         "Reset": "Reset",
+        "Resolve Target": "Tentukan Target",
+        "Resolving the target container…": "Menentukan container target…",
         "Respring": "Respring",
         "Respring did not trigger on this device.": "Respring tidak berjalan di perangkat ini.",
         "Restart Device": "Restart Perangkat",
@@ -818,6 +821,7 @@ enum WTStrings {
         "Tap a key to assign a custom image.": "Ketuk key untuk menetapkan gambar kustom.",
         "Target": "Target",
         "Target Path": "Path Target",
+        "Target container": "Container target",
         "That file is not a pairing file.": "File itu bukan pairing file.",
         "The App Data scan is still running — ad targets appear once it finishes.": "Pemindaian App Data masih berjalan — target iklan muncul setelah selesai.",
         "The CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on.": "Pengetahuan key CacheExtra — riset tweak-key yang menjadi dasar katalog tweak WorkTweaks.",
@@ -1101,10 +1105,6 @@ enum WTStrings {
         "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "Impor PosterBoard diblokir di versi iOS ini — worse_query sudah ditambal di iOS 27.3 beta 2, dan tidak ada perbaikan Flake untuk iOS 27.3 beta 2 atau yang lebih baru.",
         "Reference — MercuryPoster wallpaper import (Flake method).": "Referensi — impor wallpaper MercuryPoster (metode Flake).",
 
-        "This package targets %@, but you selected %@ in App Data. Choose the package for this app, or pick the right app in App Data.": "Paket ini menargetkan %@, tetapi Anda memilih %@ di App Data. Pilih paket untuk aplikasi ini, atau pilih aplikasi yang benar di App Data.",
-        "Target app not found in the App Data scan — open App Data and let the container scan finish, then try again.": "Aplikasi target tidak ditemukan dalam pemindaian App Data — buka App Data dan biarkan pemindaian container selesai, lalu coba lagi.",
-        "Target app: %@": "Aplikasi target: %@",
-
     ]
 
     // Chinese (Simplified)
@@ -1376,6 +1376,7 @@ enum WTStrings {
         "Eligibility": "资格",
         "Empty": "空",
         "Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.": "在 Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks 中输入此 PIN。",
+        "Enumerating containers with pathleak — this can take a while.": "正在使用 pathleak 枚举容器——这可能需要一些时间。",
         "Enumeration": "枚举",
         "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.": "错误 -1 表示已签名的应用无法访问其 App Group 容器。诊断会读取已签名描述文件中的群组并逐一探测。如果未报告任何已签名的群组，则 IPA 签名时未包含 App Group，必须重新签名——在此输入任何名称都无法修复。",
         "Escape": "逃逸",
@@ -1669,6 +1670,8 @@ enum WTStrings {
         "Requires iOS %.1f+": "需要 iOS %.1f+",
         "Rescan": "重新扫描",
         "Reset": "重置",
+        "Resolve Target": "解析目标",
+        "Resolving the target container…": "正在解析目标容器…",
         "Respring": "Respring",
         "Respring did not trigger on this device.": "此设备上未能触发 Respring。",
         "Restart Device": "重新启动设备",
@@ -1789,6 +1792,7 @@ enum WTStrings {
         "Tap a key to assign a custom image.": "点击一个按键以指定自定义图片。",
         "Target": "目标",
         "Target Path": "目标路径",
+        "Target container": "目标容器",
         "That file is not a pairing file.": "该文件不是配对文件。",
         "The App Data scan is still running — ad targets appear once it finishes.": "App Data 扫描仍在进行——完成后会显示广告目标。",
         "The CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on.": "CacheExtra 键知识——WorkTweaks 调整目录所基于的调整键研究。",
@@ -2072,10 +2076,6 @@ enum WTStrings {
         "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "此 iOS 版本上 PosterBoard 导入已被阻止——worse_query 已在 iOS 27.3 beta 2 中被修复，且 Flake 没有针对 iOS 27.3 beta 2 或更高版本的修复。",
         "Reference — MercuryPoster wallpaper import (Flake method).": "参考——MercuryPoster 壁纸导入（Flake 方法）。",
 
-        "This package targets %@, but you selected %@ in App Data. Choose the package for this app, or pick the right app in App Data.": "此安装包的目标是 %@，但您在 App Data 中选择的是 %@。请为此应用选择相应的安装包，或在 App Data 中选择正确的应用。",
-        "Target app not found in the App Data scan — open App Data and let the container scan finish, then try again.": "在 App Data 扫描中未找到目标应用 — 请打开 App Data，等容器扫描完成后再试一次。",
-        "Target app: %@": "目标应用：%@",
-
     ]
 
     // Vietnamese
@@ -2347,6 +2347,7 @@ enum WTStrings {
         "Eligibility": "Đủ điều kiện",
         "Empty": "Trống",
         "Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.": "Nhập mã PIN này trong Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.",
+        "Enumerating containers with pathleak — this can take a while.": "Đang liệt kê các container bằng pathleak — việc này có thể mất một lúc.",
         "Enumeration": "Liệt kê",
         "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.": "Lỗi -1 nghĩa là ứng dụng đã ký không thể truy cập vùng chứa App Group của nó. Chẩn đoán đọc các nhóm từ hồ sơ cấp phép đã ký và kiểm tra tất cả. Nếu không báo cáo nhóm đã ký nào, IPA đã được ký mà không có App Group và phải ký lại với App Group — nhập tên nào ở đây cũng không sửa được.",
         "Escape": "Thoát",
@@ -2640,6 +2641,8 @@ enum WTStrings {
         "Requires iOS %.1f+": "Yêu cầu iOS %.1f+",
         "Rescan": "Quét lại",
         "Reset": "Đặt lại",
+        "Resolve Target": "Xác định đích",
+        "Resolving the target container…": "Đang xác định container đích…",
         "Respring": "Respring",
         "Respring did not trigger on this device.": "Respring không kích hoạt trên thiết bị này.",
         "Restart Device": "Khởi động lại thiết bị",
@@ -2760,6 +2763,7 @@ enum WTStrings {
         "Tap a key to assign a custom image.": "Nhấn một phím để gán ảnh tùy chỉnh.",
         "Target": "Mục tiêu",
         "Target Path": "Đường dẫn đích",
+        "Target container": "Container đích",
         "That file is not a pairing file.": "Tệp đó không phải là tệp ghép nối.",
         "The App Data scan is still running — ad targets appear once it finishes.": "Quét App Data vẫn đang chạy — các mục tiêu quảng cáo sẽ xuất hiện khi quét xong.",
         "The CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on.": "Kiến thức về key CacheExtra — nghiên cứu key tinh chỉnh mà danh mục tinh chỉnh của WorkTweaks được xây dựng dựa trên.",
@@ -3043,10 +3047,6 @@ enum WTStrings {
         "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "Nhập PosterBoard bị chặn trên phiên bản iOS này — worse_query đã bị vá trong iOS 27.3 beta 2 và không có bản sửa Flake nào cho iOS 27.3 beta 2 trở lên.",
         "Reference — MercuryPoster wallpaper import (Flake method).": "Tham khảo — nhập hình nền MercuryPoster (phương thức Flake).",
 
-        "This package targets %@, but you selected %@ in App Data. Choose the package for this app, or pick the right app in App Data.": "Gói này nhắm tới %@, nhưng bạn đã chọn %@ trong App Data. Hãy chọn gói dành cho ứng dụng này, hoặc chọn đúng ứng dụng trong App Data.",
-        "Target app not found in the App Data scan — open App Data and let the container scan finish, then try again.": "Không tìm thấy ứng dụng đích trong lần quét App Data — hãy mở App Data và đợi quá trình quét container hoàn tất, rồi thử lại.",
-        "Target app: %@": "Ứng dụng đích: %@",
-
     ]
 
     // Russian
@@ -3318,6 +3318,7 @@ enum WTStrings {
         "Eligibility": "Допустимость",
         "Empty": "Пусто",
         "Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.": "Введите этот PIN в «Настройки» › «Конфиденциальность и безопасность» › «Режим разработчика» › «Pair with WorkTweaks».",
+        "Enumerating containers with pathleak — this can take a while.": "Перечисление контейнеров с помощью pathleak — это может занять некоторое время.",
         "Enumeration": "Перечисление",
         "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.": "Ошибка -1 означает, что подписанное приложение не может получить доступ к контейнеру своего App Group. Диагностика читает группы из вашего подписанного provisioning profile и проверяет их все. Если подписанных групп не обнаружено, IPA был подписан без App Group и должен быть переподписан с ним — никакое имя, введённое здесь, это не исправит.",
         "Escape": "Escape",
@@ -3611,6 +3612,8 @@ enum WTStrings {
         "Requires iOS %.1f+": "Требуется iOS %.1f+",
         "Rescan": "Сканировать повторно",
         "Reset": "Сбросить",
+        "Resolve Target": "Определить цель",
+        "Resolving the target container…": "Определение целевого контейнера…",
         "Respring": "Respring",
         "Respring did not trigger on this device.": "Respring не сработал на этом устройстве.",
         "Restart Device": "Перезагрузить устройство",
@@ -3731,6 +3734,7 @@ enum WTStrings {
         "Tap a key to assign a custom image.": "Нажмите на клавишу, чтобы назначить своё изображение.",
         "Target": "Цель",
         "Target Path": "Целевой путь",
+        "Target container": "Целевой контейнер",
         "That file is not a pairing file.": "Этот файл — не файл сопряжения.",
         "The App Data scan is still running — ad targets appear once it finishes.": "Сканирование App Data ещё выполняется — рекламные цели появятся после его завершения.",
         "The CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on.": "Знание ключей CacheExtra — исследование ключей твиков, на котором построен каталог твиков WorkTweaks.",
@@ -4014,10 +4018,6 @@ enum WTStrings {
         "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "Импорт PosterBoard заблокирован в этой версии iOS — worse_query исправлен в iOS 27.3 beta 2, и исправления Flake для iOS 27.3 beta 2 и новее не существует.",
         "Reference — MercuryPoster wallpaper import (Flake method).": "Справочник — импорт обоев MercuryPoster (метод Flake).",
 
-        "This package targets %@, but you selected %@ in App Data. Choose the package for this app, or pick the right app in App Data.": "Этот пакет предназначен для %@, но в App Data вы выбрали %@. Выберите пакет для этого приложения или выберите правильное приложение в App Data.",
-        "Target app not found in the App Data scan — open App Data and let the container scan finish, then try again.": "Целевое приложение не найдено в сканировании App Data — откройте App Data, дождитесь завершения сканирования контейнеров и попробуйте снова.",
-        "Target app: %@": "Целевое приложение: %@",
-
     ]
 
     // ar
@@ -4289,6 +4289,7 @@ enum WTStrings {
         "Eligibility": "الأهلية",
         "Empty": "فارغ",
         "Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.": "أدخل رقم PIN هذا في Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.",
+        "Enumerating containers with pathleak — this can take a while.": "جار سرد الحاويات عبر pathleak — قد يستغرق هذا بعض الوقت.",
         "Enumeration": "السرد",
         "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.": "يعني الخطأ -1 أن التطبيق الموقع لا يمكنه الوصول إلى حاوية App Group الخاصة به. تقرأ التشخيصات المجموعات من ملف التوفير الموقع وتختبرها جميعا. فإذا أفادت بعدم وجود مجموعات موقعة، فهذا يعني أن ملف IPA وقع دون App Group ويجب إعادة توقيعه مع واحدة — ولا يمكن لأي اسم تكتبه هنا أن يصلح ذلك.",
         "Escape": "الهروب",
@@ -4582,6 +4583,8 @@ enum WTStrings {
         "Requires iOS %.1f+": "يتطلب iOS %.1f+",
         "Rescan": "إعادة الفحص",
         "Reset": "إعادة تعيين",
+        "Resolve Target": "مطابقة الهدف",
+        "Resolving the target container…": "جار مطابقة الحاوية الهدف…",
         "Respring": "إعادة تشغيل الواجهة",
         "Respring did not trigger on this device.": "لم تفعل إعادة تشغيل الواجهة على هذا الجهاز.",
         "Restart Device": "إعادة تشغيل الجهاز",
@@ -4702,6 +4705,7 @@ enum WTStrings {
         "Tap a key to assign a custom image.": "اضغط على مفتاح لتعيين صورة مخصصة.",
         "Target": "الهدف",
         "Target Path": "مسار الهدف",
+        "Target container": "الحاوية الهدف",
         "That file is not a pairing file.": "هذا الملف ليس ملف اقتران.",
         "The App Data scan is still running — ad targets appear once it finishes.": "لا يزال فحص App Data قيد التشغيل — وتظهر أهداف الإعلانات عند انتهائه.",
         "The CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on.": "معرفة مفاتيح CacheExtra — البحث في مفاتيح التعديلات الذي بني عليه كتالوج تعديلات WorkTweaks.",
@@ -4976,10 +4980,6 @@ enum WTStrings {
         "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "استيراد PosterBoard محظور في إصدار iOS هذا — تم إصلاح worse_query في iOS 27.3 beta 2، ولا يوجد إصلاح Flake لنظام iOS 27.3 beta 2 أو الأحدث.",
         "Reference — MercuryPoster wallpaper import (Flake method).": "مرجع — استيراد خلفية MercuryPoster (طريقة Flake).",
 
-        "This package targets %@, but you selected %@ in App Data. Choose the package for this app, or pick the right app in App Data.": "هذه الحزمة تستهدف %@، لكنك اخترت %@ في App Data. اختر الحزمة الخاصة بهذا التطبيق، أو اختر التطبيق الصحيح في App Data.",
-        "Target app not found in the App Data scan — open App Data and let the container scan finish, then try again.": "تعذّر العثور على التطبيق الهدف في فحص App Data — افتح App Data وانتظر حتى يكتمل فحص الحاويات، ثم حاول مرة أخرى.",
-        "Target app: %@": "التطبيق الهدف: %@",
-
     ]
 
     // pt-BR
@@ -5251,6 +5251,7 @@ enum WTStrings {
         "Eligibility": "Elegibilidade",
         "Empty": "Vazio",
         "Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.": "Digite este PIN em Ajustes › Privacidade e Segurança › Modo de Desenvolvedor › Parear com o WorkTweaks.",
+        "Enumerating containers with pathleak — this can take a while.": "Listando contêineres com pathleak — isso pode demorar um pouco.",
         "Enumeration": "Enumeração",
         "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.": "O erro -1 significa que o app assinado não consegue acessar seu contêiner de App Group. O Diagnóstico lê os grupos do seu perfil de provisionamento assinado e testa todos eles. Se ele informar que não há grupos assinados, o IPA foi assinado sem um App Group e precisa ser reassinado com um — nenhum nome digitado aqui pode corrigir isso.",
         "Escape": "Escape",
@@ -5544,6 +5545,8 @@ enum WTStrings {
         "Requires iOS %.1f+": "Requer iOS %.1f+",
         "Rescan": "Verificar Novamente",
         "Reset": "Redefinir",
+        "Resolve Target": "Resolver Alvo",
+        "Resolving the target container…": "Resolvendo o contêiner de destino…",
         "Respring": "Respring",
         "Respring did not trigger on this device.": "O respring não foi acionado neste dispositivo.",
         "Restart Device": "Reiniciar Dispositivo",
@@ -5664,6 +5667,7 @@ enum WTStrings {
         "Tap a key to assign a custom image.": "Toque em uma chave para atribuir uma imagem personalizada.",
         "Target": "Alvo",
         "Target Path": "Caminho de Destino",
+        "Target container": "Contêiner de destino",
         "That file is not a pairing file.": "Esse arquivo não é um arquivo de pareamento.",
         "The App Data scan is still running — ad targets appear once it finishes.": "A verificação de Dados do App ainda está em execução — os alvos de anúncios aparecem quando ela terminar.",
         "The CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on.": "O conhecimento de chaves CacheExtra — a pesquisa de chaves de tweak na qual o catálogo de tweaks do WorkTweaks se baseia.",
@@ -5938,10 +5942,6 @@ enum WTStrings {
         "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "A importação do PosterBoard está bloqueada nesta versão do iOS — o worse_query foi corrigido no iOS 27.3 beta 2 e não existe correção Flake para o iOS 27.3 beta 2 ou posterior.",
         "Reference — MercuryPoster wallpaper import (Flake method).": "Referência — importação de papel de parede MercuryPoster (método Flake).",
 
-        "This package targets %@, but you selected %@ in App Data. Choose the package for this app, or pick the right app in App Data.": "Este pacote é para %@, mas você selecionou %@ em App Data. Escolha o pacote deste app ou selecione o app certo em App Data.",
-        "Target app not found in the App Data scan — open App Data and let the container scan finish, then try again.": "App de destino não encontrado na verificação do App Data — abra o App Data, aguarde a verificação de contêineres terminar e tente novamente.",
-        "Target app: %@": "App de destino: %@",
-
     ]
 
     // es
@@ -6213,6 +6213,7 @@ enum WTStrings {
         "Eligibility": "Elegibilidad",
         "Empty": "Vacío",
         "Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.": "Introduce este PIN en Ajustes › Privacidad y seguridad › Modo de desarrollador › Emparejar con WorkTweaks.",
+        "Enumerating containers with pathleak — this can take a while.": "Enumerando contenedores con pathleak — esto puede tardar un rato.",
         "Enumeration": "Enumeración",
         "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.": "El error -1 significa que la app firmada no puede acceder a su contenedor de App Group. El diagnóstico lee los grupos de tu perfil de aprovisionamiento firmado y los prueba todos. Si indica que no hay grupos firmados, el IPA se firmó sin un App Group y debe firmarse de nuevo con uno — ningún nombre escrito aquí puede solucionarlo.",
         "Escape": "Escape",
@@ -6506,6 +6507,8 @@ enum WTStrings {
         "Requires iOS %.1f+": "Requiere iOS %.1f+",
         "Rescan": "Volver a escanear",
         "Reset": "Restablecer",
+        "Resolve Target": "Resolver destino",
+        "Resolving the target container…": "Resolviendo el contenedor de destino…",
         "Respring": "Respring",
         "Respring did not trigger on this device.": "El respring no se activó en este dispositivo.",
         "Restart Device": "Reiniciar dispositivo",
@@ -6626,6 +6629,7 @@ enum WTStrings {
         "Tap a key to assign a custom image.": "Toca una clave para asignar una imagen personalizada.",
         "Target": "Destino",
         "Target Path": "Ruta de destino",
+        "Target container": "Contenedor de destino",
         "That file is not a pairing file.": "Ese archivo no es un archivo de emparejamiento.",
         "The App Data scan is still running — ad targets appear once it finishes.": "El análisis de Datos de la app aún está en curso — los objetivos de anuncios aparecen cuando termine.",
         "The CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on.": "El conocimiento de claves CacheExtra — la investigación de claves de tweaks en la que se basa el catálogo de tweaks de WorkTweaks.",
@@ -6900,10 +6904,6 @@ enum WTStrings {
         "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "La importación de PosterBoard está bloqueada en esta versión de iOS — worse_query fue corregido en iOS 27.3 beta 2 y no existe una corrección de Flake para iOS 27.3 beta 2 o posterior.",
         "Reference — MercuryPoster wallpaper import (Flake method).": "Referencia — importación de fondos MercuryPoster (método Flake).",
 
-        "This package targets %@, but you selected %@ in App Data. Choose the package for this app, or pick the right app in App Data.": "Este paquete es para %@, pero seleccionaste %@ en App Data. Elige el paquete de esta app o selecciona la app correcta en App Data.",
-        "Target app not found in the App Data scan — open App Data and let the container scan finish, then try again.": "No se encontró la app de destino en el análisis de App Data — abre App Data, deja que termine el análisis de contenedores e inténtalo de nuevo.",
-        "Target app: %@": "App de destino: %@",
-
     ]
 
     // fr
@@ -7175,6 +7175,7 @@ enum WTStrings {
         "Eligibility": "Éligibilité",
         "Empty": "Vide",
         "Enter this PIN in Settings › Privacy & Security › Developer Mode › Pair with WorkTweaks.": "Saisissez ce code PIN dans Réglages › Confidentialité et sécurité › Mode développeur › Jumeler avec WorkTweaks.",
+        "Enumerating containers with pathleak — this can take a while.": "Énumération des conteneurs avec pathleak — cela peut prendre un moment.",
         "Enumeration": "Énumération",
         "Error -1 means the signed app cannot access its App Group container. Diagnostics reads the groups from your signed provisioning profile and probes them all. If it reports no signed groups, the IPA was signed without an App Group and must be re-signed with one — no name typed here can fix that.": "L'erreur -1 signifie que l'app signée ne peut pas accéder à son conteneur App Group. Le diagnostic lit les groupes de votre profil de provisionnement signé et les sonde tous. S'il ne signale aucun groupe signé, l'IPA a été signé sans App Group et doit être re-signé avec un — aucun nom saisi ici ne peut corriger cela.",
         "Escape": "Échappement",
@@ -7468,6 +7469,8 @@ enum WTStrings {
         "Requires iOS %.1f+": "Nécessite iOS %.1f+",
         "Rescan": "Analyser à nouveau",
         "Reset": "Réinitialiser",
+        "Resolve Target": "Résoudre la cible",
+        "Resolving the target container…": "Résolution du conteneur cible…",
         "Respring": "Respring",
         "Respring did not trigger on this device.": "Le respring ne s'est pas déclenché sur cet appareil.",
         "Restart Device": "Redémarrer l'appareil",
@@ -7588,6 +7591,7 @@ enum WTStrings {
         "Tap a key to assign a custom image.": "Touchez une clé pour attribuer une image personnalisée.",
         "Target": "Cible",
         "Target Path": "Chemin cible",
+        "Target container": "Conteneur cible",
         "That file is not a pairing file.": "Ce fichier n'est pas un fichier de jumelage.",
         "The App Data scan is still running — ad targets appear once it finishes.": "L'analyse App Data est toujours en cours — les cibles publicitaires apparaissent une fois terminée.",
         "The CacheExtra key knowledge — the tweak-key research the WorkTweaks tweak catalog is built on.": "La connaissance des clés CacheExtra — la recherche sur les clés de tweaks sur laquelle repose le catalogue de tweaks de WorkTweaks.",
@@ -7861,10 +7865,6 @@ enum WTStrings {
         "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is.": "Écrit les descripteurs via l'exploit Airlift à travers le tunnel d'appairage + VPN. Le transport ci-dessous doit d'abord être prêt. Les dossiers de descripteurs sont préparés avec leurs sous-dossiers tels quels.",
         "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "L'import PosterBoard est bloqué sur cette version d'iOS — worse_query est corrigé dans iOS 27.3 bêta 2 et aucun correctif Flake n'existe pour iOS 27.3 bêta 2 ou version ultérieure.",
         "Reference — MercuryPoster wallpaper import (Flake method).": "Référence — import de fond d'écran MercuryPoster (méthode Flake).",
-
-        "This package targets %@, but you selected %@ in App Data. Choose the package for this app, or pick the right app in App Data.": "Ce paquet cible %@, mais vous avez sélectionné %@ dans App Data. Choisissez le paquet de cette app, ou sélectionnez la bonne app dans App Data.",
-        "Target app not found in the App Data scan — open App Data and let the container scan finish, then try again.": "App cible introuvable dans l'analyse App Data — ouvrez App Data, laissez l'analyse des conteneurs se terminer, puis réessayez.",
-        "Target app: %@": "App cible : %@",
 
     ]
 }
