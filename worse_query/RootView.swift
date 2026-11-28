@@ -23,6 +23,15 @@ struct RootView: View {
     /// v2.0, so everyone sees the new Welcome once after updating.
     @AppStorage("wt.welcomeV2Seen") private var welcomeSeen = false
     @State private var selectedTab: AppTab = .sandbox
+    /// Armed only after the tab view has finished its first
+    /// appearance pass. TabView writes its initial selection back
+    /// through the binding when it first appears, which fires
+    /// `.onChange` with no user tap — that was the automatic swipe
+    /// sound at launch (and right after the Welcome intro's
+    /// "Get Started"). A real tab tap can only arrive after the
+    /// first appearance completes, so gating on this flag keeps
+    /// the swipe sound on user switches only.
+    @State private var tabSoundArmed = false
 
     var body: some View {
         Group {
@@ -94,6 +103,7 @@ struct RootView: View {
                 .tag(AppTab.log)
         }
         .onChange(of: selectedTab) { _, _ in
+            guard tabSoundArmed else { return }
             SoundEffects.playSwipe()
         }
         // Tab switches animate (v8.0 menu motion).
@@ -101,6 +111,10 @@ struct RootView: View {
         .onAppear {
             console.start()
             gestalt.load()
+            // Arm the tab-switch sound after this appearance pass:
+            // any selection "change" before now is TabView's own
+            // initial sync, not a tap.
+            DispatchQueue.main.async { tabSoundArmed = true }
         }
     }
 }
