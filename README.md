@@ -23,7 +23,7 @@
 - **Save Vault and largest-file scanner** *(new in v7.0)* — Save Vault stages app data into a ZIP vault for backup, and the largest-file scanner lists the largest files in a container.
 - **Battery & Thermal and Jetsam & Crash** *(new in v7.0)* — Battery & Thermal reads the system powerlog database (battery level, health, cycle count, cell temperature, thermal history); Jetsam & Crash lists the crash and jetsam reports iOS writes when it terminates an app.
 - **Wi-Fi File Sharing, Voice Memos & AI Cache, SQLite/plist editor, profile viewer** *(new in v7.0)* — Sandbox → Utilities: share files with a computer over Wi-Fi; export Voice Memos and inspect the AI cache; view installed configuration profiles. App Data gains in-place SQLite database and property-list editing.
-- **Adnan.120hz Repository** *(new in v7.0)* — 41 Deploy packages converted from 3105 patch files (dialers, pass themes, PUBG variants, Mod Skin, app and game patches), installable through Deploy.
+- **Adnan.120hz Repository** *(new in v7.0)* — 32 Deploy packages converted from 3105 patch files (pass themes, PUBG variants, Mod Skin, app and game patches), installable through Deploy. *(Dialer themes removed in v8.0.)*
 - **Nine UI languages** *(new in v7.0)* — English (US, default), Indonesian, Vietnamese, Russian, Chinese, Arabic, Brazilian Portuguese, Spanish, and French, each with its own theme colours and app icon. The CacheExtra editor remains in English.
 - **Onboarding** *(new in v7.0)* — the first-install welcome flow is redesigned as three pages: developer introduction, feature overview, and license & credits.
 - **Airlift & pairing** *(new in v6.1)* — Sandbox → Utilities: **Get Pairing File** obtains the pairing file on-device (iOS 27: Pair This iPhone shows a 6-digit PIN to approve in Settings) or imports one manually (.plist), and **Airlift** flashes Passcode Themes and Wallet Cards over the pairing + Local Dev VPN transport. **All data changed** keeps a history of everything ever applied.
@@ -37,6 +37,15 @@
 - **Sandbox & Log** — the original worse_query escape / path tools and the live console output.
 - **First-launch welcome & tutorials** — install and signing guides, plus a step-by-step Siri AI guide *(new in v4.3)*, shown once per install.
 - Liquid Glass cards throughout (except the Log, which stays solid). Light, dark, and tinted app icons.
+
+## What's new in v8.0
+
+- **UI revamp** — menus rearranged in a Sileo-inspired layout, built fresh on the v7.0 material. The five tabs (Sandbox, Tweaks, Extra, Backup, Log) are unchanged.
+- **Deploy via Airlift** — Deploy now offers two options: **Normal** (the worse_query flow, iOS 26.0–27.3 beta 1) and **Airlift** (the same package flow through the Airlift exploit over the pairing + VPN tunnel, iOS 17/18/26/27 with iOS 27 capped at 27.2 beta 2). Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back — and files replaced without a backup cannot be restored from Deploy History.
+- **PosterBoard flake option** — alongside Normal, PosterBoard import now offers **Flake (MercuryPoster)**, which also finds MercuryPoster descriptors anywhere in a package and keeps their original identifiers. It works on iOS 26.0–27.3 beta 1; on iOS 27.3 beta 2 and later it is blocked — the worse_query escape is patched there and no flake fix exists for those versions.
+- **Repository** — 32 packages (dialer themes removed), with a credit to [adnan120hz](https://github.com/adnan120hz) on GitHub.
+- **Tweaky, sounds, and motion** — small Tweaky mascots on the corners of icons, calmer ASMR-style menu sounds, smooth animations on small menus, and an animated Tweaky success popup on Apply.
+- **3105 → zip conversion** — the 3105 package conversion was verified against the Deploy package system: `manifest.json` at the top level, relative paths only, stored and deflated entries only, no encryption, no ZIP64.
 
 ## Supported iOS versions
 
@@ -124,6 +133,7 @@ The two apps' credits are kept separate — they are different projects built on
 | [3105](https://github.com/YangJiiii/3105) | YangJiii | Reference & Patch Files | GPL-3.0 |
 | Xo File | — | Reference — cache data cleaner | — |
 | [Pocket Poster](https://github.com/leminlimez/Pocket-Poster) | leminlimez | Reference — video-to-wallpaper (CAML) builder used by the PosterBoard wallpaper maker | GPL-3.0 |
+| [Flake](https://github.com/squairdev/Flake) | Squair | Reference — MercuryPoster wallpaper import (Flake method) | GPL-3.0 |
 | [CAPlayground](https://github.com/CAPlayground/CAPlayground) | CAPlayground | Reference — PosterBoard wallpaper format the maker was verified against | — |
 | [Erosion-CN](https://github.com/Kianuni/Erosion-CN) | Kianuni | Reference — Splash Ad Cache Lock mechanism (ad SDK cache lock, save vault, diagnostics, Wi-Fi file sharing, Voice Memos export, AI cache probes) | GPL-3.0 |
 | [WCMigrate](https://github.com/yangokok886/WCMigrate) | yangokok886 | Reference — APFS save-vault idea (clonefile staging, atomic swap with rollback) | GPL-3.0 |
