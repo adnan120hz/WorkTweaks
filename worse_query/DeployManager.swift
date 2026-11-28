@@ -438,19 +438,45 @@ final class DeployManager: ObservableObject {
     // MARK: Resolution
 
     /// Resolve the manifest's identifier to a live container.
-    /// Application scope matches the App Data scan results;
-    /// AppGroup / InternalDaemon enumerate their roots with
-    /// the fork's pathleak helper and match by identifier.
-    /// With viaAirlift, an Application target the local scan
-    /// cannot find is looked up over the Airlift tunnel instead
+    /// Application scope matches the App Data scan results
+    /// only (v8.0 fix 3 — the Deploy page no longer
+    /// enumerates the Application root itself); with
+    /// viaAirlift, an Application target the scan cannot find
+    /// is looked up over the Airlift tunnel instead
     /// (al_find_app_container — unproven in-app, same FFI
     /// family as the proven write call; a failed lookup is an
-    /// honest error, never a guessed path). AppGroup and
-    /// InternalDaemon have no FFI resolver, so they stay
-    /// local-scan only even via Airlift.
-    func resolveTarget(package: LoadedDeployPackage, containers: [AppContainer], viaAirlift: Bool = false) {
+    /// honest error, never a guessed path). AppGroup /
+    /// InternalDaemon enumerate their roots with the fork's
+    /// pathleak helper and match by identifier — a targeted
+    /// lookup by identifier, not a scan, and the only
+    /// mechanism for those roots (App Data never scans them).
+    /// AppGroup and InternalDaemon have no FFI resolver, so
+    /// they stay local-only even via Airlift. When
+    /// preselectedTarget is set (a container picked in App
+    /// Data), the target is fixed to it: the package must
+    /// name that app, exactly or with the single team suffix,
+    /// and anything else is a mismatch error.
+    func resolveTarget(package: LoadedDeployPackage, containers: [AppContainer], viaAirlift: Bool = false, preselectedTarget: AppContainer? = nil) {
         resolvedContainerPath = nil
         resolveError = nil
+
+        // A container picked in App Data fixes the target:
+        // the package must name that app (exact, or the one
+        // team-suffixed identifier, like the scan match
+        // below). Anything else is an honest mismatch, never
+        // a guess — and never a different container.
+        if let preselected = preselectedTarget {
+            let matches = preselected.bundleID == package.bundleID
+                || preselected.bundleID.hasPrefix(package.bundleID + ".")
+            if matches {
+                resolvedContainerPath = preselected.path
+                print("[Deploy] resolved \(package.bundleID) -> \(preselected.path) (App Data selection)")
+                return
+            }
+            resolveError = String(format: L("This package targets %@, but you selected %@ in App Data. Choose the package for this app, or pick the right app in App Data."), package.bundleID, preselected.bundleID)
+            print("[Deploy] preselected \(preselected.bundleID) does not match package \(package.bundleID)")
+            return
+        }
 
         if package.scope == "Application" {
             // Exact scan match first.
@@ -470,35 +496,31 @@ final class DeployManager: ObservableObject {
                 print("[Deploy] resolved \(package.bundleID) -> \(match.path) (team-suffixed identifier)")
                 return
             }
-            // No scan match — enumerate the Application root
-            // directly. The scan can be empty or stale (the
-            // same gap PosterBoard's searchRoot closed in
-            // v4.3.1), and without this fallback Deploy can
-            // never resolve. Slow, on a background queue.
+            // No scan match. Normal has nowhere else to
+            // look: the Deploy page no longer enumerates the
+            // Application root itself (v8.0 fix 3) — the App
+            // Data scan is the only source, so the user is
+            // sent there to let it finish. Airlift may still
+            // ask the tunnel. Slow, on a background queue.
             let target = package.bundleID
+            if !viaAirlift {
+                resolveError = L("Target app not found in the App Data scan — open App Data and let the container scan finish, then try again.")
+                print("[Deploy] no Application container matches \(target) — not in the App Data scan")
+                return
+            }
             isResolving = true
-            print("[Deploy] no scan match for \(target) — enumerating the Application containers root directly…")
+            print("[Deploy] no scan match for \(target) — trying the Airlift tunnel lookup…")
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                var found = Self.findContainer(root: AppDataManager.rootPath, identifier: target)
-                if found == nil, viaAirlift {
-                    // Local enumeration failed (expected on
-                    // iOS 17/18, where there is no escape to
-                    // enumerate with): ask the tunnel.
-                    print("[Deploy] direct enumeration found nothing for \(target) — trying the Airlift tunnel lookup…")
-                    found = Self.findContainerViaAirlift(bundleID: target)
-                }
+                let found = Self.findContainerViaAirlift(bundleID: target)
                 DispatchQueue.main.async {
                     guard let self else { return }
                     self.isResolving = false
                     if let found {
                         self.resolvedContainerPath = found
-                        print("[Deploy] resolved \(target) -> \(found) (direct enumeration)")
-                    } else if viaAirlift {
-                        self.resolveError = "Target container not found for \(target) — not in the local scan and the Airlift tunnel lookup failed too."
-                        print("[Deploy] no Application container matches \(target) — not in the scan, not in a direct enumeration, not over the tunnel")
+                        print("[Deploy] resolved \(target) -> \(found) (Airlift tunnel lookup)")
                     } else {
-                        self.resolveError = "Target container not found for \(target)"
-                        print("[Deploy] no Application container matches \(target) — not in the scan and not in a direct enumeration")
+                        self.resolveError = "Target container not found for \(target) — not in the App Data scan and the Airlift tunnel lookup failed too."
+                        print("[Deploy] no Application container matches \(target) — not in the scan, not over the tunnel")
                     }
                 }
             }

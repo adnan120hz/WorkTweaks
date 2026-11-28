@@ -16,7 +16,7 @@ import UniformTypeIdentifiers
 // Data ••• menu's "Package Builder" page can host exactly
 // the same machinery: DeployStoreSection (the "My Packages"
 // store and its builder) and DeployPreviewSection (the
-// manifest / files / target / result preview every loaded
+// manifest / files / apply / result preview every loaded
 // package lands in, however it was loaded).
 //
 // Since v3.8 the page renders as Liquid Glass cards
@@ -36,6 +36,13 @@ private func deployPackageContentTypes() -> [UTType] {
 struct DeployView: View {
     @EnvironmentObject private var wtLang: WTLangStore
     @ObservedObject var appDataManager: AppDataManager
+    /// The container picked in App Data (per-container
+    /// "Deploy Package…" entry): the target is fixed to this
+    /// container, and a package naming another app is
+    /// refused with a mismatch error. Nil from the ••• menu
+    /// and everywhere else — the target then comes from the
+    /// App Data scan alone.
+    var preselectedTarget: AppContainer? = nil
     @StateObject private var deployManager = DeployManager()
 
     @State private var package: LoadedDeployPackage?
@@ -92,7 +99,8 @@ struct DeployView: View {
                 appDataManager: appDataManager,
                 package: $package,
                 deployManager: deployManager,
-                resolveRequest: $resolveRequest
+                resolveRequest: $resolveRequest,
+                preselectedTarget: preselectedTarget
             )
 
             WTSectionCard(header: wtLang.tr("Package Format")) {
@@ -375,13 +383,13 @@ struct DeployStoreSection: View {
     }
 }
 
-// MARK: - Deploy preview (manifest / files / target / result)
+// MARK: - Deploy preview (manifest / files / apply / result)
 //
 // The preview every loaded package lands in: its manifest,
-// its files, target resolution and the Deploy button, then
-// the run's result lines. Hosted by the Deploy page and by
-// the Package Builder page; the package itself is the
-// host's state, so both pages drive the one preview.
+// its files, the silent target resolution and the Apply
+// button, then the run's result lines. Hosted by the Deploy
+// page and by the Package Builder page; the package itself is
+// the host's state, so both pages drive the one preview.
 
 struct DeployPreviewSection: View {
     @EnvironmentObject private var wtLang: WTLangStore
@@ -393,8 +401,10 @@ struct DeployPreviewSection: View {
     /// picking, the manifest names the target and the
     /// destinations.
     @Binding var resolveRequest: UUID
-
-    @State private var wantsResolve = false
+    /// The container picked in App Data (see DeployView):
+    /// nil unless this preview was opened from one
+    /// container's own page.
+    var preselectedTarget: AppContainer? = nil
 
     /// The chosen deploy method. Defaults to Normal when it is
     /// available on this device, otherwise Airlift.
@@ -402,13 +412,9 @@ struct DeployPreviewSection: View {
     /// Pairing + VPN status, for the Airlift transport gate.
     @State private var transportStatus = TransportGate.check()
 
-    private var isResolving: Bool {
-        deployManager.isResolving || (wantsResolve && appDataManager.isScanning)
-    }
-
     /// Identity of the presented package, for change
-    /// detection: presenting a different package cancels a
-    /// resolve that was still waiting on the container scan.
+    /// detection: presenting a different package re-checks
+    /// the Airlift transport gate.
     private var packageKey: String? {
         package.map { "\($0.bundleID)|\($0.scope)|\($0.files.count)|\($0.name ?? "")" }
     }
@@ -518,79 +524,62 @@ struct DeployPreviewSection: View {
                     }
                 }
 
-                WTSectionCard(header: wtLang.tr("Target"), footer: method == .airlift
+                // MARK: Apply (v8.0 fix 3)
+                //
+                // The target is resolved silently when the
+                // package is presented (see resolveSilently)
+                // — there is no Target section, no resolving
+                // progress and no Resolve button anymore.
+                // This card only names the target app, applies
+                // the package, and shows a resolution error
+                // when there is one. Apply stays disabled
+                // while a resolution is still running or while
+                // no target is resolved.
+                WTSectionCard(header: wtLang.tr("Apply"), footer: method == .airlift
                     ? wtLang.tr("Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).")
                     : wtLang.tr("Before anything is written, every file that already exists is backed up (see Deploy History). Existing files are then replaced in place; new files are created.")) {
                     VStack(alignment: .leading, spacing: 0) {
-                        if isResolving {
-                            HStack(spacing: 10) {
-                                ProgressView()
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(wtLang.tr("Resolving the target container…"))
-                                        .font(.subheadline)
-                                    Text(package.scope == "Application" ? appDataManager.scanPhase : wtLang.tr("Enumerating containers with pathleak — this can take a while."))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                        } else if let resolved = deployManager.resolvedContainerPath {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(wtLang.tr("Target container"))
-                                    .font(.subheadline.weight(.semibold))
-                                Text(resolved)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                        Text(wtLang.tr("Target app: %@", package.bundleID))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
 
-                            Divider()
-                                .padding(.leading, 14)
+                        Divider()
+                            .padding(.leading, 14)
 
-                            Button {
-                                SoundEffects.playTap()
-                                if method == .airlift {
-                                    deployManager.deployViaAirlift(package: package)
-                                } else {
-                                    deployManager.deploy(package: package)
-                                }
-                            } label: {
-                                Group {
-                                    if deployManager.isDeploying {
-                                        HStack(spacing: 8) {
-                                            ProgressView()
-                                            Text(wtLang.tr(method == .airlift ? "Deploying via Airlift…" : "Applying…"))
-                                        }
-                                    } else {
-                                        Text(wtLang.tr("Apply"))
-                                            .fontWeight(.semibold)
+                        Button {
+                            SoundEffects.playTap()
+                            if method == .airlift {
+                                deployManager.deployViaAirlift(package: package)
+                            } else {
+                                deployManager.deploy(package: package)
+                            }
+                        } label: {
+                            Group {
+                                if deployManager.isDeploying {
+                                    HStack(spacing: 8) {
+                                        ProgressView()
+                                        Text(wtLang.tr(method == .airlift ? "Deploying via Airlift…" : "Applying…"))
                                     }
+                                } else {
+                                    Text(wtLang.tr("Apply"))
+                                        .fontWeight(.semibold)
                                 }
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .contentShape(Rectangle())
+                        }
+                        .disabled(deployManager.isDeploying || !methodAvailable || (method == .airlift && !transportStatus.isReady) || deployManager.isResolving || deployManager.resolvedContainerPath == nil)
+
+                        if let resolveError = deployManager.resolveError {
+                            Text(resolveError)
+                                .font(.caption)
+                                .foregroundStyle(.orange)
                                 .padding(.horizontal, 14)
-                                .padding(.vertical, 11)
-                                .contentShape(Rectangle())
-                            }
-                            .disabled(deployManager.isDeploying || !methodAvailable || (method == .airlift && !transportStatus.isReady))
-                        } else {
-                            Button {
-                                autoResolve()
-                            } label: {
-                                Text(wtLang.tr("Resolve Target"))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 11)
-                                    .contentShape(Rectangle())
-                            }
-                            if let resolveError = deployManager.resolveError {
-                                Text(resolveError)
-                                    .font(.caption)
-                                    .foregroundStyle(.orange)
-                                    .padding(.horizontal, 14)
-                                    .padding(.bottom, 10)
-                            }
+                                .padding(.bottom, 10)
                         }
                     }
                 }
@@ -612,7 +601,6 @@ struct DeployPreviewSection: View {
             }
         }
         .onChange(of: packageKey) { _, _ in
-            wantsResolve = false
             transportStatus = TransportGate.check()
         }
         .onChange(of: method) { _, _ in
@@ -622,16 +610,10 @@ struct DeployPreviewSection: View {
             deployManager.resolvedContainerPath = nil
             deployManager.resolveError = nil
             deployManager.lastResult = nil
-            autoResolve()
+            resolveSilently()
         }
         .onChange(of: resolveRequest) { _, _ in
-            autoResolve()
-        }
-        .onChange(of: appDataManager.didScan) { _, done in
-            if done, wantsResolve, let package, package.scope == "Application" {
-                wantsResolve = false
-                deployManager.resolveTarget(package: package, containers: appDataManager.containers, viaAirlift: method == .airlift)
-            }
+            resolveSilently()
         }
     }
 
@@ -754,23 +736,17 @@ struct DeployPreviewSection: View {
         .padding(.vertical, 8)
     }
 
-    /// Resolve the presented package's target by itself:
-    /// the manifest names the target, the destinations come
-    /// from the zip — v5 has no location picking. The
-    /// Application scope waits for the App Data scan when
-    /// it has not run yet.
-    private func autoResolve() {
+    /// Resolve the presented package's target silently: no
+    /// progress UI, no button, no scan trigger — the Deploy
+    /// page never starts a scan itself (v8.0 fix 3). The
+    /// Application scope matches only the App Data scan
+    /// results (or the container picked in App Data, when
+    /// one was); AppGroup / InternalDaemon use their
+    /// targeted lookup. Runs when a package is presented
+    /// and when the method changes.
+    private func resolveSilently() {
         guard let package else { return }
-        if package.scope == "Application", appDataManager.containers.isEmpty, !appDataManager.didScan {
-            // The Application scope resolves against the App
-            // Data scan — run it first, resolve when it lands.
-            wantsResolve = true
-            if !appDataManager.isScanning {
-                appDataManager.rescan()
-            }
-            return
-        }
-        deployManager.resolveTarget(package: package, containers: appDataManager.containers, viaAirlift: method == .airlift)
+        deployManager.resolveTarget(package: package, containers: appDataManager.containers, viaAirlift: method == .airlift, preselectedTarget: preselectedTarget)
     }
 }
 
