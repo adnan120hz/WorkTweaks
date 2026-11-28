@@ -364,16 +364,8 @@ struct SandboxView: View {
             destination()
         } label: {
             HStack(spacing: 10) {
-                // Label split apart so the four tiny Tweaky
-                // corner mascots (v8.0) can frame the icon
-                // itself — a Label's icon cannot take the
-                // modifier. Same symbol, same text, same look.
-                HStack(spacing: 6) {
-                    Image(systemName: systemImage)
-                        .wtIconCornerMascots()
-                    Text(title)
-                }
-                .font(.subheadline)
+                Label(title, systemImage: systemImage)
+                    .font(.subheadline)
                     // Wrap the label instead of truncating it at
                     // Large Text.
                     .fixedSize(horizontal: false, vertical: true)

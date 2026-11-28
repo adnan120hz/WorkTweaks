@@ -553,10 +553,6 @@ struct TweaksView: View {
                         Image(systemName: section.icon)
                             .font(.subheadline)
                             .foregroundStyle(selectedSection == section ? Color.white : Color.accentColor)
-                            // Four tiny Tweaky mascots at the
-                            // glyph's corners (v8.0) — before
-                            // the frame, so they hug the glyph.
-                            .wtIconCornerMascots()
                             // minWidth, not fixed: at Large Text the
                             // scaled icon needs more room.
                             .frame(minWidth: 22)
@@ -649,10 +645,6 @@ struct TweaksView: View {
                 Image(systemName: systemImage)
                     .font(.subheadline)
                     .foregroundStyle(Color.accentColor)
-                    // Four tiny Tweaky mascots at the glyph's
-                    // corners (v8.0) — before the frame, so
-                    // they hug the glyph.
-                    .wtIconCornerMascots()
                     .frame(minWidth: 22)
                 Text(title)
                     .font(.subheadline.weight(.medium))
@@ -1029,9 +1021,6 @@ struct TweaksView: View {
         Button(action: { SoundEffects.playTap(); action() }) {
             HStack(spacing: 8) {
                 Image(systemName: systemImage)
-                    // Four tiny Tweaky mascots at the glyph's
-                    // corners (v8.0).
-                    .wtIconCornerMascots()
                 Text(title)
                     .font(.subheadline.weight(.semibold))
                 Spacer(minLength: 0)

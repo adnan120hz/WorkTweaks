@@ -103,7 +103,6 @@ struct BackupView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "photo.badge.plus")
-                                    .wtIconCornerMascots()
                                     .foregroundStyle(.secondary)
                                 Text(wtLang.tr("Backup Your Photos & Videos Here!"))
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -124,7 +123,6 @@ struct BackupView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "photo.on.rectangle")
-                                    .wtIconCornerMascots()
                                     .foregroundStyle(.secondary)
                                 Text(wtLang.tr("Your All BackUP Files Here!"))
                                     .frame(maxWidth: .infinity, alignment: .leading)

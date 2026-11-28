@@ -63,16 +63,8 @@ struct AirliftView: View {
             destination()
         } label: {
             HStack(spacing: 10) {
-                // Label split apart so the four tiny Tweaky
-                // corner mascots (v8.0) can frame the icon
-                // itself — a Label's icon cannot take the
-                // modifier. Same symbol, same text, same look.
-                HStack(spacing: 6) {
-                    Image(systemName: systemImage)
-                        .wtIconCornerMascots()
-                    Text(title)
-                }
-                .font(.subheadline)
+                Label(title, systemImage: systemImage)
+                    .font(.subheadline)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))

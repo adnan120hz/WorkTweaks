@@ -73,61 +73,26 @@ struct RootView: View {
     private var tabView: some View {
         TabView(selection: $selectedTab) {
             SandboxView(console: console)
-                .tabItem {
-                    Label {
-                        Text("Sandbox")
-                    } icon: {
-                        Image(systemName: "shippingbox")
-                            .wtIconCornerMascots(size: 10)
-                    }
-                }
+                .tabItem { Label("Sandbox", systemImage: "shippingbox") }
                 .tag(AppTab.sandbox)
 
             TweaksView(console: console, manager: gestalt,
                        onOpenSandbox: { selectedTab = .sandbox },
                        onOpenExtra: { selectedTab = .extra },
                        onOpenBackup: { selectedTab = .backup })
-                .tabItem {
-                    Label {
-                        Text("Tweaks")
-                    } icon: {
-                        Image(systemName: "slider.horizontal.3")
-                            .wtIconCornerMascots(size: 10)
-                    }
-                }
+                .tabItem { Label("Tweaks", systemImage: "slider.horizontal.3") }
                 .tag(AppTab.tweaks)
 
             CacheExtraView(manager: gestalt)
-                .tabItem {
-                    Label {
-                        Text(langStore.tr("Extra"))
-                    } icon: {
-                        Image(systemName: "key")
-                            .wtIconCornerMascots(size: 10)
-                    }
-                }
+                .tabItem { Label(langStore.tr("Extra"), systemImage: "key") }
                 .tag(AppTab.extra)
 
             BackupView(manager: gestalt)
-                .tabItem {
-                    Label {
-                        Text(langStore.tr("Backup"))
-                    } icon: {
-                        Image(systemName: "externaldrive.badge.timemachine")
-                            .wtIconCornerMascots(size: 10)
-                    }
-                }
+                .tabItem { Label(langStore.tr("Backup"), systemImage: "externaldrive.badge.timemachine") }
                 .tag(AppTab.backup)
 
             LogView(console: console)
-                .tabItem {
-                    Label {
-                        Text("Log")
-                    } icon: {
-                        Image(systemName: "terminal")
-                            .wtIconCornerMascots(size: 10)
-                    }
-                }
+                .tabItem { Label("Log", systemImage: "terminal") }
                 .tag(AppTab.log)
         }
         .onChange(of: selectedTab) { _, _ in

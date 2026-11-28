@@ -196,10 +196,6 @@ struct WTPageHero: View {
             Image(systemName: systemImage)
                 .font(.title2)
                 .foregroundStyle(Color.accentColor)
-                // Four tiny Tweaky mascots at the glyph's
-                // corners (v8.0) — before the frame, so they
-                // hug the glyph rather than the row slot.
-                .wtIconCornerMascots(size: 12)
                 .frame(minWidth: 40)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
@@ -245,10 +241,6 @@ struct RowIcon: View {
             // beside. A fixed .system(size:) would not scale.
             .font(.body)
             .foregroundStyle(color)
-            // Four tiny Tweaky mascots at the glyph's corners
-            // (v8.0) — applied before the frame, so they hug
-            // the glyph rather than the 30pt row slot.
-            .wtIconCornerMascots()
             // minWidth, not a fixed width: at Large Text the
             // scaled icon needs more than 30pt, and a fixed
             // frame would clip it.
