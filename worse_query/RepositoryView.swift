@@ -130,7 +130,7 @@ struct RepositoryView: View {
                     .padding(.leading, 14)
 
                 Link(destination: URL(string: "https://github.com/adnan120hz")!) {
-                    Text(wtLang.tr("Created by adnan120hz"))
+                    Text(wtLang.tr("adnan120hz"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

@@ -1058,7 +1058,7 @@ enum WTStrings {
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Ketuk \"Jump to Siri line\" — tombol itu langsung lompat ke baris Siri yang tepat untuk perangkat ini (biasanya baris 104).",
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Pilih seluruh baris lalu ganti dengan: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Untuk mematikan patch lagi, ganti kembali dengan: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Lalu ketuk Save — backup asli dibuat sebelum penyimpanan pertama.",
 
-        "Created by adnan120hz": "Dibuat oleh adnan120hz",
+        "adnan120hz": "adnan120hz",
 
         "Tweaks applied successfully!": "Tweak berhasil diterapkan!",
         "Continue": "Lanjutkan",
@@ -2021,7 +2021,7 @@ enum WTStrings {
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "点按“Jump to Siri line”——它会直接跳到此设备的准确 Siri 行（通常是第 104 行）。",
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "选中整行并替换为：AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA。要再次关闭补丁，请将其替换回：AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA。然后点击 Save——首次保存前会创建原始备份。",
 
-        "Created by adnan120hz": "由 adnan120hz 创建",
+        "adnan120hz": "adnan120hz",
 
         "Tweaks applied successfully!": "调整已成功应用！",
         "Continue": "继续",
@@ -2984,7 +2984,7 @@ enum WTStrings {
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Chạm \"Jump to Siri line\" — nó sẽ nhảy tới đúng dòng Siri cho thiết bị này (thường là dòng 104).",
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Chọn toàn bộ dòng và thay bằng: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Để tắt bản vá, thay lại bằng: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Sau đó chạm Save — bản sao lưu gốc được tạo trước lần lưu đầu tiên.",
 
-        "Created by adnan120hz": "Được tạo bởi adnan120hz",
+        "adnan120hz": "adnan120hz",
 
         "Tweaks applied successfully!": "Đã áp dụng các tinh chỉnh thành công!",
         "Continue": "Tiếp tục",
@@ -3947,7 +3947,7 @@ enum WTStrings {
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Нажмите \"Jump to Siri line\" — кнопка перейдёт к точной строке Siri для этого устройства (обычно строка 104).",
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Выделите всю строку и замените её на: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Чтобы снова выключить патч, замените обратно на: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Затем нажмите Save — перед первым сохранением создаётся исходная резервная копия.",
 
-        "Created by adnan120hz": "Создано adnan120hz",
+        "adnan120hz": "adnan120hz",
 
         "Tweaks applied successfully!": "Твики успешно применены!",
         "Continue": "Продолжить",
@@ -4901,7 +4901,7 @@ enum WTStrings {
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "اضغط على \"Jump to Siri line\" — سينتقل مباشرة إلى سطر Siri الصحيح لهذا الجهاز (عادة السطر 104).",
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "حدد السطر كاملا واستبدله بـ: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. ولإيقاف التصحيح مجددا، أعد استبداله بـ: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. ثم اضغط على Save — تنشأ نسخة احتياطية أصلية قبل أول حفظ.",
 
-        "Created by adnan120hz": "صُنع بواسطة adnan120hz",
+        "adnan120hz": "adnan120hz",
 
         "Tweaks applied successfully!": "تم تطبيق التعديلات بنجاح!",
         "Continue": "متابعة",
@@ -5855,7 +5855,7 @@ enum WTStrings {
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Toque em \"Jump to Siri line\" — ele pula direto para a linha exata da Siri neste dispositivo (geralmente a linha 104).",
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Selecione a linha inteira e substitua por: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Para desativar o patch novamente, substitua de volta por: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Depois toque em Salvar — um backup original é feito antes do primeiro salvamento.",
 
-        "Created by adnan120hz": "Criado por adnan120hz",
+        "adnan120hz": "adnan120hz",
 
         "Tweaks applied successfully!": "Ajustes aplicados com sucesso!",
         "Continue": "Continuar",
@@ -6809,7 +6809,7 @@ enum WTStrings {
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Toca \"Jump to Siri line\" — salta directamente a la línea exacta de Siri para este dispositivo (normalmente la línea 104).",
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Selecciona toda la línea y reemplázala con: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Para desactivar el parche de nuevo, reemplázala de nuevo con: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Luego toca Guardar — se hace una copia de seguridad original antes del primer guardado.",
 
-        "Created by adnan120hz": "Creado por adnan120hz",
+        "adnan120hz": "adnan120hz",
 
         "Tweaks applied successfully!": "¡Ajustes aplicados con éxito!",
         "Continue": "Continuar",
@@ -7763,7 +7763,7 @@ enum WTStrings {
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).": "Touchez « Jump to Siri line » — le bouton va directement à la ligne Siri exacte pour cet appareil (généralement la ligne 104).",
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Sélectionnez toute la ligne et remplacez-la par : AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Pour désactiver à nouveau le correctif, remplacez-la par : AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Puis touchez Enregistrer — une sauvegarde d'origine est effectuée avant le premier enregistrement.",
 
-        "Created by adnan120hz": "Créé par adnan120hz",
+        "adnan120hz": "adnan120hz",
 
         "Tweaks applied successfully!": "Réglages appliqués avec succès !",
         "Continue": "Continuer",
