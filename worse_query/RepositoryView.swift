@@ -5,7 +5,7 @@ import SwiftUI
 // A built-in catalog of Deploy packages, installable in-app
 // through the existing Deploy engine or saved to Files.
 //
-// The 41 zips live in the app bundle as resources. Display
+// The 32 zips live in the app bundle as resources. Display
 // data is read from each zip's own manifest.json at runtime
 // (via DeployManager.loadPackage) — the manifest is the
 // source of truth; nothing about the packages is hardcoded
@@ -41,15 +41,6 @@ enum RepositoryStore {
         "3105-subway-surf",
         "3105-wbf",
         "3105-widgy",
-        "3105-amongus-dialer",
-        "3105-chikawa-dialer",
-        "3105-cutecat-dialer",
-        "3105-lovely-dialer",
-        "3105-maker-dialer",
-        "3105-maker-dialer-2",
-        "3105-onepiece-dialer",
-        "3105-pixel-dialer",
-        "3105-shin-dialer",
         "3105-adobe-dog-pass",
         "3105-amongus-pass",
         "3105-cutecat-pass",
@@ -134,6 +125,19 @@ struct RepositoryView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
+
+                Divider()
+                    .padding(.leading, 14)
+
+                Link(destination: URL(string: "https://github.com/adnan120hz")!) {
+                    Text(wtLang.tr("Created by adnan120hz"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                }
+                .buttonStyle(.plain)
             }
 
             if entries.isEmpty {
