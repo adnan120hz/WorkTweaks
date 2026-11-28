@@ -53,7 +53,7 @@ struct WelcomeView: View {
     @State private var showLicense = false
 
     private var versionText: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "7.0"
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "8.0"
         return "WorkTweaks v\(v)"
     }
 
