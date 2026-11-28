@@ -1055,6 +1055,8 @@ enum WTStrings {
         "Tweaks applied successfully!": "Tweak berhasil diterapkan!",
         "Continue": "Lanjutkan",
 
+        "Live console output — newest lines at the bottom.": "Keluaran konsol langsung — baris terbaru ada di bawah.",
+
     ]
 
     // Chinese (Simplified)
@@ -1975,6 +1977,8 @@ enum WTStrings {
 
         "Tweaks applied successfully!": "调整已成功应用！",
         "Continue": "继续",
+
+        "Live console output — newest lines at the bottom.": "实时控制台输出——最新行在底部。",
 
     ]
 
@@ -2897,6 +2901,8 @@ enum WTStrings {
         "Tweaks applied successfully!": "Đã áp dụng các tinh chỉnh thành công!",
         "Continue": "Tiếp tục",
 
+        "Live console output — newest lines at the bottom.": "Đầu ra console trực tiếp — dòng mới nhất ở dưới cùng.",
+
     ]
 
     // Russian
@@ -3818,6 +3824,8 @@ enum WTStrings {
         "Tweaks applied successfully!": "Твики успешно применены!",
         "Continue": "Продолжить",
 
+        "Live console output — newest lines at the bottom.": "Живой вывод консоли — новые строки внизу.",
+
     ]
 
     // ar
@@ -4729,6 +4737,8 @@ enum WTStrings {
 
         "Tweaks applied successfully!": "تم تطبيق التعديلات بنجاح!",
         "Continue": "متابعة",
+
+        "Live console output — newest lines at the bottom.": "مخرجات وحدة التحكم المباشرة — أحدث الأسطر في الأسفل.",
 
     ]
 
@@ -5642,6 +5652,8 @@ enum WTStrings {
         "Tweaks applied successfully!": "Ajustes aplicados com sucesso!",
         "Continue": "Continuar",
 
+        "Live console output — newest lines at the bottom.": "Saída do console ao vivo — as linhas mais recentes ficam embaixo.",
+
     ]
 
     // es
@@ -6554,6 +6566,8 @@ enum WTStrings {
         "Tweaks applied successfully!": "¡Ajustes aplicados con éxito!",
         "Continue": "Continuar",
 
+        "Live console output — newest lines at the bottom.": "Salida de consola en vivo: las líneas más recientes están abajo.",
+
     ]
 
     // fr
@@ -7465,6 +7479,8 @@ enum WTStrings {
 
         "Tweaks applied successfully!": "Réglages appliqués avec succès !",
         "Continue": "Continuer",
+
+        "Live console output — newest lines at the bottom.": "Sortie console en direct — les lignes les plus récentes sont en bas.",
 
     ]
 }

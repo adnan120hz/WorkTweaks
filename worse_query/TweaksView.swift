@@ -269,8 +269,11 @@ struct TweaksView: View {
     private var lockedView: some View {
         VStack(spacing: 18) {
             Spacer()
+            // Tweaky greets the user on the locked page
+            // (v8.0 revamp) — the lock itself stays below.
+            TweakyMascot(size: 64)
             Image(systemName: "lock.fill")
-                .font(.largeTitle)
+                .font(.title2)
                 .foregroundStyle(.secondary)
             VStack(spacing: 8) {
                 Text(wtLang.tr("Tweaks are locked"))
@@ -531,7 +534,11 @@ struct TweaksView: View {
 
     private var sectionsCard: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(wtLang.tr("Sections"))
+            HStack(spacing: 5) {
+                Image(systemName: "square.grid.2x2")
+                    .foregroundStyle(.accentColor)
+                Text(wtLang.tr("Sections"))
+            }
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 10)
@@ -562,7 +569,7 @@ struct TweaksView: View {
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 9)
+                    .padding(.vertical, 11)
                     .background(
                         selectedSection == section ? Color.accentColor : Color.clear,
                         in: RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -601,8 +608,14 @@ struct TweaksView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // One small Tweaky peeking from the card's corner
+        // (v8.0 revamp).
+        .overlay(alignment: .topTrailing) {
+            TweakyMascot(size: 22)
+                .offset(x: 6, y: -8)
+        }
         .wtGlassCard(cornerRadius: 16)
     }
 
@@ -612,7 +625,11 @@ struct TweaksView: View {
     // lives in the Sandbox tab's Utilities menu.
     private var menusCard: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(wtLang.tr("Menus"))
+            HStack(spacing: 5) {
+                Image(systemName: "list.bullet")
+                    .foregroundStyle(.accentColor)
+                Text(wtLang.tr("Menus"))
+            }
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 10)
@@ -644,7 +661,7 @@ struct TweaksView: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 10)
-            .padding(.vertical, 9)
+            .padding(.vertical, 11)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -670,7 +687,7 @@ struct TweaksView: View {
                 ProgressView()
             }
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
     }
@@ -713,7 +730,7 @@ struct TweaksView: View {
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
     }
@@ -795,7 +812,7 @@ struct TweaksView: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
-            .padding(12)
+            .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .wtGlassCard(cornerRadius: 14)
             .contentShape(Rectangle())
@@ -814,7 +831,7 @@ struct TweaksView: View {
 
     /// Device Artwork: the Dynamic Island subtype (model) picker.
     private var subtypeCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 RowIcon(systemImage: "capsule.fill")
                 Text(wtLang.tr("Subtype"))
@@ -851,14 +868,14 @@ struct TweaksView: View {
             .labelsHidden()
             .pickerStyle(.menu)
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
     }
 
     /// Device Artwork: Custom Device Name toggle + field.
     private var deviceNameCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Toggle(isOn: $manager.enableDeviceName) {
                 HStack(spacing: 8) {
                     RowIcon(systemImage: "textformat")
@@ -876,7 +893,7 @@ struct TweaksView: View {
         // The name field slides in/out with the toggle
         // instead of snapping (v8.0 menu motion).
         .animation(.wtMenu, value: manager.enableDeviceName)
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
     }
@@ -886,7 +903,7 @@ struct TweaksView: View {
     /// in Settings > General > About as the Model Number
     /// suffix; it is written on Apply, like Custom Device Name.
     private var regionModelCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Toggle(isOn: $manager.enableCustomRegion) {
                 HStack(spacing: 8) {
                     RowIcon(systemImage: "globe")
@@ -907,14 +924,14 @@ struct TweaksView: View {
         // The suffix field slides in/out with the toggle
         // instead of snapping (v8.0 menu motion).
         .animation(.wtMenu, value: manager.enableCustomRegion)
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
     }
 
     /// Eligibility: the device-model spoofing picker.
     private var spoofingCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 RowIcon(systemImage: "iphone.gen3")
                 Text(wtLang.tr("Spoofing"))
@@ -958,14 +975,14 @@ struct TweaksView: View {
             .labelsHidden()
             .pickerStyle(.menu)
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
     }
 
     /// Write Method: "Persist after reboot" (atomic_write).
     private var persistCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Toggle(isOn: $atomicWrite) {
                 HStack(spacing: 8) {
                     RowIcon(systemImage: "externaldrive.fill")
@@ -978,7 +995,7 @@ struct TweaksView: View {
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
     }
@@ -1020,7 +1037,7 @@ struct TweaksView: View {
                 Spacer(minLength: 0)
             }
             .foregroundStyle(destructive ? Color.red : Color.accentColor)
-            .padding(12)
+            .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .wtGlassCard(cornerRadius: 14)
             .contentShape(Rectangle())
@@ -1073,7 +1090,7 @@ struct TweaksView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
         .contentShape(Rectangle())
@@ -1104,7 +1121,7 @@ struct TweakCard: View {
     @State private var showFixAppleIntelligenceGuide = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 6) {
                 RowIcon(systemImage: tweak.icon)
                 Spacer(minLength: 0)
@@ -1153,7 +1170,7 @@ struct TweakCard: View {
                 }
             }
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
         .alert(wtLang.tr("Fix Status Bar"), isPresented: $showFixStatusBarGuide) {

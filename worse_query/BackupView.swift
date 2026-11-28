@@ -22,7 +22,16 @@ struct BackupView: View {
     var body: some View {
         NavigationStack {
             WTGlassPage {
-                WTSectionCard(header: wtLang.tr("Snapshots"), footer: wtLang.tr("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")) {
+                // Featured hero (v8.0 revamp): the snapshot
+                // explainer moves up here from the Snapshots
+                // card's footer, so the tab opens with it.
+                WTPageHero(
+                    systemImage: "externaldrive.badge.timemachine",
+                    title: wtLang.tr("Backup"),
+                    subtitle: wtLang.tr("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")
+                )
+
+                WTSectionCard(header: wtLang.tr("Snapshots"), headerIcon: "clock.arrow.circlepath") {
                     Button {
                         manager.createManualSnapshot()
                     } label: {
@@ -37,13 +46,13 @@ struct BackupView: View {
                 }
 
                 if let original = manager.originalSnapshot {
-                    WTSectionCard(header: wtLang.tr("Original")) {
+                    WTSectionCard(header: wtLang.tr("Original"), headerIcon: "lock.shield") {
                         snapshotRow(original)
                     }
                 }
 
                 if manager.otherSnapshots.isEmpty {
-                    WTSectionCard(header: wtLang.tr("Apply Snapshots")) {
+                    WTSectionCard(header: wtLang.tr("Apply Snapshots"), headerIcon: "clock.arrow.circlepath") {
                         Text(wtLang.tr("No snapshots yet. Apply some tweaks or tap Back Up Now."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -51,7 +60,7 @@ struct BackupView: View {
                             .padding(.vertical, 10)
                     }
                 } else {
-                    WTSectionCard(header: wtLang.tr("Apply Snapshots")) {
+                    WTSectionCard(header: wtLang.tr("Apply Snapshots"), headerIcon: "clock.arrow.circlepath") {
                         LazyVStack(alignment: .leading, spacing: 0) {
                             ForEach(Array(manager.otherSnapshots.enumerated()), id: \.element.id) { index, snapshot in
                                 if index > 0 {
@@ -86,7 +95,7 @@ struct BackupView: View {
                 // into BackUP_Data, restore via share sheet —
                 // the same PhotoBackupView/PhotoRestoreView
                 // that power this section.
-                WTSectionCard(header: wtLang.tr("All Data Backup")) {
+                WTSectionCard(header: wtLang.tr("All Data Backup"), headerIcon: "photo.on.rectangle") {
                     VStack(alignment: .leading, spacing: 0) {
                         Button {
                             SoundEffects.playTap()
@@ -183,7 +192,7 @@ struct BackupView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -234,7 +243,7 @@ struct BackupDetailView: View {
                 .disabled(!manager.isValid)
             }
 
-            WTSectionCard(header: wtLang.tr("By Tweak")) {
+            WTSectionCard(header: wtLang.tr("By Tweak"), headerIcon: "slider.horizontal.3") {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(TweakCatalog.all.enumerated()), id: \.element.id) { index, tweak in
                         if index > 0 {
@@ -258,13 +267,13 @@ struct BackupDetailView: View {
                             .disabled(!manager.isValid)
                         }
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 10)
                     }
                 }
                 .padding(.vertical, 4)
             }
 
-            WTSectionCard(header: wtLang.tr("By Key")) {
+            WTSectionCard(header: wtLang.tr("By Key"), headerIcon: "key") {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(snapshot.entries.enumerated()), id: \.element.id) { index, entry in
                         if index > 0 {
@@ -293,7 +302,7 @@ struct BackupDetailView: View {
                             .disabled(!manager.isValid)
                         }
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 10)
                     }
                 }
                 .padding(.vertical, 4)

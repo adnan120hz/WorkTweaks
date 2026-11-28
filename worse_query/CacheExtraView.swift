@@ -51,11 +51,27 @@ struct CacheExtraView: View {
         let _ = manager.dictVersion // re-render when the dict changes
         NavigationStack {
             WTGlassPage {
+                // Featured hero (v8.0 revamp): the key icon +
+                // title above the same explainer, so the tab
+                // opens like the other tabs' heroes. English
+                // by design, like the rest of this tab.
                 WTSectionCard {
-                    Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press **Apply Tweaks** in the Tweaks tab to write them (you'll get the Respring / Restart choice).")
-                        .font(.caption).foregroundStyle(.secondary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "key.fill")
+                            .font(.title2)
+                            .foregroundStyle(.accentColor)
+                            .wtIconCornerMascots(size: 12)
+                            .frame(minWidth: 36)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Cache Extra")
+                                .font(.headline)
+                            Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press **Apply Tweaks** in the Tweaks tab to write them (you'll get the Respring / Restart choice).")
+                                .font(.caption).foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
                 }
 
                 if !manager.isValid {
@@ -66,7 +82,7 @@ struct CacheExtraView: View {
                             .padding(.vertical, 10)
                     }
                 } else {
-                    WTSectionCard(header: "CacheExtra Keys (\(filteredKeys.count))") {
+                    WTSectionCard(header: "CacheExtra Keys (\(filteredKeys.count))", headerIcon: "key.fill") {
                         LazyVStack(alignment: .leading, spacing: 0) {
                             ForEach(Array(filteredKeys.enumerated()), id: \.element) { index, key in
                                 if index > 0 {
@@ -159,7 +175,7 @@ struct CacheExtraView: View {
             Image(systemName: "chevron.right")
                 .font(.caption2).foregroundStyle(.tertiary)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
     }
 }
 
@@ -182,7 +198,7 @@ struct ExtraKeyEditor: View {
     var body: some View {
         NavigationStack {
             WTGlassPage {
-                WTSectionCard(header: "Key") {
+                WTSectionCard(header: "Key", headerIcon: "key") {
                     if let existingKey {
                         Text(existingKey)
                             .font(.system(.footnote, design: .monospaced))

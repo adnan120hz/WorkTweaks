@@ -81,15 +81,15 @@ struct SandboxView: View {
                             Image(uiImage: WTHeaderIcon.image(for: lang.language))
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 52, height: 52)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .frame(width: 64, height: 64)
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                             VStack(alignment: .leading, spacing: 3) {
                                 // One Text with mixed fonts, so
                                 // "v7.0" sits exactly on the
                                 // "WorkTweaks" baseline (an HStack
                                 // lets the smaller text float).
                                 Text("WorkTweaks")
-                                    .font(.headline)
+                                    .font(.title3.weight(.semibold))
                                 + Text(" v\(appVersion)")
                                     .font(.caption)
                                     .foregroundStyle(lang.theme.accent)
@@ -117,7 +117,7 @@ struct SandboxView: View {
                             }
                         }
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 14)
 
                         Divider()
                             .padding(.leading, 14)
@@ -160,13 +160,19 @@ struct SandboxView: View {
                         .buttonStyle(.plain)
                         .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                     }
+                    // One small Tweaky peeking from the hero
+                    // card's corner (v8.0 revamp).
+                    .overlay(alignment: .topTrailing) {
+                        TweakyMascot(size: 28)
+                            .offset(x: 4, y: -6)
+                    }
                 }
                 .sheet(isPresented: $showLanguagePicker) {
                     LanguagePickerSheet()
                 }
 
                 // Master switch for the Tweaks feature.
-                WTSectionCard {
+                WTSectionCard(header: lang.tr("Tweaks"), headerIcon: "slider.horizontal.3") {
                     VStack(alignment: .leading, spacing: 6) {
                         Toggle(lang.tr("Start Tweaks Feature"), isOn: $tweaksEnabled)
                             .font(.subheadline.weight(.semibold))
@@ -220,7 +226,7 @@ struct SandboxView: View {
                 // Utility menus — each opens its own page.
                 // v7.0: grouped into labeled sections instead
                 // of one long list; every row is still here.
-                WTSectionCard(header: lang.tr("Diagnostics")) {
+                WTSectionCard(header: lang.tr("Diagnostics"), headerIcon: "stethoscope") {
                     VStack(alignment: .leading, spacing: 0) {
                         utilityRow("Battery & Thermal", systemImage: "battery.100") {
                             BatteryDiagnosticsView()
@@ -236,7 +242,7 @@ struct SandboxView: View {
                     }
                 }
 
-                WTSectionCard(header: lang.tr("Files & Sharing")) {
+                WTSectionCard(header: lang.tr("Files & Sharing"), headerIcon: "folder") {
                     VStack(alignment: .leading, spacing: 0) {
                         utilityRow(lang.tr("App Data"), systemImage: "folder") {
                             AppDataView()
@@ -261,7 +267,7 @@ struct SandboxView: View {
                 }
 
 
-                WTSectionCard(header: lang.tr("System")) {
+                WTSectionCard(header: lang.tr("System"), headerIcon: "gearshape") {
                     VStack(alignment: .leading, spacing: 0) {
                         utilityRow("Sandbox Escape", systemImage: "lock.open") {
                             SandboxEscapePage(path: $path, sandboxHandle: $sandboxHandle)
@@ -277,7 +283,7 @@ struct SandboxView: View {
                     }
                 }
 
-                WTSectionCard(header: lang.tr("Media")) {
+                WTSectionCard(header: lang.tr("Media"), headerIcon: "photo") {
                     VStack(alignment: .leading, spacing: 0) {
                         utilityRow("PosterBoard", systemImage: "photo") {
                             PosterBoardView()
@@ -293,7 +299,7 @@ struct SandboxView: View {
                     }
                 }
 
-                WTSectionCard(header: lang.tr("Pairing & Airlift")) {
+                WTSectionCard(header: lang.tr("Pairing & Airlift"), headerIcon: "airplane") {
                     VStack(alignment: .leading, spacing: 0) {
                         utilityRow(lang.tr("Get Pairing File + VPN Status"), systemImage: "key.fill") {
                             PairingView()
@@ -309,7 +315,7 @@ struct SandboxView: View {
                     }
                 }
 
-                WTSectionCard(header: "Log") {
+                WTSectionCard(header: "Log", headerIcon: "terminal") {
                     VStack(alignment: .leading, spacing: 0) {
                         ScrollViewReader { proxy in
                             ScrollView {
@@ -377,7 +383,7 @@ struct SandboxView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 11)
+            .padding(.vertical, 13)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

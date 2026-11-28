@@ -105,7 +105,7 @@ struct WTGlassPage<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
                 content()
 
                 // Bottom clearance so the last card is never
@@ -127,16 +127,26 @@ struct WTGlassPage<Content: View>: View {
 /// their rows with Divider(), like the lists they replace.
 struct WTSectionCard<Content: View>: View {
     var header: String? = nil
+    /// Optional small accent icon shown before the header
+    /// caption (v8.0 revamp) — the friendly, icon-forward
+    /// section headers. Nil keeps the plain caption.
+    var headerIcon: String? = nil
     var footer: String? = nil
     @ViewBuilder let content: () -> Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let header {
-                Text(header)
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
+                HStack(spacing: 5) {
+                    if let headerIcon {
+                        Image(systemName: headerIcon)
+                            .foregroundStyle(.accentColor)
+                    }
+                    Text(header)
+                }
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 10)
             }
 
             VStack(alignment: .leading, spacing: 0) {
@@ -162,6 +172,51 @@ struct WTSectionCard<Content: View>: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+}
+
+// MARK: - Featured page hero (v8.0 revamp)
+//
+// The Sileo-inspired "featured" banner at the top of a tab
+// page: one big icon-forward glass card with the page's icon,
+// title and a one- or two-line subtitle, and a small Tweaky
+// mascot peeking from the corner. Built fresh on the v7.0
+// material (WTGlassCard, accent icon, no colored chips, no
+// gradients) — only the grouping is Sileo-like. The subtitle
+// should reuse an existing translated string where one fits,
+// so the hero adds no new translation keys.
+
+struct WTPageHero: View {
+    var systemImage: String
+    var title: String
+    var subtitle: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: systemImage)
+                .font(.title2)
+                .foregroundStyle(.accentColor)
+                // Four tiny Tweaky mascots at the glyph's
+                // corners (v8.0) — before the frame, so they
+                // hug the glyph rather than the row slot.
+                .wtIconCornerMascots(size: 12)
+                .frame(minWidth: 40)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.headline)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            // One small Tweaky peeking from the hero's corner
+            // — the playful note of the revamp.
+            TweakyMascot(size: 26)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .wtGlassCard(cornerRadius: 16)
     }
 }
 
