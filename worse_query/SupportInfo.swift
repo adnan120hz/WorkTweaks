@@ -128,4 +128,183 @@ enum SupportInfo {
     static var deviceSummary: String {
         "iOS \(deviceVersion) (\(deviceBuild))"
     }
+
+    // MARK: - Deploy method availability (v8.0)
+    //
+    // Deploy package has exactly two methods, each gated to its
+    // own iOS range. The main launch gate above (isSupported,
+    // 18+) is NOT touched: these rows and gates only decide
+    // which Deploy method a device is offered.
+    //
+    //   Normal — iOS 26.0 (23A341) to iOS 27.3 beta 1 (24C5037i).
+    //     worse_query is patched in iOS 27.3 beta 2 (24C5049d).
+    //   Airlift — iOS 17 / 18 / 26 / 27, with iOS 27 capped at
+    //     max 27.2 beta 2 (24B5089g).
+    //
+    // iOS 17 rows (below) come verbatim from the user-provided
+    // v80-ios17-versions.md — betas 17.0b1 21A5248v through
+    // 17.7.1 RC 21H216, releases 17.0 21A329 through 17.7.2
+    // 21H221, multi-build versions expanded to one row per
+    // build. iOS 18/26/27 rows are the supportedReleases table
+    // above (already in v7.0) — no new tables for them.
+
+    /// The iOS 17 builds Airlift Deploy supports. Kept apart
+    /// from supportedReleases on purpose: iOS 17 is NOT a
+    /// launch-supported version, it only gets Deploy via
+    /// Airlift. One row per unique build (an RC and its final
+    /// release share a build, so they merge into one row with
+    /// both names in the notes, like the table above).
+    static let airliftIOS17Releases: [SupportedRelease] = [
+        SupportedRelease(version: "iOS 17.0 Beta 1", build: "21A5248v", notes: "Developer Beta 1", releaseDate: "June 5, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0 Beta 2", build: "21A5268h", notes: "Developer Beta 2", releaseDate: "June 21, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0 Beta 3", build: "21A5277h", notes: "Developer Beta 3", releaseDate: "July 5, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0 Beta 3", build: "21A5277j", notes: "Reissue", releaseDate: "July 11, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0 Beta 4", build: "21A5291h", notes: "Developer Beta 4", releaseDate: "July 25, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0 Beta 4", build: "21A5291j", notes: "Reissue", releaseDate: "July 31, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0 Beta 5", build: "21A5303d", notes: "Developer Beta 5", releaseDate: "August 8, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0 Beta 6", build: "21A5312c", notes: "Developer Beta 6", releaseDate: "August 15, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0 Beta 7", build: "21A5319a", notes: "Developer Beta 7", releaseDate: "August 22, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0 Beta 8", build: "21A5326a", notes: "Developer Beta 8", releaseDate: "August 29, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0", build: "21A326", notes: "iPhone 15 — factory-installed build", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.0", build: "21A327", notes: "iPhone 15 — factory-installed build", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.0", build: "21A329", notes: "Release Candidate / Final Release — Non-iPhone 15", releaseDate: "September 12, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.0", build: "21A331", notes: "iPhone 15 — release build", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.0.1", build: "21A340", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.0.2", build: "21A350", notes: "iPhone 15", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.0.2", build: "21A351", notes: "Non-iPhone 15", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.0.3", build: "21A360", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.1 Beta 1", build: "21B5045h", notes: "Developer Beta 1", releaseDate: "September 27, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.1 Beta 2", build: "21B5056e", notes: "Developer Beta 2", releaseDate: "October 3, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.1 Beta 3", build: "21B5066a", notes: "Developer Beta 3", releaseDate: "October 10, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.1", build: "21B74", notes: "Release Candidate / Final Release — Non-iPhone 15", releaseDate: "October 17, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.1 RC 2", build: "21B77", notes: "Release Candidate", releaseDate: "October 20, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.1", build: "21B80", notes: "iPhone 15", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.1.1", build: "21B91", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.1.2", build: "21B101", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.2 Beta 1", build: "21C5029g", notes: "Developer Beta 1", releaseDate: "October 26, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.2 Beta 2", build: "21C5040g", notes: "Developer Beta 2", releaseDate: "November 9, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.2 Beta 3", build: "21C5046c", notes: "Developer Beta 3", releaseDate: "November 14, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.2 Beta 4", build: "21C5054b", notes: "Developer Beta 4", releaseDate: "November 28, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.2", build: "21C62", notes: "Release Candidate / Final Release", releaseDate: "December 5, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.2.1", build: "21C66", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.3 Beta 1", build: "21D5026f", notes: "Developer Beta 1", releaseDate: "December 12, 2023", partial: true),
+        SupportedRelease(version: "iOS 17.3 Beta 2", build: "21D5036c", notes: "Developer Beta 2", releaseDate: "January 3, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.3 Beta 3", build: "21D5044a", notes: "Developer Beta 3", releaseDate: "January 9, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.3", build: "21D50", notes: "Release Candidate / Final Release", releaseDate: "January 17, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.3.1", build: "21D61", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.4 Beta 1", build: "21E5184i", notes: "Developer Beta 1", releaseDate: "January 25, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.4 Beta 1", build: "21E5184k", notes: "Reissue", releaseDate: "January 30, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.4 Beta 2", build: "21E5195e", notes: "Developer Beta 2", releaseDate: "February 6, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.4 Beta 3", build: "21E5200d", notes: "Developer Beta 3", releaseDate: "February 13, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.4 Beta 4", build: "21E5209b", notes: "Developer Beta 4", releaseDate: "February 20, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.4 RC", build: "21E217", notes: "Release Candidate", releaseDate: "February 27, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.4", build: "21E219", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.4.1", build: "21E236", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.4.1", build: "21E237", notes: "Revised build", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.5 Beta 1", build: "21F5048f", notes: "Developer Beta 1", releaseDate: "April 2, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.5 Beta 2", build: "21F5058e", notes: "Developer Beta 2", releaseDate: "April 16, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.5 Beta 3", build: "21F5063f", notes: "Developer Beta 3", releaseDate: "April 23, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.5 Beta 4", build: "21F5073b", notes: "Developer Beta 4", releaseDate: "April 30, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.5", build: "21F79", notes: "Release Candidate / Final Release", releaseDate: "May 7, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.5.1", build: "21F90", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.6 Beta 1", build: "21G5052e", notes: "Developer Beta 1", releaseDate: "June 17, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.6 Beta 2", build: "21G5061c", notes: "Developer Beta 2", releaseDate: "July 1, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.6 Beta 3", build: "21G5066d", notes: "Developer Beta 3", releaseDate: "July 9, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.6 Beta 4", build: "21G5075a", notes: "Developer Beta 4", releaseDate: "July 16, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.6 RC", build: "21G79", notes: "Release Candidate", releaseDate: "July 23, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.6", build: "21G80", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.6.1", build: "21G93", notes: "", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.6.1", build: "21G101", notes: "Revised build", releaseDate: "", partial: true),
+        SupportedRelease(version: "iOS 17.7", build: "21H16", notes: "Release Candidate / Final Release — Last iPhone model still receiving features", releaseDate: "September 9, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.7.1", build: "21H216", notes: "Release Candidate / Final Release", releaseDate: "October 21, 2024", partial: true),
+        SupportedRelease(version: "iOS 17.7.2", build: "21H221", notes: "Last iPhone", releaseDate: "", partial: true),
+    ]
+
+    /// Why a Deploy method is not offered on this device.
+    enum DeployGate {
+        case available
+        case belowMinimum
+        case aboveMaximum
+        case unknownBuild
+    }
+
+    /// Normal Deploy (worse_query): iOS 26.0 .. iOS 27.3 beta 1.
+    static var normalDeployGate: DeployGate {
+        let build = deviceBuild
+        guard !build.isEmpty else { return .unknownBuild }
+        if let idx = supportedReleases.firstIndex(where: { $0.build == build }) {
+            let lo = supportedReleases.firstIndex(where: { $0.build == "23A341" }) ?? 0
+            let hi = supportedReleases.firstIndex(where: { $0.build == "24C5037i" }) ?? supportedReleases.count
+            if idx < lo { return .belowMinimum }
+            if idx > hi { return .aboveMaximum }
+            return .available
+        }
+        // Not a listed build: decide by build-train order.
+        // Below iOS 26.0 is below the minimum; above
+        // iOS 27.3 beta 1 (worse_query patched in beta 2) is
+        // above the maximum.
+        if compareBuilds(build, "23A341") == .orderedAscending { return .belowMinimum }
+        if compareBuilds(build, "24C5037i") == .orderedDescending { return .aboveMaximum }
+        return .available
+    }
+
+    /// Deploy via Airlift: iOS 17 / 18 / 26 / 27, iOS 27 capped
+    /// at max 27.2 beta 2 (24B5089g).
+    static var airliftDeployGate: DeployGate {
+        let build = deviceBuild
+        guard !build.isEmpty else { return .unknownBuild }
+        if airliftIOS17Releases.contains(where: { $0.build == build }) { return .available }
+        if let idx = supportedReleases.firstIndex(where: { $0.build == build }) {
+            // iOS 18 (22*) and iOS 26 (23*) are fully in range.
+            if build.hasPrefix("22") || build.hasPrefix("23") { return .available }
+            // iOS 27 (24*): table order decides — the 27.2 beta 2
+            // row is the cap. (Table order is chronological, which
+            // matters here: 27.2 RC/final builds sort before the
+            // betas lexicographically but come after them.)
+            let cap = supportedReleases.firstIndex(where: { $0.build == "24B5089g" }) ?? supportedReleases.count
+            return idx <= cap ? .available : .aboveMaximum
+        }
+        // Not a listed build: decide by train. 21*/22*/23* are
+        // iOS 17/18/26 (available); 24* is iOS 27, capped at
+        // 27.2 beta 2; anything newer is above the maximum.
+        if build.hasPrefix("21") || build.hasPrefix("22") || build.hasPrefix("23") { return .available }
+        if build.hasPrefix("24") {
+            if compareBuilds(build, "24A5355q") == .orderedAscending { return .belowMinimum }
+            return compareBuilds(build, "24B5089g") == .orderedDescending ? .aboveMaximum : .available
+        }
+        return .aboveMaximum
+    }
+
+    static var normalDeployAvailable: Bool { normalDeployGate == .available }
+    static var airliftDeployAvailable: Bool { airliftDeployGate == .available }
+
+    /// Apple build-train order: year digits, train letter,
+    /// finals (no letter suffix — RC / final releases) sort
+    /// AFTER the betas of the same train letter, then build
+    /// number, then the beta suffix letter. So 24B115 (27.2 RC)
+    /// sorts after 24B5089g (27.2 beta 2), and 24A435 (27.0 RC)
+    /// after the 27.0 betas but before every 24B build.
+    /// Unparseable strings fall back to a plain comparison.
+    static func compareBuilds(_ lhs: String, _ rhs: String) -> ComparisonResult {
+        func key(_ s: String) -> (Int, String, Int, Int, String)? {
+            guard let re = try? NSRegularExpression(pattern: #"^(\d+)([A-Z])(\d+)([a-z]?)$"#),
+                  let m = re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)),
+                  m.numberOfRanges == 5 else { return nil }
+            func group(_ i: Int) -> String {
+                let r = m.range(at: i)
+                guard r.location != NSNotFound, let range = Range(r, in: s) else { return "" }
+                return String(s[range])
+            }
+            return (Int(group(1)) ?? 0, group(2), group(4).isEmpty ? 1 : 0, Int(group(3)) ?? 0, group(4))
+        }
+        guard let l = key(lhs), let r = key(rhs) else {
+            return lhs.compare(rhs)
+        }
+        if l.0 != r.0 { return l.0 < r.0 ? .orderedAscending : .orderedDescending }
+        if l.1 != r.1 { return l.1 < r.1 ? .orderedAscending : .orderedDescending }
+        if l.2 != r.2 { return l.2 < r.2 ? .orderedAscending : .orderedDescending }
+        if l.3 != r.3 { return l.3 < r.3 ? .orderedAscending : .orderedDescending }
+        if l.4 != r.4 { return l.4 < r.4 ? .orderedAscending : .orderedDescending }
+        return .orderedSame
+    }
 }

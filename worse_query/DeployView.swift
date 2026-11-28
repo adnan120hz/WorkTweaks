@@ -396,6 +396,12 @@ struct DeployPreviewSection: View {
 
     @State private var wantsResolve = false
 
+    /// The chosen deploy method. Defaults to Normal when it is
+    /// available on this device, otherwise Airlift.
+    @State private var method: DeployMethod = DeployMethod.defaultMethod
+    /// Pairing + VPN status, for the Airlift transport gate.
+    @State private var transportStatus = TransportGate.check()
+
     private var isResolving: Bool {
         deployManager.isResolving || (wantsResolve && appDataManager.isScanning)
     }
@@ -410,6 +416,64 @@ struct DeployPreviewSection: View {
     var body: some View {
         Group {
             if let package {
+                // MARK: Deploy method (v8.0)
+                //
+                // Exactly two options, each with its supported
+                // iOS range and gated to that range. Normal is
+                // the existing worse_query flow; Airlift runs
+                // the same package flow through the Airlift
+                // exploit over the pairing + VPN tunnel.
+                WTSectionCard(header: wtLang.tr("Deploy Method")) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        methodRow(.normal)
+                        Divider()
+                            .padding(.leading, 14)
+                        methodRow(.airlift)
+                    }
+                }
+
+                if method == .airlift {
+                    if !transportStatus.isReady {
+                        TransportGateCard(status: transportStatus) {
+                            SoundEffects.playTap()
+                            transportStatus = TransportGate.check()
+                        }
+                    }
+                    WTSectionCard {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(wtLang.tr("Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History."))
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text(wtLang.tr("Files in subfolders are staged with their folders. Only flat (top-level) payloads are proven over Airlift so far."))
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text(wtLang.tr("AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel."))
+                                .fixedSize(horizontal: false, vertical: true)
+                            DisclosureGroup {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    ForEach(SupportInfo.airliftIOS17Releases) { rel in
+                                        HStack(spacing: 8) {
+                                            Text(rel.version)
+                                            Spacer()
+                                            Text(rel.build)
+                                                .font(.system(.caption, design: .monospaced))
+                                        }
+                                    }
+                                }
+                                .padding(.top, 6)
+                                Text(wtLang.tr("iOS 18, 26 and 27 follow the SupportInfo table (iOS 27 up to 27.2 beta 2)."))
+                                    .padding(.top, 6)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            } label: {
+                                Text(wtLang.tr("Airlift — supported iOS 17 versions"))
+                                    .font(.caption.weight(.semibold))
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                    }
+                }
+
                 WTSectionCard(header: wtLang.tr("Manifest")) {
                     VStack(alignment: .leading, spacing: 0) {
                         if let name = package.name {
@@ -450,7 +514,9 @@ struct DeployPreviewSection: View {
                     }
                 }
 
-                WTSectionCard(header: wtLang.tr("Target"), footer: wtLang.tr("Before anything is written, every file that already exists is backed up (see Deploy History). Existing files are then replaced in place; new files are created.")) {
+                WTSectionCard(header: wtLang.tr("Target"), footer: method == .airlift
+                    ? wtLang.tr("Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).")
+                    : wtLang.tr("Before anything is written, every file that already exists is backed up (see Deploy History). Existing files are then replaced in place; new files are created.")) {
                     VStack(alignment: .leading, spacing: 0) {
                         if isResolving {
                             HStack(spacing: 10) {
@@ -480,13 +546,18 @@ struct DeployPreviewSection: View {
                                 .padding(.leading, 14)
 
                             Button {
-                                deployManager.deploy(package: package)
+                                SoundEffects.playTap()
+                                if method == .airlift {
+                                    deployManager.deployViaAirlift(package: package)
+                                } else {
+                                    deployManager.deploy(package: package)
+                                }
                             } label: {
                                 Group {
                                     if deployManager.isDeploying {
                                         HStack(spacing: 8) {
                                             ProgressView()
-                                            Text(wtLang.tr("Applying…"))
+                                            Text(wtLang.tr(method == .airlift ? "Deploying via Airlift…" : "Applying…"))
                                         }
                                     } else {
                                         Text(wtLang.tr("Apply"))
@@ -498,7 +569,7 @@ struct DeployPreviewSection: View {
                                 .padding(.vertical, 11)
                                 .contentShape(Rectangle())
                             }
-                            .disabled(deployManager.isDeploying)
+                            .disabled(deployManager.isDeploying || !methodAvailable || (method == .airlift && !transportStatus.isReady))
                         } else {
                             Button {
                                 autoResolve()
@@ -522,7 +593,7 @@ struct DeployPreviewSection: View {
             }
 
             if let result = deployManager.lastResult {
-                WTSectionCard(header: wtLang.tr("Result — %d succeeded, %d failed", result.succeeded, result.failed), footer: result.receiptFolderName.map { wtLang.tr("Backup and receipt saved under DeployBackups/%@ — restore it any time from Deploy History.", $0) }) {
+                WTSectionCard(header: wtLang.tr("Result — %d succeeded, %d failed", result.succeeded, result.failed), footer: resultFooter(result)) {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(result.lines.enumerated()), id: \.element.id) { index, line in
                             if index > 0 {
@@ -538,6 +609,16 @@ struct DeployPreviewSection: View {
         }
         .onChange(of: packageKey) { _, _ in
             wantsResolve = false
+            transportStatus = TransportGate.check()
+        }
+        .onChange(of: method) { _, _ in
+            // The target resolves differently per method
+            // (Airlift can fall back to the tunnel lookup),
+            // so switching methods re-resolves from scratch.
+            deployManager.resolvedContainerPath = nil
+            deployManager.resolveError = nil
+            deployManager.lastResult = nil
+            autoResolve()
         }
         .onChange(of: resolveRequest) { _, _ in
             autoResolve()
@@ -545,9 +626,108 @@ struct DeployPreviewSection: View {
         .onChange(of: appDataManager.didScan) { _, done in
             if done, wantsResolve, let package, package.scope == "Application" {
                 wantsResolve = false
-                deployManager.resolveTarget(package: package, containers: appDataManager.containers)
+                deployManager.resolveTarget(package: package, containers: appDataManager.containers, viaAirlift: method == .airlift)
             }
         }
+    }
+
+    /// Whether the currently selected method is offered on
+    /// this device. The Apply button stays disabled otherwise.
+    private var methodAvailable: Bool {
+        method == .normal ? SupportInfo.normalDeployAvailable : SupportInfo.airliftDeployAvailable
+    }
+
+    /// One Deploy Method option row: title, supported iOS
+    /// range, what it does, and — when the gate closes it —
+    /// the honest reason, in orange. Unavailable options
+    /// cannot be selected.
+    private func methodRow(_ option: DeployMethod) -> some View {
+        let gate = option == .normal ? SupportInfo.normalDeployGate : SupportInfo.airliftDeployGate
+        let available = gate == .available
+        let selected = method == option
+        return Button {
+            guard available else { return }
+            SoundEffects.playTap()
+            method = option
+        } label: {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(selected ? Color.accentColor : .secondary)
+                    .font(.title3)
+                    .padding(.top, 1)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(wtLang.tr(option == .normal ? "Normal Deploy" : "Deploy via Airlift"))
+                            .font(.subheadline.weight(.semibold))
+                        if !available {
+                            Text(wtLang.tr("Not available on this iOS version"))
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                    Text(option == .normal ? "iOS 26.0 – iOS 27.3 beta 1" : "iOS 17 / 18 / 26 / 27 · iOS 27 up to 27.2 beta 2")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Text(wtLang.tr(option == .normal
+                        ? "Uses the sandbox escape (worse_query) to write files directly. No pairing file or VPN needed."
+                        : "Writes the package through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if !available {
+                        Text(gateReason(option, gate))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+            .opacity(available ? 1 : 0.75)
+        }
+        .buttonStyle(.plain)
+        .disabled(!available)
+    }
+
+    /// The user-facing reason a Deploy method is gated off on
+    /// this device.
+    private func gateReason(_ option: DeployMethod, _ gate: SupportInfo.DeployGate) -> String {
+        switch gate {
+        case .available:
+            return ""
+        case .belowMinimum:
+            return option == .normal
+                ? wtLang.tr("Requires iOS 26.0 or later.")
+                : wtLang.tr("Requires iOS 17 or later.")
+        case .aboveMaximum:
+            return option == .normal
+                ? wtLang.tr("Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.")
+                : wtLang.tr("Blocked above iOS 27.2 beta 2.")
+        case .unknownBuild:
+            return wtLang.tr("Could not read this iPhone's iOS build number.")
+        }
+    }
+
+    /// The result card footer: where the backup/receipt went,
+    /// plus any honest Airlift caveats (translated from the
+    /// result's note keys). When no backup was made, the folder
+    /// holds only the receipt — the footer says so instead of
+    /// promising a restore.
+    private func resultFooter(_ result: DeployRunResult) -> String? {
+        var parts: [String] = []
+        if let folder = result.receiptFolderName {
+            if result.noteKeys.contains("No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.") {
+                parts.append(wtLang.tr("Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.", folder))
+            } else {
+                parts.append(wtLang.tr("Backup and receipt saved under DeployBackups/%@ — restore it any time from Deploy History.", folder))
+            }
+        }
+        parts.append(contentsOf: result.noteKeys.map { wtLang.tr($0) })
+        guard !parts.isEmpty else { return nil }
+        return parts.joined(separator: "\n\n")
     }
 
     /// One line of a deploy/restore result: a status icon and
@@ -586,7 +766,7 @@ struct DeployPreviewSection: View {
             }
             return
         }
-        deployManager.resolveTarget(package: package, containers: appDataManager.containers)
+        deployManager.resolveTarget(package: package, containers: appDataManager.containers, viaAirlift: method == .airlift)
     }
 }
 

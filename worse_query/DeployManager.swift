@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import Compression
+import AirliftFFI
 
 // MARK: - Deploy (targeted file replacement packages)
 //
@@ -70,6 +71,13 @@ struct DeployReceipt: Codable {
     var containerPath: String
     var timestamp: String
     var files: [DeployReceiptFile]
+    /// True when the deploy ran via Airlift on a device where
+    /// the target container could not be read first (iOS 17/18:
+    /// no sandbox-extension grant and no FFI read primitive),
+    /// so files it replaced were NOT backed up. Restore refuses
+    /// such a receipt — it cannot know what the originals were.
+    /// Defaults to false so receipts written before v8.0 decode.
+    var backupUnavailable: Bool = false
 }
 
 struct DeployHistoryEntry: Identifiable {
@@ -91,8 +99,37 @@ struct DeployRunLine: Identifiable {
 struct DeployRunResult {
     let lines: [DeployRunLine]
     let receiptFolderName: String?
+    /// WTLang keys for honest caveats the result card renders
+    /// translated (e.g. Airlift writes that could not be
+    /// verified on-device, or a missing backup). Empty for a
+    /// plain Normal deploy.
+    var noteKeys: [String] = []
     var succeeded: Int { lines.filter(\.ok).count }
     var failed: Int { lines.count - succeeded }
+}
+
+// MARK: - Deploy method (v8.0)
+//
+// Deploy package has exactly two methods. Normal is the
+// existing flow (manifest → resolve → backup → write files →
+// receipt). Airlift runs the same flow but the file writes go
+// through the Airlift exploit (al_exploit_write_dir, the proven
+// FFI call behind the passcode and wallet flashes) over the
+// pairing + VPN tunnel, so it works on iOS 17/18/26/27 (iOS 27
+// capped at 27.2 beta 2) where worse_query does not. Which
+// method is offered is SupportInfo's gate, not this enum.
+
+enum DeployMethod: String, CaseIterable, Identifiable {
+    case normal
+    case airlift
+
+    var id: String { rawValue }
+
+    /// The method offered first: Normal when it is available
+    /// on this device, otherwise Airlift when it is.
+    static var defaultMethod: DeployMethod {
+        SupportInfo.normalDeployAvailable ? .normal : .airlift
+    }
 }
 
 // MARK: - Manager
@@ -404,7 +441,14 @@ final class DeployManager: ObservableObject {
     /// Application scope matches the App Data scan results;
     /// AppGroup / InternalDaemon enumerate their roots with
     /// the fork's pathleak helper and match by identifier.
-    func resolveTarget(package: LoadedDeployPackage, containers: [AppContainer]) {
+    /// With viaAirlift, an Application target the local scan
+    /// cannot find is looked up over the Airlift tunnel instead
+    /// (al_find_app_container — unproven in-app, same FFI
+    /// family as the proven write call; a failed lookup is an
+    /// honest error, never a guessed path). AppGroup and
+    /// InternalDaemon have no FFI resolver, so they stay
+    /// local-scan only even via Airlift.
+    func resolveTarget(package: LoadedDeployPackage, containers: [AppContainer], viaAirlift: Bool = false) {
         resolvedContainerPath = nil
         resolveError = nil
 
@@ -435,13 +479,23 @@ final class DeployManager: ObservableObject {
             isResolving = true
             print("[Deploy] no scan match for \(target) — enumerating the Application containers root directly…")
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                let found = Self.findContainer(root: AppDataManager.rootPath, identifier: target)
+                var found = Self.findContainer(root: AppDataManager.rootPath, identifier: target)
+                if found == nil, viaAirlift {
+                    // Local enumeration failed (expected on
+                    // iOS 17/18, where there is no escape to
+                    // enumerate with): ask the tunnel.
+                    print("[Deploy] direct enumeration found nothing for \(target) — trying the Airlift tunnel lookup…")
+                    found = Self.findContainerViaAirlift(bundleID: target)
+                }
                 DispatchQueue.main.async {
                     guard let self else { return }
                     self.isResolving = false
                     if let found {
                         self.resolvedContainerPath = found
                         print("[Deploy] resolved \(target) -> \(found) (direct enumeration)")
+                    } else if viaAirlift {
+                        self.resolveError = "Target container not found for \(target) — not in the local scan and the Airlift tunnel lookup failed too."
+                        print("[Deploy] no Application container matches \(target) — not in the scan, not in a direct enumeration, not over the tunnel")
                     } else {
                         self.resolveError = "Target container not found for \(target)"
                         print("[Deploy] no Application container matches \(target) — not in the scan and not in a direct enumeration")
@@ -464,12 +518,46 @@ final class DeployManager: ObservableObject {
                 if let found {
                     self.resolvedContainerPath = found
                     print("[Deploy] resolved \(package.bundleID) -> \(found)")
+                } else if viaAirlift {
+                    self.resolveError = "Target container not found for \(package.bundleID) — Airlift cannot look up \(package.scope) targets over the tunnel (only Application targets); the local container scan must find it."
+                    print("[Deploy] no container under \(root) matches \(package.bundleID) — Airlift has no resolver for this scope")
                 } else {
                     self.resolveError = "Target container not found for \(package.bundleID)"
                     print("[Deploy] no container under \(root) matches \(package.bundleID)")
                 }
             }
         }
+    }
+
+    /// Application-scope container lookup over the Airlift
+    /// tunnel (al_find_app_container). UNPROVEN in-app: no
+    /// Swift caller uses it yet — it is the same FFI family as
+    /// the proven al_exploit_write_dir, and a failure here is
+    /// an honest nil, never a guessed path. Blocks; call only
+    /// off the main thread. Nil without a pairing file.
+    private static func findContainerViaAirlift(bundleID: String) -> String? {
+        guard PairingStore.hasPairingFile else { return nil }
+        "10.7.0.1".withCString { _ = al_set_target_host($0) }
+        let pairingPath = PairingController.pairingFilePath()
+        var outContainer: UnsafeMutablePointer<CChar>? = nil
+        var outError: UnsafeMutablePointer<CChar>? = nil
+        let rc = pairingPath.withCString { pairC in
+            bundleID.withCString { idC in
+                al_find_app_container(pairC, idC, nil, nil, &outContainer, &outError)
+            }
+        }
+        if let p = outError {
+            print("[Deploy] Airlift container lookup error: \(String(validatingUTF8: p) ?? "rc=\(rc)")")
+            al_string_free(p)
+        }
+        guard rc == 0, let c = outContainer else {
+            if let c = outContainer { al_string_free(c) }
+            return nil
+        }
+        let path = String(cString: c)
+        al_string_free(c)
+        print("[Deploy] Airlift container lookup for \(bundleID) -> \(path)")
+        return path.isEmpty ? nil : path
     }
 
     /// Match a container under `root` by directory name or by
@@ -507,6 +595,239 @@ final class DeployManager: ObservableObject {
                     AppDataManager.shared.invalidateScanCache()
                 }
             }
+        }
+    }
+
+    // MARK: Deploy via Airlift
+    //
+    // Same package flow as Normal (manifest → resolve → backup
+    // → write → receipt), but the writes go through the Airlift
+    // exploit instead of the local sandbox-extension grant:
+    //
+    //   al_exploit_write_dir(pairing, stageDir, containerPath)
+    //
+    // — the PROVEN FFI call behind the passcode flash
+    // (TelephonyUI caches) and the wallet flash (.pkpass
+    // folders). The payloads are staged into a temp dir that
+    // mirrors their relative paths (subfolders included) and
+    // written in one call; the target host is pointed at the
+    // Local Dev VPN gateway (10.7.0.1) first, like the wallet
+    // flash does.
+    //
+    // HONEST LIMITS (read airlift.h — there is no read or
+    // download primitive in the FFI at all):
+    //   1. Backup: when the container can still be read locally
+    //      (iOS 26/27 — the sandbox-extension grant works), the
+    //      existing files are backed up exactly like Normal and
+    //      the receipt is a normal one. When it cannot (iOS
+    //      17/18 — no grant, no FFI read), the files the deploy
+    //      replaces are NOT backed up: backupUnavailable is set
+    //      on the receipt, the result says so, and Restore
+    //      refuses that receipt rather than guessing.
+    //   2. Verification: without a local grant the written files
+    //      cannot be read back, so a successful exploit return
+    //      (rc == 0) is reported as "Sent via Airlift", NOT as
+    //      "Replaced (size)". With a grant, sizes are verified
+    //      after the write and reported honestly.
+    //   3. Nested folders are staged as-is; only flat (top-level)
+    //      payloads are proven over Airlift so far (both existing
+    //      callers stage flat). The UI says so.
+    //   4. al_find_app_container (used by resolution) is
+    //      unproven in-app; a failed lookup is an honest error.
+
+    func deployViaAirlift(package: LoadedDeployPackage) {
+        guard let containerPath = resolvedContainerPath, !isDeploying else { return }
+        guard TransportGate.check().isReady else {
+            lastResult = DeployRunResult(
+                lines: [DeployRunLine(path: "", ok: false, message: "Deploy via Airlift needs the pairing file and the VPN tunnel — fix the transport card above, then try again.")],
+                receiptFolderName: nil
+            )
+            return
+        }
+        isDeploying = true
+        lastResult = nil
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result = Self.performDeployViaAirlift(package: package, containerPath: containerPath)
+            DispatchQueue.main.async {
+                self?.isDeploying = false
+                self?.lastResult = result
+                if result.succeeded > 0 {
+                    AppDataManager.shared.invalidateScanCache()
+                }
+            }
+        }
+    }
+
+    private static func performDeployViaAirlift(package: LoadedDeployPackage, containerPath: String) -> DeployRunResult {
+        guard let storeRoot = storeRootURL() else {
+            return DeployRunResult(
+                lines: [DeployRunLine(path: "", ok: false, message: "The App Group container is unavailable, so there is no backup store — nothing was deployed.")],
+                receiptFolderName: nil
+            )
+        }
+        let folderName = "\(timestampStamp())-\(package.bundleID.replacingOccurrences(of: "/", with: "_"))"
+        let backupDir = storeRoot.appendingPathComponent(folderName, isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: backupDir, withIntermediateDirectories: true)
+        } catch {
+            print("[Deploy] Airlift: could not create the backup folder \(backupDir.path): \(error)")
+            return DeployRunResult(
+                lines: [DeployRunLine(path: "", ok: false, message: "The backup folder could not be created — nothing was deployed.")],
+                receiptFolderName: nil
+            )
+        }
+
+        // 1. Backup first, when the container can be read
+        // locally at all. The grant is held across the whole
+        // deploy so the post-write size check can use it too.
+        let handle = consumeExtension(containerPath)
+        let hadGrant = handle > 0
+        print("[Deploy] Airlift grant for \(containerPath) -> \(handle)")
+        defer { if hadGrant { releaseExtension(handle) } }
+        let backupUnavailable = !hadGrant
+
+        var existedBefore: [String: Bool] = [:]
+        var backupError: [String: String] = [:]
+        if hadGrant {
+            for file in package.files {
+                let destPath = (containerPath as NSString).appendingPathComponent(file.relativePath)
+                let existed = FileManager.default.fileExists(atPath: destPath)
+                existedBefore[file.relativePath] = existed
+                guard existed else { continue }
+                let backupPath = backupDir.appendingPathComponent(file.relativePath).path
+                do {
+                    try FileManager.default.createDirectory(atPath: (backupPath as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+                    try FileManager.default.copyItem(atPath: destPath, toPath: backupPath)
+                    print("[Deploy] Airlift backed up \(file.relativePath)")
+                } catch {
+                    // A file whose backup failed is NOT deployed
+                    // at all — overwriting it without a backup
+                    // would destroy the original.
+                    backupError[file.relativePath] = error.localizedDescription
+                    print("[Deploy] Airlift backup failed for \(file.relativePath): \(error) — this file will not be deployed")
+                }
+            }
+        }
+        let deployableFiles = package.files.filter { backupError[$0.relativePath] == nil }
+
+        // 2. Stage the deployable payloads into a temp dir
+        // mirroring their relative paths, then one exploit write.
+        guard let stageDir = stagePayloadsForAirlift(deployableFiles) else {
+            return DeployRunResult(
+                lines: [DeployRunLine(path: "", ok: false, message: "The payloads could not be staged for the Airlift write — nothing was deployed.")],
+                receiptFolderName: nil
+            )
+        }
+        defer { try? FileManager.default.removeItem(at: stageDir) }
+
+        "10.7.0.1".withCString { _ = al_set_target_host($0) }
+        let pairingPath = PairingController.pairingFilePath()
+        var outError: UnsafeMutablePointer<CChar>? = nil
+        // Nothing deployable (every file failed its backup):
+        // skip the exploit call — there is nothing to write.
+        var rc: Int32 = 0
+        if !deployableFiles.isEmpty {
+            rc = pairingPath.withCString { pairC in
+                stageDir.path.withCString { srcC in
+                    containerPath.withCString { tgtC in
+                        al_exploit_write_dir(pairC, srcC, tgtC, nil, nil, &outError)
+                    }
+                }
+            }
+        }
+        var ffiError: String? = nil
+        if let p = outError {
+            ffiError = String(validatingUTF8: p)
+            al_string_free(p)
+        }
+        print("[Deploy] Airlift write_dir rc=\(rc) for \(containerPath)\(ffiError.map { " — \($0)" } ?? "")")
+
+        // 3. Per-file lines + receipt. A failed exploit call
+        // fails every file with its error; a successful one
+        // reports verified sizes when a grant exists, and
+        // "Sent via Airlift" (unverified) when it does not.
+        var lines: [DeployRunLine] = []
+        var receiptFiles: [DeployReceiptFile] = []
+        var noteKeys: [String] = []
+        // Files whose backup failed were never staged and never
+        // written — they fail here, honestly.
+        for file in package.files where backupError[file.relativePath] != nil {
+            lines.append(DeployRunLine(path: file.relativePath, ok: false, message: "Backup failed: \(backupError[file.relativePath] ?? "") — not deployed"))
+            receiptFiles.append(DeployReceiptFile(path: file.relativePath, existedBefore: true, size: file.data.count, status: "failed"))
+        }
+        if rc != 0 {
+            for file in deployableFiles {
+                lines.append(DeployRunLine(path: file.relativePath, ok: false, message: "Airlift write failed: \(ffiError ?? "exploit error (rc=\(rc))")"))
+                receiptFiles.append(DeployReceiptFile(path: file.relativePath, existedBefore: existedBefore[file.relativePath] ?? false, size: file.data.count, status: "failed"))
+            }
+        } else {
+            if backupUnavailable {
+                noteKeys.append("No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.")
+            }
+            if !hadGrant {
+                noteKeys.append("Airlift wrote the files, but they could not be verified on-device — the exploit reported success.")
+            }
+            for file in deployableFiles {
+                let destPath = (containerPath as NSString).appendingPathComponent(file.relativePath)
+                let existed = existedBefore[file.relativePath] ?? false
+                if hadGrant {
+                    let size = (try? FileManager.default.attributesOfItem(atPath: destPath))?[.size] as? NSNumber
+                    if size?.int64Value == Int64(file.data.count) {
+                        lines.append(DeployRunLine(path: file.relativePath, ok: true, message: existed
+                            ? "Replaced (\(wtFormatSize(Int64(file.data.count))))"
+                            : "Created (\(wtFormatSize(Int64(file.data.count))))"))
+                    } else {
+                        lines.append(DeployRunLine(path: file.relativePath, ok: false, message: "Size check failed after writing"))
+                    }
+                    receiptFiles.append(DeployReceiptFile(path: file.relativePath, existedBefore: existed, size: file.data.count, status: lines.last?.ok == true ? "ok" : "failed"))
+                } else {
+                    lines.append(DeployRunLine(path: file.relativePath, ok: true, message: "Sent via Airlift"))
+                    receiptFiles.append(DeployReceiptFile(path: file.relativePath, existedBefore: false, size: file.data.count, status: "ok"))
+                }
+                print("[Deploy] Airlift \(file.relativePath): \(lines.last?.ok == true ? "ok" : "FAILED") — \(lines.last?.message ?? "")")
+            }
+        }
+
+        let receipt = DeployReceipt(
+            name: package.name,
+            bundleID: package.bundleID,
+            scope: package.scope,
+            containerPath: containerPath,
+            timestamp: ISO8601DateFormatter().string(from: Date()),
+            files: receiptFiles,
+            backupUnavailable: backupUnavailable
+        )
+        let receiptURL = backupDir.appendingPathComponent("receipt.json")
+        if let receiptData = try? JSONEncoder().encode(receipt) {
+            try? receiptData.write(to: receiptURL)
+            print("[Deploy] Airlift receipt written to \(receiptURL.path)")
+        } else {
+            print("[Deploy] WARNING: the Airlift receipt could not be written — this deploy will not appear in Deploy History.")
+        }
+
+        var result = DeployRunResult(lines: lines, receiptFolderName: folderName)
+        result.noteKeys = noteKeys
+        return result
+    }
+
+    /// Stage payload files into a temp dir that mirrors their
+    /// relative paths (subfolders included), ready for one
+    /// al_exploit_write_dir call. Nil when staging fails.
+    private static func stagePayloadsForAirlift(_ files: [LoadedDeployFile]) -> URL? {
+        let stageDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("airlift_deploy_\(UUID().uuidString)", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: stageDir, withIntermediateDirectories: true)
+            for file in files {
+                let dest = stageDir.appendingPathComponent(file.relativePath)
+                try FileManager.default.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try file.data.write(to: dest)
+            }
+            return stageDir
+        } catch {
+            print("[Deploy] Airlift staging failed: \(error)")
+            try? FileManager.default.removeItem(at: stageDir)
+            return nil
         }
     }
 
@@ -679,6 +1000,18 @@ final class DeployManager: ObservableObject {
     private static func performRestore(entry: DeployHistoryEntry, containers: [AppContainer]) -> DeployRunResult {
         let receipt = entry.receipt
         print("[Deploy] restore of \(entry.folderName) started (\(receipt.bundleID), scope \(receipt.scope))")
+
+        // A receipt whose deploy could not back anything up
+        // (Airlift on iOS 17/18) holds no originals at all:
+        // restoring would have to guess, so it refuses outright
+        // instead of deleting files it cannot replace.
+        if receipt.backupUnavailable {
+            print("[Deploy] restore refused — receipt \(entry.folderName) has no backup (Airlift could not read the originals)")
+            return DeployRunResult(
+                lines: [DeployRunLine(path: "", ok: false, message: "No backup was made for this deploy (Airlift on iOS 17/18 cannot read the originals), so nothing can be restored automatically.")],
+                receiptFolderName: nil
+            )
+        }
 
         // The recorded container path is used while it still
         // exists; otherwise the target is re-resolved by

@@ -1057,6 +1057,28 @@ enum WTStrings {
 
         "Live console output — newest lines at the bottom.": "Keluaran konsol langsung — baris terbaru ada di bawah.",
 
+        "Deploy Method": "Metode Deploy",
+        "Normal Deploy": "Deploy Normal",
+        "Deploy via Airlift": "Deploy via Airlift",
+        "Uses the sandbox escape (worse_query) to write files directly. No pairing file or VPN needed.": "Menggunakan sandbox escape (worse_query) untuk menulis file secara langsung. Tidak perlu file pairing atau VPN.",
+        "Writes the package through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first.": "Menulis paket melalui exploit Airlift lewat tunnel pairing + VPN. Transport di bawah harus siap dulu.",
+        "Not available on this iOS version": "Tidak tersedia di versi iOS ini",
+        "Requires iOS 26.0 or later.": "Membutuhkan iOS 26.0 atau lebih baru.",
+        "Requires iOS 17 or later.": "Membutuhkan iOS 17 atau lebih baru.",
+        "Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.": "Diblokir di atas iOS 27.3 beta 1 — worse_query sudah ditambal di iOS 27.3 beta 2.",
+        "Blocked above iOS 27.2 beta 2.": "Diblokir di atas iOS 27.2 beta 2.",
+        "Could not read this iPhone's iOS build number.": "Tidak bisa membaca nomor build iOS iPhone ini.",
+        "Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History.": "Airlift tidak bisa mencadangkan file yang digantinya di iOS 17/18 — exploit bisa menulis tapi tidak bisa membaca kembali. Di iOS 26/27 cadangan dibuat dulu saat container bisa dibaca. File yang diganti tanpa cadangan tidak bisa dipulihkan dari Deploy History.",
+        "Files in subfolders are staged with their folders. Only flat (top-level) payloads are proven over Airlift so far.": "File di subfolder dipentaskan beserta foldernya. Sejauh ini hanya payload datar (level atas) yang terbukti lewat Airlift.",
+        "AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel.": "Target AppGroup dan InternalDaemon dicari dari pemindaian container lokal; di iOS 17/18 hanya target Application yang bisa ditemukan lewat tunnel.",
+        "Airlift — supported iOS 17 versions": "Airlift — versi iOS 17 yang didukung",
+        "iOS 18, 26 and 27 follow the SupportInfo table (iOS 27 up to 27.2 beta 2).": "iOS 18, 26 dan 27 mengikuti tabel SupportInfo (iOS 27 sampai 27.2 beta 2).",
+        "Deploying via Airlift…": "Deploy via Airlift…",
+        "No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.": "Tidak ada cadangan yang dibuat — container target tidak bisa dibaca, jadi file yang diganti deploy ini tidak bisa dipulihkan dari Deploy History.",
+        "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "Airlift sudah menulis file, tapi tidak bisa diverifikasi di perangkat — exploit melaporkan berhasil.",
+        "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "File ditulis melalui exploit Airlift. Cadangan dibuat dulu hanya saat container bisa dibaca (iOS 26/27).",
+        "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Tanda terima disimpan di DeployBackups/%@ — tidak ada cadangan yang dibuat, jadi deploy ini tidak bisa dipulihkan.",
+
     ]
 
     // Chinese (Simplified)
@@ -1979,6 +2001,28 @@ enum WTStrings {
         "Continue": "继续",
 
         "Live console output — newest lines at the bottom.": "实时控制台输出——最新行在底部。",
+
+        "Deploy Method": "部署方式",
+        "Normal Deploy": "常规部署",
+        "Deploy via Airlift": "通过 Airlift 部署",
+        "Uses the sandbox escape (worse_query) to write files directly. No pairing file or VPN needed.": "使用沙盒逃逸（worse_query）直接写入文件。无需配对文件或 VPN。",
+        "Writes the package through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first.": "通过配对 + VPN 通道，使用 Airlift 漏洞写入安装包。须先准备好下方的传输通道。",
+        "Not available on this iOS version": "在此 iOS 版本上不可用",
+        "Requires iOS 26.0 or later.": "需要 iOS 26.0 或更高版本。",
+        "Requires iOS 17 or later.": "需要 iOS 17 或更高版本。",
+        "Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.": "在 iOS 27.3 beta 1 以上被阻止——worse_query 已在 iOS 27.3 beta 2 中被修复。",
+        "Blocked above iOS 27.2 beta 2.": "在 iOS 27.2 beta 2 以上被阻止。",
+        "Could not read this iPhone's iOS build number.": "无法读取此 iPhone 的 iOS 构建号。",
+        "Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History.": "Airlift 在 iOS 17/18 上无法备份它替换的文件——漏洞可以写入，但无法读回。在 iOS 26/27 上，若容器可读，会先创建备份。没有备份而被替换的文件无法从 Deploy History 恢复。",
+        "Files in subfolders are staged with their folders. Only flat (top-level) payloads are proven over Airlift so far.": "子文件夹中的文件会连同文件夹一起暂存。目前为止，仅证明顶层（扁平）负载可通过 Airlift 传输。",
+        "AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel.": "AppGroup 与 InternalDaemon 目标通过本地容器扫描解析；在 iOS 17/18 上，只有 Application 目标能通过通道找到。",
+        "Airlift — supported iOS 17 versions": "Airlift——支持的 iOS 17 版本",
+        "iOS 18, 26 and 27 follow the SupportInfo table (iOS 27 up to 27.2 beta 2).": "iOS 18、26 和 27 遵循 SupportInfo 表（iOS 27 最高至 27.2 beta 2）。",
+        "Deploying via Airlift…": "正在通过 Airlift 部署…",
+        "No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.": "未创建备份——无法读取目标容器，因此本次部署替换的文件无法从 Deploy History 恢复。",
+        "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "Airlift 已写入文件，但无法在设备上验证——漏洞报告成功。",
+        "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "文件通过 Airlift 漏洞写入。仅当容器可读时（iOS 26/27）才会先创建备份。",
+        "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "收据已保存至 DeployBackups/%@——未创建备份，因此本次部署无法恢复。",
 
     ]
 
@@ -2903,6 +2947,28 @@ enum WTStrings {
 
         "Live console output — newest lines at the bottom.": "Đầu ra console trực tiếp — dòng mới nhất ở dưới cùng.",
 
+        "Deploy Method": "Phương thức triển khai",
+        "Normal Deploy": "Triển khai thường",
+        "Deploy via Airlift": "Triển khai qua Airlift",
+        "Uses the sandbox escape (worse_query) to write files directly. No pairing file or VPN needed.": "Dùng sandbox escape (worse_query) để ghi file trực tiếp. Không cần file pairing hay VPN.",
+        "Writes the package through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first.": "Ghi gói qua exploit Airlift trên đường hầm pairing + VPN. Transport bên dưới phải sẵn sàng trước.",
+        "Not available on this iOS version": "Không khả dụng trên phiên bản iOS này",
+        "Requires iOS 26.0 or later.": "Yêu cầu iOS 26.0 trở lên.",
+        "Requires iOS 17 or later.": "Yêu cầu iOS 17 trở lên.",
+        "Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.": "Bị chặn trên iOS 27.3 beta 1 — worse_query đã bị vá trong iOS 27.3 beta 2.",
+        "Blocked above iOS 27.2 beta 2.": "Bị chặn trên iOS 27.2 beta 2.",
+        "Could not read this iPhone's iOS build number.": "Không đọc được số build iOS của iPhone này.",
+        "Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History.": "Airlift không thể sao lưu các file nó thay thế trên iOS 17/18 — exploit ghi được nhưng không đọc lại được. Trên iOS 26/27, bản sao lưu được tạo trước khi container đọc được. File bị thay thế mà không có sao lưu thì không thể khôi phục từ Deploy History.",
+        "Files in subfolders are staged with their folders. Only flat (top-level) payloads are proven over Airlift so far.": "File trong thư mục con được dàn dựng kèm thư mục. Đến nay chỉ payload phẳng (cấp cao nhất) được chứng minh qua Airlift.",
+        "AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel.": "Mục tiêu AppGroup và InternalDaemon được tìm từ lần quét container cục bộ; trên iOS 17/18 chỉ mục tiêu Application mới tìm được qua đường hầm.",
+        "Airlift — supported iOS 17 versions": "Airlift — các phiên bản iOS 17 được hỗ trợ",
+        "iOS 18, 26 and 27 follow the SupportInfo table (iOS 27 up to 27.2 beta 2).": "iOS 18, 26 và 27 theo bảng SupportInfo (iOS 27 tối đa 27.2 beta 2).",
+        "Deploying via Airlift…": "Đang triển khai qua Airlift…",
+        "No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.": "Không có bản sao lưu nào được tạo — không đọc được container đích, nên các file bản triển khai này thay thế không thể khôi phục từ Deploy History.",
+        "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "Airlift đã ghi các file, nhưng không thể xác minh trên thiết bị — exploit báo thành công.",
+        "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "File được ghi qua exploit Airlift. Bản sao lưu chỉ được tạo trước khi container đọc được (iOS 26/27).",
+        "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Biên nhận đã lưu trong DeployBackups/%@ — không có bản sao lưu nào được tạo, nên bản triển khai này không thể khôi phục.",
+
     ]
 
     // Russian
@@ -3826,6 +3892,28 @@ enum WTStrings {
 
         "Live console output — newest lines at the bottom.": "Живой вывод консоли — новые строки внизу.",
 
+        "Deploy Method": "Способ развёртывания",
+        "Normal Deploy": "Обычное развёртывание",
+        "Deploy via Airlift": "Развёртывание через Airlift",
+        "Uses the sandbox escape (worse_query) to write files directly. No pairing file or VPN needed.": "Использует sandbox escape (worse_query) для прямой записи файлов. Файл сопряжения и VPN не нужны.",
+        "Writes the package through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first.": "Записывает пакет через эксплойт Airlift по туннелю сопряжения + VPN. Сначала должен быть готов транспорт ниже.",
+        "Not available on this iOS version": "Недоступно в этой версии iOS",
+        "Requires iOS 26.0 or later.": "Требуется iOS 26.0 или новее.",
+        "Requires iOS 17 or later.": "Требуется iOS 17 или новее.",
+        "Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.": "Заблокировано выше iOS 27.3 beta 1 — worse_query исправлен в iOS 27.3 beta 2.",
+        "Blocked above iOS 27.2 beta 2.": "Заблокировано выше iOS 27.2 beta 2.",
+        "Could not read this iPhone's iOS build number.": "Не удалось прочитать номер сборки iOS этого iPhone.",
+        "Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History.": "Airlift не может сохранить резервные копии заменяемых файлов на iOS 17/18 — эксплойт записывает, но не может прочитать обратно. На iOS 26/27 резервная копия создаётся заранее, если контейнер читается. Файлы, заменённые без резервной копии, нельзя восстановить из Deploy History.",
+        "Files in subfolders are staged with their folders. Only flat (top-level) payloads are proven over Airlift so far.": "Файлы во вложенных папках подготавливаются вместе с папками. Пока через Airlift проверены только плоские (верхнего уровня) пакеты.",
+        "AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel.": "Цели AppGroup и InternalDaemon ищутся локальным сканированием контейнеров; на iOS 17/18 через туннель находятся только цели Application.",
+        "Airlift — supported iOS 17 versions": "Airlift — поддерживаемые версии iOS 17",
+        "iOS 18, 26 and 27 follow the SupportInfo table (iOS 27 up to 27.2 beta 2).": "iOS 18, 26 и 27 — по таблице SupportInfo (iOS 27 максимум до 27.2 beta 2).",
+        "Deploying via Airlift…": "Развёртывание через Airlift…",
+        "No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.": "Резервная копия не создана — целевой контейнер не читается, поэтому заменённые файлы нельзя восстановить из Deploy History.",
+        "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "Airlift записал файлы, но проверить их на устройстве не удалось — эксплойт сообщил об успехе.",
+        "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "Файлы записываются через эксплойт Airlift. Резервная копия создаётся заранее только если контейнер читается (iOS 26/27).",
+        "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Квитанция сохранена в DeployBackups/%@ — резервная копия не создана, поэтому это развёртывание нельзя восстановить.",
+
     ]
 
     // ar
@@ -4739,6 +4827,28 @@ enum WTStrings {
         "Continue": "متابعة",
 
         "Live console output — newest lines at the bottom.": "مخرجات وحدة التحكم المباشرة — أحدث الأسطر في الأسفل.",
+
+        "Deploy Method": "طريقة النشر",
+        "Normal Deploy": "النشر العادي",
+        "Deploy via Airlift": "النشر عبر Airlift",
+        "Uses the sandbox escape (worse_query) to write files directly. No pairing file or VPN needed.": "يستخدم تجاوز الحماية (worse_query) لكتابة الملفات مباشرة. لا حاجة لملف اقتران أو VPN.",
+        "Writes the package through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first.": "يكتب الحزمة عبر ثغرة Airlift من خلال نفق الاقتران + VPN. يجب أن يكون النقل أدناه جاهزًا أولًا.",
+        "Not available on this iOS version": "غير متاح في إصدار iOS هذا",
+        "Requires iOS 26.0 or later.": "يتطلب iOS 26.0 أو أحدث.",
+        "Requires iOS 17 or later.": "يتطلب iOS 17 أو أحدث.",
+        "Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.": "محظور فوق iOS 27.3 beta 1 — تم إصلاح worse_query في iOS 27.3 beta 2.",
+        "Blocked above iOS 27.2 beta 2.": "محظور فوق iOS 27.2 beta 2.",
+        "Could not read this iPhone's iOS build number.": "تعذّر قراءة رقم بناء iOS لهذا iPhone.",
+        "Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History.": "لا يستطيع Airlift نسخ الملفات التي يستبدلها احتياطيًا على iOS 17/18 — الثغرة تكتب لكنها لا تستطيع القراءة مجددًا. على iOS 26/27، تُنشأ نسخة احتياطية أولًا عندما تكون الحاوية قابلة للقراءة. الملفات المستبدلة دون نسخة احتياطية لا يمكن استعادتها من Deploy History.",
+        "Files in subfolders are staged with their folders. Only flat (top-level) payloads are proven over Airlift so far.": "تُجهَّز الملفات في المجلدات الفرعية مع مجلداتها. حتى الآن، الحمولات المسطّحة (المستوى الأعلى) فقط هي المثبتة عبر Airlift.",
+        "AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel.": "تُحل أهداف AppGroup وInternalDaemon من فحص الحاوية المحلي؛ على iOS 17/18، أهداف Application فقط هي التي يمكن العثور عليها عبر النفق.",
+        "Airlift — supported iOS 17 versions": "Airlift — إصدارات iOS 17 المدعومة",
+        "iOS 18, 26 and 27 follow the SupportInfo table (iOS 27 up to 27.2 beta 2).": "تتبع إصدارات iOS 18 و26 و27 جدول SupportInfo (iOS 27 حتى 27.2 beta 2 كحد أقصى).",
+        "Deploying via Airlift…": "جارٍ النشر عبر Airlift…",
+        "No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.": "لم تُنشأ نسخة احتياطية — تعذّرت قراءة الحاوية الهدف، لذا لا يمكن استعادة الملفات التي استبدلها هذا النشر من Deploy History.",
+        "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "كتب Airlift الملفات، لكن تعذّر التحقق منها على الجهاز — أبلغت الثغرة عن النجاح.",
+        "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "تُكتب الملفات عبر ثغرة Airlift. تُنشأ نسخة احتياطية أولًا فقط عندما تكون الحاوية قابلة للقراءة (iOS 26/27).",
+        "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "تم حفظ الإيصال في DeployBackups/%@ — لم تُنشأ نسخة احتياطية، لذا لا يمكن استعادة هذا النشر.",
 
     ]
 
@@ -5654,6 +5764,28 @@ enum WTStrings {
 
         "Live console output — newest lines at the bottom.": "Saída do console ao vivo — as linhas mais recentes ficam embaixo.",
 
+        "Deploy Method": "Método de implantação",
+        "Normal Deploy": "Implantação normal",
+        "Deploy via Airlift": "Implantação via Airlift",
+        "Uses the sandbox escape (worse_query) to write files directly. No pairing file or VPN needed.": "Usa o sandbox escape (worse_query) para gravar arquivos diretamente. Não precisa de arquivo de pareamento nem de VPN.",
+        "Writes the package through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first.": "Grava o pacote pelo exploit Airlift através do túnel de pareamento + VPN. O transporte abaixo precisa estar pronto primeiro.",
+        "Not available on this iOS version": "Não disponível nesta versão do iOS",
+        "Requires iOS 26.0 or later.": "Requer iOS 26.0 ou posterior.",
+        "Requires iOS 17 or later.": "Requer iOS 17 ou posterior.",
+        "Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.": "Bloqueado acima do iOS 27.3 beta 1 — o worse_query foi corrigido no iOS 27.3 beta 2.",
+        "Blocked above iOS 27.2 beta 2.": "Bloqueado acima do iOS 27.2 beta 2.",
+        "Could not read this iPhone's iOS build number.": "Não foi possível ler o número de build do iOS deste iPhone.",
+        "Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History.": "O Airlift não consegue fazer backup dos arquivos que substitui no iOS 17/18 — o exploit grava, mas não consegue ler de volta. No iOS 26/27, um backup é feito antes quando o contêiner pode ser lido. Arquivos substituídos sem backup não podem ser restaurados pelo Deploy History.",
+        "Files in subfolders are staged with their folders. Only flat (top-level) payloads are proven over Airlift so far.": "Arquivos em subpastas são preparados com suas pastas. Até agora, apenas pacotes simples (de nível superior) foram comprovados via Airlift.",
+        "AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel.": "Alvos AppGroup e InternalDaemon são resolvidos pela varredura local de contêineres; no iOS 17/18, apenas alvos Application podem ser encontrados pelo túnel.",
+        "Airlift — supported iOS 17 versions": "Airlift — versões do iOS 17 suportadas",
+        "iOS 18, 26 and 27 follow the SupportInfo table (iOS 27 up to 27.2 beta 2).": "iOS 18, 26 e 27 seguem a tabela SupportInfo (iOS 27 até o 27.2 beta 2).",
+        "Deploying via Airlift…": "Implantando via Airlift…",
+        "No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.": "Nenhum backup foi feito — o contêiner de destino não pôde ser lido, então os arquivos substituídos por esta implantação não podem ser restaurados pelo Deploy History.",
+        "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "O Airlift gravou os arquivos, mas não foi possível verificá-los no dispositivo — o exploit relatou sucesso.",
+        "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "Os arquivos são gravados pelo exploit Airlift. Um backup só é feito antes quando o contêiner pode ser lido (iOS 26/27).",
+        "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Recibo salvo em DeployBackups/%@ — nenhum backup foi feito, então esta implantação não pode ser restaurada.",
+
     ]
 
     // es
@@ -6568,6 +6700,28 @@ enum WTStrings {
 
         "Live console output — newest lines at the bottom.": "Salida de consola en vivo: las líneas más recientes están abajo.",
 
+        "Deploy Method": "Método de implementación",
+        "Normal Deploy": "Implementación normal",
+        "Deploy via Airlift": "Implementación vía Airlift",
+        "Uses the sandbox escape (worse_query) to write files directly. No pairing file or VPN needed.": "Usa el escape de sandbox (worse_query) para escribir archivos directamente. No necesita archivo de emparejamiento ni VPN.",
+        "Writes the package through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first.": "Escribe el paquete a través del exploit Airlift por el túnel de emparejamiento + VPN. El transporte de abajo debe estar listo primero.",
+        "Not available on this iOS version": "No disponible en esta versión de iOS",
+        "Requires iOS 26.0 or later.": "Requiere iOS 26.0 o posterior.",
+        "Requires iOS 17 or later.": "Requiere iOS 17 o posterior.",
+        "Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.": "Bloqueado por encima de iOS 27.3 beta 1 — worse_query fue corregido en iOS 27.3 beta 2.",
+        "Blocked above iOS 27.2 beta 2.": "Bloqueado por encima de iOS 27.2 beta 2.",
+        "Could not read this iPhone's iOS build number.": "No se pudo leer el número de compilación de iOS de este iPhone.",
+        "Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History.": "Airlift no puede respaldar los archivos que reemplaza en iOS 17/18 — el exploit escribe pero no puede leerlos de vuelta. En iOS 26/27, se hace un respaldo antes cuando el contenedor se puede leer. Los archivos reemplazados sin respaldo no se pueden restaurar desde Deploy History.",
+        "Files in subfolders are staged with their folders. Only flat (top-level) payloads are proven over Airlift so far.": "Los archivos en subcarpetas se preparan con sus carpetas. Hasta ahora, solo las cargas simples (de nivel superior) están comprobadas vía Airlift.",
+        "AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel.": "Los destinos AppGroup e InternalDaemon se resuelven con el escaneo local de contenedores; en iOS 17/18, solo los destinos Application se pueden encontrar por el túnel.",
+        "Airlift — supported iOS 17 versions": "Airlift — versiones de iOS 17 compatibles",
+        "iOS 18, 26 and 27 follow the SupportInfo table (iOS 27 up to 27.2 beta 2).": "iOS 18, 26 y 27 siguen la tabla SupportInfo (iOS 27 hasta 27.2 beta 2).",
+        "Deploying via Airlift…": "Implementando vía Airlift…",
+        "No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.": "No se hizo ningún respaldo — no se pudo leer el contenedor de destino, así que los archivos reemplazados por esta implementación no se pueden restaurar desde Deploy History.",
+        "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "Airlift escribió los archivos, pero no se pudieron verificar en el dispositivo — el exploit informó éxito.",
+        "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "Los archivos se escriben a través del exploit Airlift. Solo se hace un respaldo antes cuando el contenedor se puede leer (iOS 26/27).",
+        "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Recibo guardado en DeployBackups/%@ — no se hizo ningún respaldo, así que esta implementación no se puede restaurar.",
+
     ]
 
     // fr
@@ -7481,6 +7635,28 @@ enum WTStrings {
         "Continue": "Continuer",
 
         "Live console output — newest lines at the bottom.": "Sortie console en direct — les lignes les plus récentes sont en bas.",
+
+        "Deploy Method": "Méthode de déploiement",
+        "Normal Deploy": "Déploiement normal",
+        "Deploy via Airlift": "Déploiement via Airlift",
+        "Uses the sandbox escape (worse_query) to write files directly. No pairing file or VPN needed.": "Utilise l'échappement sandbox (worse_query) pour écrire les fichiers directement. Aucun fichier d'appairage ni VPN requis.",
+        "Writes the package through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first.": "Écrit le paquet via l'exploit Airlift à travers le tunnel d'appairage + VPN. Le transport ci-dessous doit d'abord être prêt.",
+        "Not available on this iOS version": "Non disponible sur cette version d'iOS",
+        "Requires iOS 26.0 or later.": "Nécessite iOS 26.0 ou version ultérieure.",
+        "Requires iOS 17 or later.": "Nécessite iOS 17 ou version ultérieure.",
+        "Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.": "Bloqué au-dessus d'iOS 27.3 bêta 1 — worse_query est corrigé dans iOS 27.3 bêta 2.",
+        "Blocked above iOS 27.2 beta 2.": "Bloqué au-dessus d'iOS 27.2 bêta 2.",
+        "Could not read this iPhone's iOS build number.": "Impossible de lire le numéro de build iOS de cet iPhone.",
+        "Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History.": "Airlift ne peut pas sauvegarder les fichiers qu'il remplace sur iOS 17/18 — l'exploit écrit mais ne peut pas relire. Sur iOS 26/27, une sauvegarde est faite d'abord quand le conteneur est lisible. Les fichiers remplacés sans sauvegarde ne peuvent pas être restaurés depuis Deploy History.",
+        "Files in subfolders are staged with their folders. Only flat (top-level) payloads are proven over Airlift so far.": "Les fichiers des sous-dossiers sont préparés avec leurs dossiers. Jusqu'ici, seules les charges simples (de premier niveau) sont prouvées via Airlift.",
+        "AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel.": "Les cibles AppGroup et InternalDaemon sont résolues par l'analyse locale des conteneurs ; sur iOS 17/18, seules les cibles Application peuvent être trouvées via le tunnel.",
+        "Airlift — supported iOS 17 versions": "Airlift — versions iOS 17 prises en charge",
+        "iOS 18, 26 and 27 follow the SupportInfo table (iOS 27 up to 27.2 beta 2).": "iOS 18, 26 et 27 suivent le tableau SupportInfo (iOS 27 jusqu'à 27.2 bêta 2).",
+        "Deploying via Airlift…": "Déploiement via Airlift…",
+        "No backup was made — the target container could not be read, so files this deploy replaced cannot be restored from Deploy History.": "Aucune sauvegarde n'a été faite — le conteneur cible n'a pas pu être lu, donc les fichiers remplacés par ce déploiement ne peuvent pas être restaurés depuis Deploy History.",
+        "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "Airlift a écrit les fichiers, mais ils n'ont pas pu être vérifiés sur l'appareil — l'exploit a signalé un succès.",
+        "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "Les fichiers sont écrits via l'exploit Airlift. Une sauvegarde n'est faite d'abord que lorsque le conteneur est lisible (iOS 26/27).",
+        "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Reçu enregistré dans DeployBackups/%@ — aucune sauvegarde n'a été faite, donc ce déploiement ne peut pas être restauré.",
 
     ]
 }
