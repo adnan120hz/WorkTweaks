@@ -175,6 +175,9 @@ struct DeployBuilderView: View {
                                 .contentShape(Rectangle())
                         }
                     }
+                    // The scope footer and bundle-ID warning
+                    // animate instead of snapping (v8.0).
+                    .animation(.wtMenu, value: scope)
                 }
 
                 WTSectionCard(

@@ -122,6 +122,11 @@ struct PosterBoardView: View {
                 }
             }
         }
+        // Status, result and receipt rows animate in/out
+        // instead of snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: manager.lastResult != nil)
+        .animation(.wtMenu, value: manager.receipts.count)
+        .animation(.wtMenu, value: manager.isBusy)
         .navigationTitle("PosterBoard")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

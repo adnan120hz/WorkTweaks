@@ -210,6 +210,11 @@ struct SandboxView: View {
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
+                    // Master switch, UI picker and sounds toggle
+                    // animate instead of snapping (v8.0).
+                    .animation(.wtMenu, value: tweaksEnabled)
+                    .animation(.wtMenu, value: tweaksUIVersion)
+                    .animation(.wtMenu, value: soundEffectsEnabled)
                 }
 
                 // Utility menus — each opens its own page.
@@ -451,6 +456,9 @@ struct SandboxEscapePage: View {
                     }
                     .disabled(!isConsumed)
                 }
+                // Consume/release state changes animate
+                // instead of snapping (v8.0 menu motion).
+                .animation(.wtMenu, value: isConsumed)
             }
 
             WTSectionCard(header: lang.tr("Utilities")) {

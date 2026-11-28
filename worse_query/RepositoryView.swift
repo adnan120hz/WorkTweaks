@@ -199,6 +199,9 @@ struct RepositoryView: View {
                 }
             }
         }
+        // The "Installed" badge animates in instead of
+        // snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: installedBundleIDs)
         .navigationTitle("Adnan.120hz Repository")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

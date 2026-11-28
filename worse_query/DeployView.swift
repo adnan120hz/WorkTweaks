@@ -120,6 +120,10 @@ struct DeployView: View {
                 .padding(.vertical, 10)
             }
         }
+        // Package preview and rejection card animate in/out
+        // instead of snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: package != nil)
+        .animation(.wtMenu, value: importError != nil)
         .navigationTitle(wtLang.tr("Deploy"))
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: deployPackageContentTypes()) { result in

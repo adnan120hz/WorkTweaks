@@ -89,6 +89,9 @@ struct CacheExtraView: View {
                             }
                         }
                         .padding(.vertical, 4)
+                        // Key rows animate in/out as the
+                        // dictionary changes (v8.0 menu motion).
+                        .animation(.wtMenu, value: manager.dictVersion)
                     }
                 }
 
@@ -243,6 +246,9 @@ struct ExtraKeyEditor: View {
                                     .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                             }
                         }
+                        // The value field swaps with motion when
+                        // the type picker changes (v8.0).
+                        .animation(.wtMenu, value: kind)
                     }
                 }
 

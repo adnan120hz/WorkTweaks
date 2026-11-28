@@ -133,6 +133,8 @@ struct RootView: View {
         .onChange(of: selectedTab) { _, _ in
             SoundEffects.playSwipe()
         }
+        // Tab switches animate (v8.0 menu motion).
+        .animation(.wtMenu, value: selectedTab)
         .onAppear {
             console.start()
             gestalt.load()

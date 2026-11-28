@@ -48,6 +48,9 @@ struct AirliftView: View {
                 }
             }
         }
+        // The transport gate card and the menu rows' fade
+        // animate instead of snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: transport.isReady)
         .navigationTitle("Airlift")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { transport = TransportGate.check() }

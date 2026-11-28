@@ -137,6 +137,11 @@ struct BackupView: View {
                     PhotoRestoreView()
                 }
             }
+            // Snapshot rows and the error card animate in/out
+            // instead of snapping (v8.0 menu motion).
+            .animation(.wtMenu, value: manager.otherSnapshots.count)
+            .animation(.wtMenu, value: manager.originalSnapshot != nil)
+            .animation(.wtMenu, value: manager.lastError != nil)
             .navigationTitle(wtLang.tr("Backup"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {

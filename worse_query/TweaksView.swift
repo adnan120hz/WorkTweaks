@@ -160,6 +160,10 @@ struct TweaksView: View {
                     lockedView
                 }
             }
+            // Locked ↔ unlocked and New/Old UI switches
+            // animate instead of snapping (v8.0 menu motion).
+            .animation(.wtMenu, value: tweaksEnabled)
+            .animation(.wtMenu, value: uiVersionRaw)
             .navigationTitle("WorkTweaks")
             // Large Text: the .large title renders at ~42pt and
             // overlaps the first cards (the two ScrollViews
@@ -350,7 +354,7 @@ struct TweaksView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
-            .animation(.easeInOut(duration: 0.25), value: selectedSection)
+            .animation(.wtMenu, value: selectedSection)
         }
         .scrollIndicators(.hidden)
         .background(Color(.systemGroupedBackground))
@@ -384,7 +388,7 @@ struct TweaksView: View {
                     Color.clear.frame(height: 32)
                 }
                 .padding(.vertical, 16)
-                .animation(.easeInOut(duration: 0.25), value: selectedSection)
+                .animation(.wtMenu, value: selectedSection)
             }
             .scrollIndicators(.hidden)
 
@@ -869,6 +873,9 @@ struct TweaksView: View {
                     .textFieldStyle(.roundedBorder)
             }
         }
+        // The name field slides in/out with the toggle
+        // instead of snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: manager.enableDeviceName)
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)
@@ -897,6 +904,9 @@ struct TweaksView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
+        // The suffix field slides in/out with the toggle
+        // instead of snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: manager.enableCustomRegion)
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)

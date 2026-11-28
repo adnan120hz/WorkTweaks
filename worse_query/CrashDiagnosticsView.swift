@@ -163,6 +163,11 @@ struct CrashDiagnosticsView: View {
                 }
             }
         }
+        // Report rows and status text animate in/out instead
+        // of snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: manager.isLoading)
+        .animation(.wtMenu, value: manager.lastResult != nil)
+        .animation(.wtMenu, value: manager.reports.count)
         .navigationTitle(wtLang.tr("Jetsam & Crash"))
         .sheet(item: $selected) { report in
             CrashReportDetailView(report: report, manager: manager)

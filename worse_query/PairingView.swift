@@ -154,6 +154,11 @@ struct PairingView: View {
             }
             Color.clear.frame(height: 60)
         }
+        // Pairing/VPN status cards animate instead of
+        // snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: hasPairing)
+        .animation(.wtMenu, value: tunnelUp)
+        .animation(.wtMenu, value: statusMessage != nil)
         .navigationTitle(wtLang.tr("Get Pairing File + VPN Status"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { refresh() }

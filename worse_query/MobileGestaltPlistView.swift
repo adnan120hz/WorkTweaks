@@ -929,6 +929,9 @@ struct SiriGuideCard: View {
                 }
             }
         }
+        // The tutorial steps expand/collapse with motion
+        // instead of snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: expanded)
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 14)

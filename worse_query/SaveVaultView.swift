@@ -263,6 +263,10 @@ struct SaveVaultView: View {
                 .padding(.vertical, 10)
             }
         }
+        // Selected-app card and scan states animate in/out
+        // instead of snapping (v8.0 menu motion).
+        .animation(.wtMenu, value: selectedBundleID)
+        .animation(.wtMenu, value: appData.isScanning)
         .navigationTitle(wtLang.tr("Save Vault"))
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $showZipImporter, allowedContentTypes: [.zip]) { result in

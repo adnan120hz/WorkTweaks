@@ -37,6 +37,21 @@ extension DynamicTypeSize {
     var wtIsLargeText: Bool { self >= .xxLarge }
 }
 
+// MARK: - Shared menu motion (v8.0)
+//
+// One motion language for every small menu in the app:
+// a short ease-in-out, fast enough to never feel laggy
+// and gentle enough to never bounce. Every animated
+// state change uses `.animation(.wtMenu, value: <the
+// state that changed>)` — never the deprecated
+// value-less `.animation()` — so motion triggers only
+// on real changes.
+
+extension Animation {
+    /// The app's menu animation: ease-in-out, 0.25s.
+    static var wtMenu: Animation { .easeInOut(duration: 0.25) }
+}
+
 // MARK: - Liquid Glass card surface
 //
 // Every card in the app renders on the iOS 26 Liquid Glass
