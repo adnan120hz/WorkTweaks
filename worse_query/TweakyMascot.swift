@@ -133,3 +133,56 @@ struct AnimatedTweakyMascot: View {
             .onAppear { bouncing = true }
     }
 }
+
+// MARK: - Tiny Tweaky mascots on icon corners (v8.0)
+//
+// A decorative, non-interactive frame of four tiny Tweaky
+// mascots — one at each corner of an icon (top-left,
+// top-right, bottom-left, bottom-right). Each mascot sits
+// astride its corner, half outside the icon's frame, so the
+// four mascots frame the glyph without covering it. Reuses
+// TweakyMascot at 10–12pt; no new strings, no hit-testing,
+// and VoiceOver-hidden (TweakyMascot is already
+// accessibilityHidden). Applied to the tab-bar icons, the
+// shared RowIcon, and the menu-row icons.
+
+struct IconCornerMascots: ViewModifier {
+    /// Body diameter of each corner mascot in points.
+    /// Menu rows use 11; the smaller tab-bar icons use 10.
+    var size: CGFloat = 11
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .topLeading) {
+                TweakyMascot(size: size)
+                    .offset(x: -size * 0.5, y: -size * 0.62)
+                    .allowsHitTesting(false)
+            }
+            .overlay(alignment: .topTrailing) {
+                TweakyMascot(size: size)
+                    .offset(x: size * 0.5, y: -size * 0.62)
+                    .allowsHitTesting(false)
+            }
+            .overlay(alignment: .bottomLeading) {
+                TweakyMascot(size: size)
+                    .offset(x: -size * 0.5, y: size * 0.62)
+                    .allowsHitTesting(false)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                TweakyMascot(size: size)
+                    .offset(x: size * 0.5, y: size * 0.62)
+                    .allowsHitTesting(false)
+            }
+    }
+}
+
+extension View {
+    /// Adds four tiny Tweaky mascots at the corners of the
+    /// icon this is applied to. Decoration only: the mascots
+    /// never receive touches and are hidden from VoiceOver.
+    /// Apply it to the Image itself, before any .frame, so
+    /// the mascots hug the glyph rather than the row slot.
+    func wtIconCornerMascots(size: CGFloat = 11) -> some View {
+        modifier(IconCornerMascots(size: size))
+    }
+}
