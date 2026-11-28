@@ -179,17 +179,22 @@ struct WTSectionCard<Content: View>: View {
 //
 // The Sileo-inspired "featured" banner at the top of a tab
 // page: one big icon-forward glass card with the page's icon,
-// title and a one- or two-line subtitle, and a small Tweaky
-// mascot peeking from the corner. Built fresh on the v7.0
-// material (WTGlassCard, accent icon, no colored chips, no
-// gradients) — only the grouping is Sileo-like. The subtitle
-// should reuse an existing translated string where one fits,
-// so the hero adds no new translation keys.
+// title and a one- or two-line subtitle, and Tweaky plus his
+// friends peeking from the corners (a different character in
+// each corner, the lineup rotating per tab). Built fresh on
+// the v7.0 material (WTGlassCard, accent icon, no colored
+// chips, no gradients) — only the grouping is Sileo-like.
+// The subtitle should reuse an existing translated string
+// where one fits, so the hero adds no new translation keys.
 
 struct WTPageHero: View {
     var systemImage: String
     var title: String
     var subtitle: String
+    /// Which corner-friends lineup decorates the hero —
+    /// each tab passes its own variant so no two heroes
+    /// show the same arrangement.
+    var friendsVariant: Int = 0
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
@@ -206,13 +211,14 @@ struct WTPageHero: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
-            // One small Tweaky peeking from the hero's corner
-            // — the playful note of the revamp.
-            TweakyMascot(size: 26)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .wtGlassCard(cornerRadius: 16)
+        // Tweaky and his friends peek from the hero's
+        // corners — a different character in each corner,
+        // the lineup rotating with friendsVariant.
+        .wtCardCornerFriends(variant: friendsVariant)
     }
 }
 

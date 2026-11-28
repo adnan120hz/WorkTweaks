@@ -55,6 +55,7 @@ struct CacheExtraView: View {
                 // title above the same explainer, so the tab
                 // opens like the other tabs' heroes. English
                 // by design, like the rest of this tab.
+                // Tweaky and his friends peek from its corners.
                 WTSectionCard {
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "key.fill")
@@ -72,6 +73,7 @@ struct CacheExtraView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
                 }
+                .wtCardCornerFriends(variant: 4)
 
                 if !manager.isValid {
                     WTSectionCard {

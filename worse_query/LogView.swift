@@ -15,7 +15,8 @@ struct LogView: View {
                         WTPageHero(
                             systemImage: "terminal",
                             title: wtLang.tr("Log"),
-                            subtitle: wtLang.tr("Live console output — newest lines at the bottom.")
+                            subtitle: wtLang.tr("Live console output — newest lines at the bottom."),
+                            friendsVariant: 1
                         )
 
                         Text(console.output)

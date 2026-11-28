@@ -160,12 +160,10 @@ struct SandboxView: View {
                         .buttonStyle(.plain)
                         .simultaneousGesture(TapGesture().onEnded { _ in SoundEffects.playTap() })
                     }
-                    // One small Tweaky peeking from the hero
-                    // card's corner (v8.0 revamp).
-                    .overlay(alignment: .topTrailing) {
-                        TweakyMascot(size: 28)
-                            .offset(x: 4, y: -6)
-                    }
+                    // Tweaky and his friends peek from the
+                    // identity card's corners — a different
+                    // character in each corner (v8.0 fix).
+                    .wtCardCornerFriends(variant: 2)
                 }
                 .sheet(isPresented: $showLanguagePicker) {
                     LanguagePickerSheet()

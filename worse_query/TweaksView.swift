@@ -606,12 +606,9 @@ struct TweaksView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        // One small Tweaky peeking from the card's corner
-        // (v8.0 revamp).
-        .overlay(alignment: .topTrailing) {
-            TweakyMascot(size: 22)
-                .offset(x: 6, y: -8)
-        }
+        // Tweaky and his friends peek from the card's corners
+        // — a different character in each corner (v8.0 fix).
+        .wtCardCornerFriends(variant: 3)
         .wtGlassCard(cornerRadius: 16)
     }
 

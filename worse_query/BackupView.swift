@@ -28,7 +28,8 @@ struct BackupView: View {
                 WTPageHero(
                     systemImage: "externaldrive.badge.timemachine",
                     title: wtLang.tr("Backup"),
-                    subtitle: wtLang.tr("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully.")
+                    subtitle: wtLang.tr("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully."),
+                    friendsVariant: 0
                 )
 
                 WTSectionCard(header: wtLang.tr("Snapshots"), headerIcon: "clock.arrow.circlepath") {
