@@ -5,7 +5,7 @@ import SwiftUI
 // A built-in catalog of Deploy packages, installable in-app
 // through the existing Deploy engine or saved to Files.
 //
-// The 32 zips live in the app bundle as resources. Display
+// The 25 zips live in the app bundle as resources. Display
 // data is read from each zip's own manifest.json at runtime
 // (via DeployManager.loadPackage) — the manifest is the
 // source of truth; nothing about the packages is hardcoded
@@ -41,14 +41,7 @@ enum RepositoryStore {
         "3105-subway-surf",
         "3105-wbf",
         "3105-widgy",
-        "3105-adobe-dog-pass",
-        "3105-amongus-pass",
-        "3105-cutecat-pass",
-        "3105-hachiware-pass",
-        "3105-minepass-nightly",
-        "3105-minepass-rainbow",
-        "3105-permanentmarker-pass",
-        "3105-pubg-46-owen-basic-global",
+                                                                "3105-pubg-46-owen-basic-global",
         "3105-pubg-46-owen-basic-kr",
         "3105-pubg-46-owen-basic-vng",
         "3105-pubg-46-owen-basic-imobile",
