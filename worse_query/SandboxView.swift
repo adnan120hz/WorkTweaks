@@ -64,6 +64,17 @@ struct SandboxView: View {
     var body: some View {
         NavigationStack {
             WTGlassPage {
+                // Header block (v8.0 fix): kicker + big title +
+                // subtitle, replacing the large navigation title.
+                // The subtitle reuses the support line, so the
+                // header adds no new translation keys.
+                WTPageHeader(
+                    kicker: "WORKTWEAKS • SANDBOX",
+                    title: "Sandbox",
+                    subtitle: supportLine,
+                    friend: .rocket
+                )
+
                 // Front door identity: app icon, name, and this
                 // device's support status — v7.0 themed header:
                 // "{Language} Version" under the name (name text
@@ -224,6 +235,38 @@ struct SandboxView: View {
                 // Utility menus — each opens its own page.
                 // v7.0: grouped into labeled sections instead
                 // of one long list; every row is still here.
+                WTSectionCard(header: lang.tr("System"), headerIcon: "gearshape") {
+                    VStack(alignment: .leading, spacing: 0) {
+                        utilityRow("Sandbox Escape", systemImage: "lock.open") {
+                            SandboxEscapePage(path: $path, sandboxHandle: $sandboxHandle)
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow(lang.tr("Path Enumeration"), systemImage: "list.bullet.indent") {
+                            PathEnumerationPage(path: path)
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("App Group", systemImage: "person.2") {
+                            AppGroupPage(groupText: $groupText)
+                        }
+                    }
+                }
+
+                WTSectionCard(header: lang.tr("Media"), headerIcon: "photo") {
+                    VStack(alignment: .leading, spacing: 0) {
+                        utilityRow("PosterBoard", systemImage: "photo") {
+                            PosterBoardView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow(lang.tr("Cache Data Cleaner"), systemImage: "trash") {
+                            CacheCleanerView()
+                        }
+                        Divider().padding(.leading, 14)
+                        utilityRow("Splash Ad Cache Lock", systemImage: "megaphone.slash") {
+                            AdCacheBlockerView()
+                        }
+                    }
+                }
+
                 WTSectionCard(header: lang.tr("Diagnostics"), headerIcon: "stethoscope") {
                     VStack(alignment: .leading, spacing: 0) {
                         utilityRow("Battery & Thermal", systemImage: "battery.100") {
@@ -264,38 +307,6 @@ struct SandboxView: View {
                     }
                 }
 
-
-                WTSectionCard(header: lang.tr("System"), headerIcon: "gearshape") {
-                    VStack(alignment: .leading, spacing: 0) {
-                        utilityRow("Sandbox Escape", systemImage: "lock.open") {
-                            SandboxEscapePage(path: $path, sandboxHandle: $sandboxHandle)
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow(lang.tr("Path Enumeration"), systemImage: "list.bullet.indent") {
-                            PathEnumerationPage(path: path)
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("App Group", systemImage: "person.2") {
-                            AppGroupPage(groupText: $groupText)
-                        }
-                    }
-                }
-
-                WTSectionCard(header: lang.tr("Media"), headerIcon: "photo") {
-                    VStack(alignment: .leading, spacing: 0) {
-                        utilityRow("PosterBoard", systemImage: "photo") {
-                            PosterBoardView()
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow(lang.tr("Cache Data Cleaner"), systemImage: "trash") {
-                            CacheCleanerView()
-                        }
-                        Divider().padding(.leading, 14)
-                        utilityRow("Splash Ad Cache Lock", systemImage: "megaphone.slash") {
-                            AdCacheBlockerView()
-                        }
-                    }
-                }
 
                 WTSectionCard(header: lang.tr("Pairing & Airlift"), headerIcon: "airplane") {
                     VStack(alignment: .leading, spacing: 0) {
@@ -352,6 +363,7 @@ struct SandboxView: View {
                 }
             }
             .navigationTitle("Sandbox")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 

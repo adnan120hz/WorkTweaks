@@ -1,23 +1,28 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Tweaks tab (v3.0 two-column layout)
+// MARK: - Tweaks tab (v8.0 fix: Library-style single column)
 //
-// The tab is a two-column page: a scrolling column of tweak cards
-// on the left and a fixed "Sections" card on the right (All /
-// Dynamic Island / Tweaks / Apple Intelligence / Add feature /
-// Apply/Revert); the card is vertically centered in
-// the right column. Apply/Revert is a section of its own: its
-// column holds the Apply / Respring / Revert action cards.
-// Toggles
-// mutate the in-memory MobileGestalt dictionary immediately;
-// "Apply Tweaks" persists it. Every tweak keeps its own SF Symbol
-// (see TweakCatalog.presentation), rendered uniformly as a plain
-// accent-colored icon. The tab starts LOCKED until "Start Tweaks
-// Feature" is turned on in the Sandbox tab
+// The tab is one scrolling column, Library/Sileo-inspired but
+// built fresh on the v7.0 material (WTGlassCard surfaces,
+// language-theme accent, current fonts): a header block
+// (kicker + big title + subtitle), a search capsule, a
+// featured Dynamic Island card, category rows that open one
+// category's tweaks, then the Apply / Respring / Revert
+// actions and a footer note. The old v3.0 two-column split —
+// a scrolling tweak column beside a fixed 150pt Sections
+// card — is gone: at Large Text it already broke (labels
+// truncated, cards sliding behind the tab bar), and the
+// v8.0 revamp left it visually unchanged. The new layout is
+// single-column at every text size. Toggles mutate the
+// in-memory MobileGestalt dictionary immediately; "Apply
+// Tweaks" persists it. Every tweak keeps its own SF Symbol
+// (see TweakCatalog.presentation), rendered uniformly as a
+// plain accent-colored icon. The tab starts LOCKED until
+// "Start Tweaks Feature" is turned on in the Sandbox tab
 // (wt.tweaksFeatureEnabled).
 
-/// The sections of the Tweaks tab's right-hand Sections card.
+/// The sections of the Tweaks tab's category rows.
 /// All = the full catalog; Apply/Revert holds the action cards
 /// instead of tweaks.
 enum TweakSection: String, CaseIterable, Identifiable {
@@ -96,18 +101,9 @@ struct TweaksView: View {
     let console: Console
     @ObservedObject var manager: GestaltManager
     @EnvironmentObject private var wtLang: WTLangStore
-    /// Large Text trigger (see SharedUI): at .xxxLarge and
-    /// above the two-column layout collapses to one column.
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Switches the TabView to the Sandbox tab (RootView owns the
     /// selection); used by the locked state's button.
     var onOpenSandbox: () -> Void
-    /// Switches the TabView to the Extra tab (RootView owns the
-    /// selection); used by the Menus card in the right column.
-    var onOpenExtra: () -> Void
-    /// Switches the TabView to the Backup tab (RootView owns the
-    /// selection); used by the Menus card in the right column.
-    var onOpenBackup: () -> Void
 
     @AppStorage("atomic_write") private var atomicWrite = true
     /// Master switch for this tab, flipped in the Sandbox tab.
@@ -122,11 +118,10 @@ struct TweaksView: View {
     @State private var infoTitle: String?
     @State private var infoMessage: String = ""
     @State private var showRevertConfirm = false
-    @State private var selectedSection: TweakSection = .all
-    /// Search (toolbar pill): the pill presents a dedicated
+    /// Search: the toolbar button presents a dedicated
     /// full-screen search cover with its own header and results
-    /// list, so the columns layout underneath is never
-    /// remeasured or overlapped while searching.
+    /// list, so the page underneath is never remeasured or
+    /// overlapped while searching.
     @State private var searchActive = false
     @State private var searchText = ""
     @FocusState private var searchFocused: Bool
@@ -154,7 +149,7 @@ struct TweaksView: View {
                             }
                         )
                     } else {
-                        columnsView
+                        libraryView
                     }
                 } else {
                     lockedView
@@ -165,12 +160,10 @@ struct TweaksView: View {
             .animation(.wtMenu, value: tweaksEnabled)
             .animation(.wtMenu, value: uiVersionRaw)
             .navigationTitle("WorkTweaks")
-            // Large Text: the .large title renders at ~42pt and
-            // overlaps the first cards (the two ScrollViews
-            // confuse the large-title tracking), so use the small
-            // inline title instead — the identity card already
-            // shows the name and version.
-            .navigationBarTitleDisplayMode(dynamicTypeSize.wtIsLargeText ? .inline : .large)
+            // Always inline: the page carries its own header
+            // block (kicker + big title), so a large navigation
+            // title would duplicate it.
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Search is a New UI feature — the Old UI (v1)
                 // never had it.
@@ -301,41 +294,27 @@ struct TweaksView: View {
         .background(Color(.systemGroupedBackground))
     }
 
-    // MARK: Two-column layout (single column at Large Text)
+    // MARK: Library-style layout (v8.0 fix)
     //
-    // Default sizes keep the two-column page: a scrolling
-    // column of tweak cards on the left and the fixed
-    // 150pt Sections/identity/Menus column on the right.
-    // At Large Text (Dynamic Type .xxLarge and above,
-    // including .xxxLarge and all Accessibility sizes) that 150pt column
-    // is too narrow for its labels ("Dynamic Island",
-    // "Apple Intelligence" truncate, cards overlap the big
-    // title) and the squeezed left column truncates card
-    // titles — so the page collapses to ONE full-width
-    // scrolling column: identity, Sections, Menus, then the
-    // tweak cards. Same cards, same order, same actions;
-    // only the arrangement changes, and it changes back
-    // automatically when the text size shrinks.
+    // One scrolling column at every text size — no fixed side
+    // column, so Large Text can never squeeze it: header block,
+    // status, search capsule, featured card, category rows,
+    // Apply/Revert actions, footer note and links. Same cards,
+    // same toggles, same actions; only the arrangement changes.
+    // The old v3.0 two-column split (a scrolling tweak column
+    // beside a fixed 150pt Sections card) is gone: at Large
+    // Text it already broke, and the v8.0 revamp left it
+    // visually unchanged.
 
-    @ViewBuilder
-    private var columnsView: some View {
-        if dynamicTypeSize.wtIsLargeText {
-            singleColumnView
-        } else {
-            twoColumnView
-        }
-    }
-
-    /// The Large Text layout: every card full-width in one
-    /// scrolling column, with bottom clearance taller than
-    /// the floating tab bar so the last card is never hidden
-    /// behind it.
-    private var singleColumnView: some View {
+    private var libraryView: some View {
         ScrollView {
-            VStack(spacing: 12) {
-                identityMiniCard
-                sectionsCard
-                menusCard
+            VStack(alignment: .leading, spacing: 20) {
+                WTPageHeader(
+                    kicker: "WORKTWEAKS • TWEAK LIBRARY",
+                    title: wtLang.tr("Explore tweaks"),
+                    subtitle: wtLang.tr("Pick a tweak, turn it on, then apply it."),
+                    friend: .tweaky
+                )
 
                 statusCard
 
@@ -343,77 +322,240 @@ struct TweaksView: View {
                     warningCard
                 }
 
-                if selectedSection == .applyRevert {
-                    actionsBlock
-                        .transition(.opacity)
-                } else {
-                    sectionCards
-                        .transition(.opacity)
-                }
+                searchCapsule
+
+                featuredSection
+
+                browseSection
+
+                actionsSection
+
+                footerNoteCard
 
                 footerLinks
 
-                Color.clear.frame(height: 56)
+                // Bottom clearance so the last card is never
+                // hidden behind the floating tab bar.
+                Color.clear.frame(height: 32)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
-            .animation(.wtMenu, value: selectedSection)
         }
         .scrollIndicators(.hidden)
         .background(Color(.systemGroupedBackground))
     }
 
-    private var twoColumnView: some View {
-        HStack(alignment: .top, spacing: 12) {
-            ScrollView {
-                VStack(spacing: 12) {
-                    statusCard
+    /// The search capsule: a glass pill that opens the
+    /// full-screen search cover (an empty query shows the full
+    /// catalog). The capsule is the "All" entry point now that
+    /// the Sections card is gone.
+    private var searchCapsule: some View {
+        Button {
+            SoundEffects.playTap()
+            searchActive = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                Text(wtLang.tr("Search tweaks"))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .wtGlassCard(cornerRadius: 999)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(wtLang.tr("Search tweaks"))
+    }
 
-                    if manager.isEmpty || !manager.isValid {
-                        warningCard
+    /// A small-caps section label, as in the Library reference.
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .semibold))
+            .tracking(1.2)
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 10)
+    }
+
+    // MARK: Featured card
+
+    /// The Dynamic Island tweak, featured at the top of the
+    /// page.
+    private var featuredTweak: GestaltTweak? {
+        TweakCatalog.all.first { $0.id == "enable_dynamic_island_capability" }
+    }
+
+    @ViewBuilder
+    private var featuredSection: some View {
+        if let tweak = featuredTweak {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionLabel(wtLang.tr("Featured"))
+                featuredCard(tweak: tweak)
+            }
+        }
+    }
+
+    /// The featured card: the Dynamic Island tweak with its
+    /// description, a toggle to turn it on right here, an
+    /// arrow that opens its explanation, and the subtype
+    /// picker under it.
+    private func featuredCard(tweak: GestaltTweak) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color.accentColor)
+                    .frame(width: 8, height: 8)
+                Text(wtLang.tr("Featured"))
+                    .font(.system(size: 12, weight: .semibold))
+                    .tracking(1.2)
+                    .foregroundStyle(.primary)
+                Spacer(minLength: 0)
+                // A large Dynamic Island mark as the card's
+                // visual, standing in for the reference's chip
+                // illustration.
+                Image(systemName: "capsule.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(Color.accentColor.opacity(0.85))
+            }
+            Text(tweak.title)
+                .font(.system(size: 28, weight: .bold))
+                .fixedSize(horizontal: false, vertical: true)
+            if let info = tweak.infoMessage {
+                Text(info)
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: 12) {
+                if tweak.infoMessage != nil {
+                    Button {
+                        SoundEffects.playTap()
+                        showInfo(for: tweak)
+                    } label: {
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.accentColor, in: Circle())
                     }
-
-                    // The Apply/Revert section's content is the
-                    // action cards; every other section shows its
-                    // tweak cards. Section switches animate.
-                    if selectedSection == .applyRevert {
-                        actionsBlock
-                            .transition(.opacity)
-                    } else {
-                        sectionCards
-                            .transition(.opacity)
-                    }
-
-                    footerLinks
-
-                    // Bottom clearance so the last card is never
-                    // hidden behind the floating tab bar.
-                    Color.clear.frame(height: 32)
+                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, 16)
-                .animation(.wtMenu, value: selectedSection)
+                Spacer(minLength: 0)
+                Toggle("", isOn: manager.toggleBinding(for: tweak))
+                    .labelsHidden()
+                    .disabled(!manager.isValid || !tweak.supported())
             }
-            .scrollIndicators(.hidden)
+            // The Dynamic Island model picker lives under the
+            // featured card, as in the old layout.
+            subtypeCard
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .wtGlassCard(cornerRadius: 20)
+    }
 
-            // The right column is filled top-to-bottom: a mini
-            // identity card at the top, the Sections card held in
-            // the middle by spacers, and a Menus quick-access card
-            // at the bottom. The column spans the full height of
-            // the row (driven by the ScrollView beside it) while
-            // the left column scrolls.
-            VStack(spacing: 0) {
-                identityMiniCard
-                Spacer(minLength: 0)
-                sectionsCard
-                Spacer(minLength: 0)
-                menusCard
+    // MARK: Browse by category
+
+    /// The browsable categories: every section that holds
+    /// tweaks. Apply/Revert is an action, not a category, so
+    /// it gets its own section below instead of a row here.
+    /// "All" lives in the search capsule (an empty query
+    /// shows the full catalog).
+    private var browseCategories: [TweakSection] {
+        [.dynamicIsland, .appleIntelligence, .tweaks, .addFeature]
+    }
+
+    private var browseSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel(wtLang.tr("Browse by category"))
+            ForEach(browseCategories) { section in
+                NavigationLink {
+                    categoryPage(for: section)
+                } label: {
+                    categoryRow(section: section)
+                }
+                .buttonStyle(.plain)
             }
-            .frame(width: 150)
-            .frame(maxHeight: .infinity)
-            .padding(.vertical, 16)
+        }
+    }
+
+    /// One category row: icon in a tinted square, title,
+    /// tweak count, chevron — as in the reference.
+    private func categoryRow(section: TweakSection) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: section.icon)
+                .font(.system(size: 20))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 44, height: 44)
+                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(section.title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text(wtLang.tr("%d tweaks", visibleTweaks(for: section).count))
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .wtGlassCard(cornerRadius: 16)
+    }
+
+    /// One category's page: the section's tweak cards (with
+    /// their follower cards) in a single scrolling column.
+    /// Pushed from a category row; the same cards the old
+    /// Sections picker showed, now on their own page.
+    @ViewBuilder
+    private func categoryPage(for section: TweakSection) -> some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                sectionCards(for: section)
+            }
+            .padding(16)
+        }
+        .scrollIndicators(.hidden)
         .background(Color(.systemGroupedBackground))
+        .navigationTitle(section.title)
+        .navigationBarTitleDisplayMode(.large)
+    }
+
+    // MARK: Apply & revert
+
+    private var actionsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel(TweakSection.applyRevert.title)
+            actionsBlock
+        }
+    }
+
+    /// The safety note at the bottom of the page: the same
+    /// warning as the Apply/Revert actions, with a shield
+    /// icon — Apply first, then respring or restart.
+    private var footerNoteCard: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "shield.checkmark")
+                .font(.system(size: 22))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 44, height: 44)
+                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(wtLang.tr("Tweaks change your device"))
+                    .font(.system(size: 17, weight: .semibold))
+                Text(wtLang.tr("Apply first, then respring or restart. Availability varies by device and iOS version."))
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .wtGlassCard(cornerRadius: 16)
     }
 
     // MARK: Search (dedicated full-screen cover)
@@ -422,11 +564,10 @@ struct TweaksView: View {
     /// own header — a glass capsule field (magnifier, the text
     /// field, a clear button while there is text) and a Cancel
     /// button — over a single-column, full-width scrolling list
-    /// of results. Search is fully isolated from the columns
-    /// layout: the Tweaks page underneath (nav title, cards,
-    /// Sections card) is never remeasured or overlapped while
-    /// searching, and closing returns to it untouched, with the
-    /// selected section preserved.
+    /// of results. Search is fully isolated from the page
+    /// layout: the Tweaks page underneath is never remeasured
+    /// or overlapped while searching, and closing returns to
+    /// it untouched.
     private var searchCover: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
@@ -530,132 +671,6 @@ struct TweaksView: View {
         }
     }
 
-    // MARK: Sections card (right column, always visible)
-
-    private var sectionsCard: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 5) {
-                Image(systemName: "square.grid.2x2")
-                    .foregroundStyle(Color.accentColor)
-                Text(wtLang.tr("Sections"))
-            }
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.bottom, 4)
-
-            ForEach(TweakSection.allCases) { section in
-                Button {
-                    SoundEffects.playTap()
-                    selectedSection = section
-                } label: {
-                    HStack(spacing: 9) {
-                        Image(systemName: section.icon)
-                            .font(.subheadline)
-                            .foregroundStyle(selectedSection == section ? Color.white : Color.accentColor)
-                            // minWidth, not fixed: at Large Text the
-                            // scaled icon needs more room.
-                            .frame(minWidth: 22)
-                        Text(section.title)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(selectedSection == section ? Color.white : Color.primary)
-                            // Wrap to a second line instead of
-                            // truncating ("Dynamic I…") at Large Text.
-                            .fixedSize(horizontal: false, vertical: true)
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 11)
-                    .background(
-                        selectedSection == section ? Color.accentColor : Color.clear,
-                        in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    )
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(10)
-        .wtGlassCard(cornerRadius: 16)
-    }
-
-    // MARK: Right-column companion cards (identity + menus)
-
-    /// This build's version as recorded in the bundle
-    /// (CFBundleShortVersionString), e.g. "3.5".
-    private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
-    }
-
-    // Mini identity card at the top of the right column: app
-    // name, version, device model, and iOS version + build.
-    // Quiet and display-only — no buttons.
-    private var identityMiniCard: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text("WorkTweaks")
-                .font(.subheadline.weight(.semibold))
-            Text(wtLang.tr("Version %@", appVersion))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(machineName())
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(SupportInfo.deviceSummary)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // Tweaky and his friends peek from the card's corners
-        // — a different character in each corner (v8.0 fix).
-        .wtCardCornerFriends(variant: 3)
-        .wtGlassCard(cornerRadius: 16)
-    }
-
-    // Menus quick-access card at the bottom of the right column:
-    // navigation rows styled like the Sections rows, but plain —
-    // they switch tabs instead of selecting a section. App Data
-    // lives in the Sandbox tab's Utilities menu.
-    private var menusCard: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 5) {
-                Image(systemName: "list.bullet")
-                    .foregroundStyle(Color.accentColor)
-                Text(wtLang.tr("Menus"))
-            }
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.bottom, 4)
-
-            menuRow(title: wtLang.tr("App Data"), systemImage: "folder") { onOpenSandbox() }
-            menuRow(title: "CacheExtra", systemImage: "key") { onOpenExtra() }
-            menuRow(title: wtLang.tr("Backup"), systemImage: "externaldrive.badge.timemachine") { onOpenBackup() }
-        }
-        .padding(10)
-        .wtGlassCard(cornerRadius: 16)
-    }
-
-    private func menuRow(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
-        Button(action: { SoundEffects.playTap(); action() }) {
-            HStack(spacing: 9) {
-                Image(systemName: systemImage)
-                    .font(.subheadline)
-                    .foregroundStyle(Color.accentColor)
-                    .frame(minWidth: 22)
-                Text(title)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 11)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
     // MARK: Status card
 
     private var statusCard: some View {
@@ -742,8 +757,8 @@ struct TweaksView: View {
     }
 
     @ViewBuilder
-    private var sectionCards: some View {
-        ForEach(visibleTweaks(for: selectedSection)) { tweak in
+    private func sectionCards(for section: TweakSection) -> some View {
+        ForEach(visibleTweaks(for: section)) { tweak in
             if tweak.id == "siri_ai_cache_patch" {
                 // Manual now: the guide card instead of the auto
                 // toggle, and the Mobile Gestalt.plist menu row
@@ -763,18 +778,18 @@ struct TweaksView: View {
             // The spoofing model picker sits next to Apple
             // Intelligence, as before — in the All section and in
             // the Apple Intelligence section itself.
-            if tweak.id == "apple_intelligence" && (selectedSection == .all || selectedSection == .appleIntelligence) {
+            if tweak.id == "apple_intelligence" && (section == .all || section == .appleIntelligence) {
                 spoofingCard
             }
         }
 
-        if selectedSection == .tweaks || selectedSection == .all {
+        if section == .tweaks || section == .all {
             deviceNameCard
             regionModelCard
             persistCard
         }
 
-        if selectedSection == .addFeature {
+        if section == .addFeature {
             footnoteCard
         }
     }

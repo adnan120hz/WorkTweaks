@@ -28,7 +28,7 @@ import SwiftUI
 // columns and two-column layouts squeeze their labels until
 // they truncate or overlap, so layouts that read this flag
 // collapse to a single column and let their labels wrap
-// (see TweaksView.columnsView and the keypad below).
+// (see TweaksView.libraryView and the keypad below).
 // Default sizes are untouched.
 
 extension DynamicTypeSize {
@@ -175,50 +175,51 @@ struct WTSectionCard<Content: View>: View {
     }
 }
 
-// MARK: - Featured page hero (v8.0 revamp)
+// MARK: - Per-tab page header (v8.0 fix)
 //
-// The Sileo-inspired "featured" banner at the top of a tab
-// page: one big icon-forward glass card with the page's icon,
-// title and a one- or two-line subtitle, and Tweaky plus his
-// friends peeking from the corners (a different character in
-// each corner, the lineup rotating per tab). Built fresh on
-// the v7.0 material (WTGlassCard, accent icon, no colored
-// chips, no gradients) — only the grouping is Sileo-like.
-// The subtitle should reuse an existing translated string
-// where one fits, so the hero adds no new translation keys.
+// The real layout redesign: every tab opens with a text
+// header block — a small-caps kicker in the language-theme
+// accent, a big bold title, and a one- or two-line subtitle
+// — instead of the large navigation title plus a hero card.
+// Built fresh on the v7.0 material (current fonts, accent
+// color, no colored chips, no gradients); only the grouping
+// is Library/Sileo-like. A mascot friend may peek from the
+// header's trailing side (one character per tab, passed in
+// by the tab). The subtitle should reuse an existing
+// translated string where one fits, so the header adds no
+// new translation keys.
 
-struct WTPageHero: View {
-    var systemImage: String
+struct WTPageHeader: View {
+    var kicker: String
     var title: String
     var subtitle: String
-    /// Which corner-friends lineup decorates the hero —
-    /// each tab passes its own variant so no two heroes
-    /// show the same arrangement.
-    var friendsVariant: Int = 0
+    /// One mascot friend peeking from the header's trailing
+    /// side. Nil keeps the header text-only.
+    var friend: MascotFriendKind? = nil
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: systemImage)
-                .font(.title2)
-                .foregroundStyle(Color.accentColor)
-                .frame(minWidth: 40)
-            VStack(alignment: .leading, spacing: 3) {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(kicker)
+                    .font(.system(size: 13, weight: .semibold))
+                    .tracking(1.5)
+                    .foregroundStyle(Color.accentColor)
                 Text(title)
-                    .font(.headline)
+                    .font(.system(size: 34, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(subtitle)
-                    .font(.caption)
+                    .font(.system(size: 15))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
+            if let friend {
+                MascotFriendView(kind: friend, size: 30)
+                    .padding(.top, 4)
+                    .allowsHitTesting(false)
+            }
         }
-        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .wtGlassCard(cornerRadius: 16)
-        // Tweaky and his friends peek from the hero's
-        // corners — a different character in each corner,
-        // the lineup rotating with friendsVariant.
-        .wtCardCornerFriends(variant: friendsVariant)
     }
 }
 

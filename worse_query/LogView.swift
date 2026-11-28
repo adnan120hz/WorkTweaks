@@ -9,14 +9,14 @@ struct LogView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        // Featured hero (v8.0 revamp) — the Log
-                        // tab opens like the other tabs now.
-                        // The console itself stays plain.
-                        WTPageHero(
-                            systemImage: "terminal",
+                        // Header block (v8.0 fix): kicker + big
+                        // title + subtitle, replacing the hero
+                        // card. The console itself stays plain.
+                        WTPageHeader(
+                            kicker: "WORKTWEAKS • LOG",
                             title: wtLang.tr("Log"),
                             subtitle: wtLang.tr("Live console output — newest lines at the bottom."),
-                            friendsVariant: 1
+                            friend: .cat
                         )
 
                         Text(console.output)
@@ -36,6 +36,9 @@ struct LogView: View {
                 }
                 .background(Color(.systemGroupedBackground))
                 .navigationTitle(wtLang.tr("Log"))
+                // Always inline: the page carries its own header
+                // block (kicker + big title).
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button(wtLang.tr("Clear")) {

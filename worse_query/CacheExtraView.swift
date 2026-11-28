@@ -51,27 +51,47 @@ struct CacheExtraView: View {
         let _ = manager.dictVersion // re-render when the dict changes
         NavigationStack {
             WTGlassPage {
-                // Featured hero (v8.0 revamp): the key icon +
-                // title above the same explainer, so the tab
-                // opens like the other tabs' heroes. English
-                // by design, like the rest of this tab.
-                // Tweaky and his friends peek from its corners.
+                // Header block (v8.0 fix): kicker + big title +
+                // subtitle, replacing the hero card. English by
+                // design, like the rest of this tab.
+                WTPageHeader(
+                    kicker: "WORKTWEAKS • CACHE EXTRA",
+                    title: "Cache Extra",
+                    subtitle: "Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press Apply Tweaks in the Tweaks tab to write them (you'll get the Respring / Restart choice).",
+                    friend: .star
+                )
+
+                // Featured card (v8.0 fix): the Add Key action,
+                // promoted from the toolbar plus button, with
+                // Tweaky and his friends in its corners.
                 WTSectionCard {
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "key.fill")
-                            .font(.title2)
-                            .foregroundStyle(Color.accentColor)
-                            .frame(minWidth: 36)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Cache Extra")
-                                .font(.headline)
-                            Text("Type any CacheExtra key and value — the core system exposes the raw MobileGestalt dictionary. Edits are staged in memory like the tweak toggles: press **Apply Tweaks** in the Tweaks tab to write them (you'll get the Respring / Restart choice).")
-                                .font(.caption).foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
+                    Button {
+                        SoundEffects.playTap()
+                        showAdd = true
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(Color.accentColor)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Add Key")
+                                    .font(.subheadline.weight(.semibold))
+                                Text("Type a new CacheExtra key and value.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
                         }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
+                    .buttonStyle(.plain)
+                    .disabled(!manager.isValid)
                 }
                 .wtCardCornerFriends(variant: 4)
 
@@ -127,6 +147,9 @@ struct CacheExtraView: View {
                 }
             }
             .navigationTitle("Cache Extra")
+            // Always inline: the page carries its own header
+            // block (kicker + big title).
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $search, prompt: "Search keys")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

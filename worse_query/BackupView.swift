@@ -22,29 +22,40 @@ struct BackupView: View {
     var body: some View {
         NavigationStack {
             WTGlassPage {
-                // Featured hero (v8.0 revamp): the snapshot
-                // explainer moves up here from the Snapshots
-                // card's footer, so the tab opens with it.
-                WTPageHero(
-                    systemImage: "externaldrive.badge.timemachine",
+                // Header block (v8.0 fix): kicker + big title +
+                // subtitle, replacing the hero card. The subtitle
+                // reuses the snapshot explainer, so the header
+                // adds no new translation keys.
+                WTPageHeader(
+                    kicker: "WORKTWEAKS • BACKUP",
                     title: wtLang.tr("Backup"),
                     subtitle: wtLang.tr("A snapshot is also created automatically at every Apply, containing the state that Apply just produced. The Original backup is created once, the first time MobileGestalt is read successfully."),
-                    friendsVariant: 0
+                    friend: .cloud
                 )
 
-                WTSectionCard(header: wtLang.tr("Snapshots"), headerIcon: "clock.arrow.circlepath") {
+                // Featured card (v8.0 fix): Back Up Now, promoted
+                // to the top of the page with Tweaky and his
+                // friends in its corners.
+                WTSectionCard {
                     Button {
                         manager.createManualSnapshot()
                     } label: {
-                        Text(wtLang.tr("Back Up Now"))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 11)
-                            .contentShape(Rectangle())
+                        HStack(spacing: 10) {
+                            Image(systemName: "externaldrive.badge.timemachine")
+                                .font(.title2)
+                                .foregroundStyle(Color.accentColor)
+                            Text(wtLang.tr("Back Up Now"))
+                                .font(.subheadline.weight(.semibold))
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .disabled(!manager.isValid)
                 }
+                .wtCardCornerFriends(variant: 0)
 
                 if let original = manager.originalSnapshot {
                     WTSectionCard(header: wtLang.tr("Original"), headerIcon: "lock.shield") {
@@ -79,16 +90,6 @@ struct BackupView: View {
                             }
                         }
                         .padding(.vertical, 4)
-                    }
-                }
-
-                if let error = manager.lastError {
-                    WTSectionCard {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundStyle(.red)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
                     }
                 }
 
@@ -144,6 +145,17 @@ struct BackupView: View {
                 .sheet(isPresented: $showAllBackups) {
                     PhotoRestoreView()
                 }
+
+                if let error = manager.lastError {
+                    WTSectionCard {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                    }
+                }
+
             }
             // Snapshot rows and the error card animate in/out
             // instead of snapping (v8.0 menu motion).
@@ -151,7 +163,7 @@ struct BackupView: View {
             .animation(.wtMenu, value: manager.originalSnapshot != nil)
             .animation(.wtMenu, value: manager.lastError != nil)
             .navigationTitle(wtLang.tr("Backup"))
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
