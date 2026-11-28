@@ -548,7 +548,7 @@ private let regionInfoKey = "yK+xavymRGZ3xWc1tb8XDg"
 
 enum TweakCatalog {
     static let all: [GestaltTweak] = [
-        makeTweak(title: "Enable Dynamic Island Capability", minv: 19.0, keys: ["YlEtTtHlNesRBMal1CqRaA"], value: 1, infoType: .info, infoMessage: "An alternate way to enable the Dynamic Island, as used by Nugget."),
+        makeTweak(title: "Enable Dynamic Island Capability", minv: 19.0, keys: ["YlEtTtHlNesRBMal1CqRaA"], value: 1, infoType: .info, infoMessage: "An alternate way to enable the Dynamic Island."),
         makeTweak(title: "Always-On Display", minv: 18.0, keys: ["2OOJf1VhaM7NxfRok3HbWQ", "j8/Omm6s1lsmTDFsXjsBfA"], value: 1, infoType: .warning, infoMessage: "Can increase screen burn-in risk on devices that don't officially support it."),
         makeTweak(title: "AOD Vibrancy", minv: 18.0, keys: ["ykpu7qyhqFweVMKtxNylWA"], value: 1, infoType: .info, infoMessage: "Turn this on if your Always-On Display renders incorrectly."),
         makeTweak(title: "Disable Wallpaper Parallax", keys: ["UIParallaxCapability"], value: 0, infoType: .info, infoMessage: "Prevents the wallpaper from moving when you tilt or move the device."),
