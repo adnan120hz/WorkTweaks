@@ -944,6 +944,11 @@ final class GestaltManager: ObservableObject {
 
     /// Set when Apply succeeds: the Tweaks tab offers Respring / Restart.
     @Published var showPostApplyChoice = false
+    /// Set alongside showPostApplyChoice when Apply succeeds: the
+    /// Tweaks tab first shows the animated Tweaky success popup;
+    /// tapping its Continue dismisses it and the Respring /
+    /// Restart dialog appears.
+    @Published var showApplySuccess = false
     /// Set after a successful Revert or Backup restore: those changes
     /// require a full device restart (user requirement — a respring is
     /// not enough), so the presenting view shows the Restart Required
@@ -1394,7 +1399,9 @@ final class GestaltManager: ObservableObject {
             // The user chooses: some tweaks (especially Apple
             // Intelligence) need a full restart, not just a respring —
             // the Tweaks tab presents the Respring / Restart choice.
+            // The animated Tweaky success popup shows first.
             showPostApplyChoice = true
+            showApplySuccess = true
         } catch {
             print("(mg) failed to apply mobilegestalt: \(error)")
             lastError = error.localizedDescription

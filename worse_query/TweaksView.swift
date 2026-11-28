@@ -213,7 +213,15 @@ struct TweaksView: View {
             } message: {
                 Text(manager.notice ?? "")
             }
-            .confirmationDialog(wtLang.tr("Tweaks Applied"), isPresented: $manager.showPostApplyChoice, titleVisibility: .visible) {
+            // The Respring / Restart dialog waits until the
+            // animated success popup is dismissed: both flags
+            // are set together on Apply success, and the popup's
+            // Continue clears showApplySuccess, which lets this
+            // dialog appear. Title, buttons and behavior unchanged.
+            .confirmationDialog(wtLang.tr("Tweaks Applied"), isPresented: Binding(
+                get: { manager.showPostApplyChoice && !manager.showApplySuccess },
+                set: { manager.showPostApplyChoice = $0 }
+            ), titleVisibility: .visible) {
                 Button(wtLang.tr("Respring")) { RespringCenter.shared.trigger() }
                 Button(wtLang.tr("Restart Device")) { manager.presentManualRestartGuide() }
                 Button(wtLang.tr("Later"), role: .cancel) { }
@@ -238,6 +246,16 @@ struct TweaksView: View {
                 Button(wtLang.tr("Revert"), role: .destructive) { manager.revert() }
             } message: {
                 Text(wtLang.tr("This restores the MobileGestalt backup saved on first launch (SavedGestalt.plist)."))
+            }
+            // Animated Tweaky success popup, shown on Apply
+            // success; Continue dismisses it and the Respring /
+            // Restart dialog above appears.
+            .overlay {
+                if manager.showApplySuccess {
+                    ApplySuccessPopup {
+                        manager.showApplySuccess = false
+                    }
+                }
             }
         }
     }
@@ -1134,5 +1152,42 @@ struct TweakCard: View {
             return wtLang.tr("Requires iOS %.1f+", minv)
         }
         return tweak.isOn(in: manager.dictNow) ? wtLang.tr("On") : wtLang.tr("Off")
+    }
+}
+
+// MARK: - Apply-success popup (v8.0)
+//
+// Centered card over a dimmed background: the animated
+// Tweaky mascot, the localized success text, and a Continue
+// button. Continue only dismisses the popup — the Respring /
+// Restart confirmationDialog (still bound to
+// showPostApplyChoice) appears right after.
+private struct ApplySuccessPopup: View {
+    var onContinue: () -> Void
+
+    @EnvironmentObject private var wtLang: WTLangStore
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+            VStack(spacing: 18) {
+                AnimatedTweakyMascot(size: 90)
+                Text(wtLang.tr("Tweaks applied successfully!"))
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+                Button(wtLang.tr("Continue")) {
+                    onContinue()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            }
+            .padding(28)
+            .frame(maxWidth: 320)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .shadow(radius: 16)
+            .padding(.horizontal, 32)
+        }
     }
 }

@@ -103,3 +103,33 @@ private struct SmileShape: Shape {
         return path
     }
 }
+
+// MARK: - Animated Tweaky (Apply-success popup)
+//
+// The same mascot with a happy motion — a gentle vertical
+// bounce, a subtle scale pulse, and a slight side-to-side
+// wiggle (antenna included). Real SwiftUI animation: one
+// @State boolean drives offset + scale + rotation through a
+// single .easeInOut animation repeating forever with
+// autoreverses, so the three motions stay in sync.
+// Lightweight and non-blocking; the animation stops with the
+// view when the popup is dismissed. Used by the Apply-success
+// popup in the Tweaks tab.
+struct AnimatedTweakyMascot: View {
+    /// Body diameter in points. The Apply-success popup uses 90.
+    var size: CGFloat = 90
+
+    @State private var bouncing = false
+
+    var body: some View {
+        TweakyMascot(size: size)
+            .offset(y: bouncing ? -size * 0.08 : size * 0.04)
+            .scaleEffect(bouncing ? 1.05 : 0.97)
+            .rotationEffect(.degrees(bouncing ? 3 : -3))
+            .animation(
+                .easeInOut(duration: 0.55).repeatForever(autoreverses: true),
+                value: bouncing
+            )
+            .onAppear { bouncing = true }
+    }
+}

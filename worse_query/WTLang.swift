@@ -1052,6 +1052,9 @@ enum WTStrings {
 
         "Created by adnan120hz": "Dibuat oleh adnan120hz",
 
+        "Tweaks applied successfully!": "Tweak berhasil diterapkan!",
+        "Continue": "Lanjutkan",
+
     ]
 
     // Chinese (Simplified)
@@ -1969,6 +1972,9 @@ enum WTStrings {
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "选中整行并替换为：AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA。要再次关闭补丁，请将其替换回：AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA。然后点击 Save——首次保存前会创建原始备份。",
 
         "Created by adnan120hz": "由 adnan120hz 创建",
+
+        "Tweaks applied successfully!": "调整已成功应用！",
+        "Continue": "继续",
 
     ]
 
@@ -2888,6 +2894,9 @@ enum WTStrings {
 
         "Created by adnan120hz": "Được tạo bởi adnan120hz",
 
+        "Tweaks applied successfully!": "Đã áp dụng các tinh chỉnh thành công!",
+        "Continue": "Tiếp tục",
+
     ]
 
     // Russian
@@ -3806,6 +3815,9 @@ enum WTStrings {
 
         "Created by adnan120hz": "Создано adnan120hz",
 
+        "Tweaks applied successfully!": "Твики успешно применены!",
+        "Continue": "Продолжить",
+
     ]
 
     // ar
@@ -4714,6 +4726,9 @@ enum WTStrings {
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "حدد السطر كاملا واستبدله بـ: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. ولإيقاف التصحيح مجددا، أعد استبداله بـ: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. ثم اضغط على Save — تنشأ نسخة احتياطية أصلية قبل أول حفظ.",
 
         "Created by adnan120hz": "صُنع بواسطة adnan120hz",
+
+        "Tweaks applied successfully!": "تم تطبيق التعديلات بنجاح!",
+        "Continue": "متابعة",
 
     ]
 
@@ -5624,6 +5639,9 @@ enum WTStrings {
 
         "Created by adnan120hz": "Criado por adnan120hz",
 
+        "Tweaks applied successfully!": "Ajustes aplicados com sucesso!",
+        "Continue": "Continuar",
+
     ]
 
     // es
@@ -6533,6 +6551,9 @@ enum WTStrings {
 
         "Created by adnan120hz": "Creado por adnan120hz",
 
+        "Tweaks applied successfully!": "¡Ajustes aplicados con éxito!",
+        "Continue": "Continuar",
+
     ]
 
     // fr
@@ -7441,6 +7462,9 @@ enum WTStrings {
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.": "Sélectionnez toute la ligne et remplacez-la par : AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Pour désactiver à nouveau le correctif, remplacez-la par : AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Puis touchez Enregistrer — une sauvegarde d'origine est effectuée avant le premier enregistrement.",
 
         "Created by adnan120hz": "Créé par adnan120hz",
+
+        "Tweaks applied successfully!": "Réglages appliqués avec succès !",
+        "Continue": "Continuer",
 
     ]
 }
