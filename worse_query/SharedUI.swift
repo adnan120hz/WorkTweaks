@@ -140,7 +140,7 @@ struct WTSectionCard<Content: View>: View {
                 HStack(spacing: 5) {
                     if let headerIcon {
                         Image(systemName: headerIcon)
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                     }
                     Text(header)
                 }
@@ -195,7 +195,7 @@ struct WTPageHero: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: systemImage)
                 .font(.title2)
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 // Four tiny Tweaky mascots at the glyph's
                 // corners (v8.0) — before the frame, so they
                 // hug the glyph rather than the row slot.

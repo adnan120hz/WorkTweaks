@@ -536,7 +536,7 @@ struct TweaksView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 5) {
                 Image(systemName: "square.grid.2x2")
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                 Text(wtLang.tr("Sections"))
             }
                 .font(.footnote.weight(.semibold))
@@ -627,7 +627,7 @@ struct TweaksView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 5) {
                 Image(systemName: "list.bullet")
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                 Text(wtLang.tr("Menus"))
             }
                 .font(.footnote.weight(.semibold))

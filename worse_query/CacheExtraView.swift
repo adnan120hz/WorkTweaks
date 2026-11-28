@@ -59,7 +59,7 @@ struct CacheExtraView: View {
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "key.fill")
                             .font(.title2)
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                             .wtIconCornerMascots(size: 12)
                             .frame(minWidth: 36)
                         VStack(alignment: .leading, spacing: 3) {
