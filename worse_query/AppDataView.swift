@@ -57,6 +57,21 @@ struct AppDataView: View {
                 .padding(.vertical, 10)
             }
 
+            // Instruction: Deploy resolves its target app from
+            // this scan, so the scan must finish before deploying.
+            WTSectionCard {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(Color.accentColor)
+                    Text(wtLang.tr("Before you deploy a package, let the container scan finish here first. Deploy finds its target app from this scan."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+            }
+
             if !manager.containers.isEmpty {
                 WTSectionCard {
                     LazyVStack(alignment: .leading, spacing: 0) {
