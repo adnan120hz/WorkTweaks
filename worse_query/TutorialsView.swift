@@ -67,22 +67,25 @@ struct TutorialsView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     // The patch is manual now (the automatic
                     // pattern is ambiguous on some devices):
-                    // steps 1–3 are the shared Siri guide.
-                    step(1, wtLang.tr(SiriManualGuide.plistSteps[0]))
+                    // the shared Siri guide steps first (backup,
+                    // line 104, charge limit, apply together),
+                    // then Spoofing, the Apple Intelligence
+                    // toggle, and Join Waitlist.
+                    let siriCount = SiriManualGuide.plistSteps.count
+                    ForEach(Array(SiriManualGuide.plistSteps.enumerated()), id: \.offset) { index, stepText in
+                        step(index + 1, wtLang.tr(stepText))
+                        if index < siriCount - 1 {
+                            Divider().padding(.leading, 14)
+                        }
+                    }
                     Divider().padding(.leading, 14)
-                    step(2, wtLang.tr(SiriManualGuide.plistSteps[1]))
+                    step(siriCount + 1, wtLang.tr("Set the Spoofing picker (under Apple Intelligence) to iPhone 17 Pro (iPhone18,1)."))
                     Divider().padding(.leading, 14)
-                    step(3, wtLang.tr(SiriManualGuide.plistSteps[2]))
+                    step(siriCount + 2, wtLang.tr("Turn on the Apple Intelligence toggle."))
                     Divider().padding(.leading, 14)
-                    step(4, wtLang.tr("Set the Spoofing picker (under Apple Intelligence) to iPhone 17 Pro (iPhone18,1)."))
+                    step(siriCount + 3, wtLang.tr("Open Settings → Apple Intelligence & Siri and tap Join Waitlist. Wait about 15 minutes for it to be accepted."))
                     Divider().padding(.leading, 14)
-                    step(5, wtLang.tr("Turn on the Apple Intelligence toggle and the Charge Limit Menu toggle (Add feature section)."))
-                    Divider().padding(.leading, 14)
-                    step(6, wtLang.tr("Go to the Apply/Revert section and tap Apply, then Respring. When the respring finishes, restart your iPhone."))
-                    Divider().padding(.leading, 14)
-                    step(7, wtLang.tr("Open Settings → Apple Intelligence & Siri and tap Join Waitlist. Wait about 15 minutes for it to be accepted."))
-                    Divider().padding(.leading, 14)
-                    step(8, wtLang.tr("If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it."))
+                    step(siriCount + 4, wtLang.tr("If Siri is stuck on 'Adding support for Siri is in progress' with the model already downloaded, that is a different problem — this method does not fix it."))
                 }
                 .padding(.vertical, 4)
             }

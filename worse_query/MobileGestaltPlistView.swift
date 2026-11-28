@@ -113,12 +113,15 @@ enum SiriPatchState {
 /// Guide C so the three never drift apart.
 enum SiriManualGuide {
     static let plistSteps: [String] = [
+        "First, back up MobileGestalt in the Backup tab — tap \"Back Up Now\" before changing anything.",
         "Open \"Mobile Gestalt.plist\" in the Tweaks tab (below the Siri AI Cache Patch card), then tap \"Open with Text Editor\".",
         "Tap \"Jump to Siri line\" — it jumps to the exact Siri line for this device (usually line 104).",
         "Select the whole line and replace it with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. To turn the patch off again, replace it back with: AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Then tap Save — a pristine backup is made before the first save.",
+        "Turn on the Charge Limit Menu toggle (Add feature section).",
+        "Now apply both changes together: go to the Apply/Revert section and tap Apply Tweaks, then choose Restart Device (or Respring first, then restart your iPhone).",
     ]
 
-    static let thenLine = "Then turn on Apple Intelligence and the Charge Limit Menu toggle, set Spoofing to iPhone 17 Pro, Apply, respring and restart — Join Waitlist should appear in Settings > Apple Intelligence & Siri."
+    static let thenLine = "Then turn on the Apple Intelligence toggle and set the Spoofing picker (under Apple Intelligence) to iPhone 17 Pro — Join Waitlist should appear in Settings > Apple Intelligence & Siri."
 
     /// Caveat appended to every rendering of the guide (same
     /// sentence as Guide C step 8): the stuck-on-"Adding
