@@ -20,7 +20,7 @@ struct SupportedRelease: Identifiable {
     /// e.g. "September 28, 2026"
     let releaseDate: String
     /// True when only a subset of features is supported on this
-    /// build (App Data + Airlift). iOS 18 and iOS 26 are partial.
+    /// build (App Data + Airlift). iOS 17, iOS 18 and iOS 26 are partial.
     let partial: Bool
 
     var id: String { build }
@@ -38,7 +38,7 @@ enum SupportInfo {
     /// The allowlist — user-specified for v2.0, used verbatim.
     /// Public betas share builds with developer betas, so each
     /// unique build appears once with both names in its notes.
-    /// iOS 18 and iOS 26 are partially supported: App Data and
+    /// iOS 17, iOS 18 and iOS 26 are partially supported: App Data and
     /// Airlift only. iOS 27 is fully supported.
     static let supportedReleases: [SupportedRelease] = [
         SupportedRelease(version: "iOS 18.0 Beta 1", build: "22A5282m", notes: "Developer Beta 1", releaseDate: "June 10, 2024", partial: true),
@@ -118,7 +118,7 @@ enum SupportInfo {
     }
 
     /// True when the device's build is on the allowlist but only
-    /// partially supported (App Data + Airlift). iOS 18 and iOS 26.
+    /// partially supported (App Data + Airlift). iOS 17, iOS 18 and iOS 26.
     static var isPartiallySupported: Bool {
         matchedRelease?.partial == true
     }

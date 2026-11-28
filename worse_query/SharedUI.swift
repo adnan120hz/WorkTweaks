@@ -262,6 +262,7 @@ struct RowIcon: View {
 // Used in License & Credits and on the unsupported screen.
 
 struct SupportedReleaseRow: View {
+    @EnvironmentObject private var wtLang: WTLangStore
     let release: SupportedRelease
 
     var body: some View {
@@ -277,6 +278,11 @@ struct SupportedReleaseRow: View {
             Text("\(release.notes) • \(release.releaseDate)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            if release.partial {
+                Text(wtLang.tr("Partially Supported — Only App Data & Airlift"))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.orange)
+            }
         }
         .padding(.vertical, 2)
     }

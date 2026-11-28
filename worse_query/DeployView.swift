@@ -449,6 +449,10 @@ struct DeployPreviewSection: View {
                                 .fixedSize(horizontal: false, vertical: true)
                             DisclosureGroup {
                                 VStack(alignment: .leading, spacing: 2) {
+                                    Text(wtLang.tr("Partially Supported — Only App Data & Airlift"))
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(.orange)
+                                        .padding(.bottom, 4)
                                     ForEach(SupportInfo.airliftIOS17Releases) { rel in
                                         HStack(spacing: 8) {
                                             Text(rel.version)
