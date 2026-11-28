@@ -36,7 +36,6 @@ enum RepositoryStore {
         "3105-iscreen",
         "3105-iscreen-appgroup",
         "3105-locket",
-        "3105-locket-trial-dates-guide",
         "3105-pvz",
         "3105-subway-surf",
         "3105-wbf",
