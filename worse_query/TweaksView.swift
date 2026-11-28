@@ -27,6 +27,7 @@ import UIKit
 /// instead of tweaks.
 enum TweakSection: String, CaseIterable, Identifiable {
     case all, dynamicIsland, tweaks, appleIntelligence, addFeature, applyRevert
+    case ipados, display, internalFeatures
 
     var id: String { rawValue }
 
@@ -38,6 +39,9 @@ enum TweakSection: String, CaseIterable, Identifiable {
         case .appleIntelligence: return "Apple Intelligence"
         case .addFeature: return L("Add feature")
         case .applyRevert: return L("Apply/Revert")
+        case .ipados: return "iPadOS"
+        case .display: return L("Display")
+        case .internalFeatures: return L("Internal")
         }
     }
 
@@ -49,13 +53,30 @@ enum TweakSection: String, CaseIterable, Identifiable {
         case .appleIntelligence: return "sparkles"
         case .addFeature: return "plus.circle"
         case .applyRevert: return "checkmark.circle"
+        case .ipados: return "ipad"
+        case .display: return "sun.max"
+        case .internalFeatures: return "cpu"
         }
     }
 }
 
 /// Which section each catalog tweak belongs to — exactly one per
-/// tweak, keyed by tweak id. The union of Dynamic Island / Tweaks /
-/// Apple Intelligence / Add feature is the full 24-tweak catalog.
+/// tweak, keyed by tweak id. The union of Dynamic Island /
+/// Apple Intelligence / iPadOS / Display / Internal / Tweaks /
+/// Add feature is the full 24-tweak catalog. The groupings only
+/// regroup existing tweaks: iPadOS holds the iPad-related ones
+/// (iPadOS Mode, iPad apps, Stage Manager, Apple Pencil);
+/// Display holds the screen ones (Always On Display, vibrancy,
+/// wallpaper parallax, Liquid Glass low-performance mode,
+/// PWM); Internal holds the Apple-internal ones (Security
+/// Research Device mode, internal storage view, Apple internal
+/// install, internal features). Tweaks keeps the two that fit
+/// no new box (boot/shutdown chime, region restrictions) next
+/// to the Custom Device Name / Custom Region Model / Persist
+/// cards that already live there; Add feature keeps the
+/// hardware additions (Camera Control, Action Button, charge
+/// limit, Tap to Wake, Collision SOS) with the Lock Screen
+/// Footnote card.
 enum TweakCategory {
     static let sectionByID: [String: TweakSection] = [
         // Dynamic Island
@@ -63,29 +84,32 @@ enum TweakCategory {
         // Apple Intelligence
         "apple_intelligence": .appleIntelligence,
         "siri_ai_cache_patch": .appleIntelligence,
+        // iPadOS
+        "enable_ipados_mode": .ipados,
+        "allow_ipad_apps": .ipados,
+        "stage_manager_support": .ipados,
+        "apple_pencil_settings": .ipados,
+        // Display
+        "always_on_display": .display,
+        "aod_vibrancy": .display,
+        "disable_wallpaper_parallax": .display,
+        "enable_liquid_glass_low_performance_mode": .display,
+        "disable_liquid_glass_low_performance_mode": .display,
+        "pulse_width_modulation": .display,
+        // Internal
+        "security_research_device_mode": .internalFeatures,
+        "internal_storage_view": .internalFeatures,
+        "apple_internal_install": .internalFeatures,
+        "internal_features": .internalFeatures,
         // Add feature
         "iphone_16_camera_control_settings": .addFeature,
         "action_button_settings": .addFeature,
-        "apple_pencil_settings": .addFeature,
-        "enable_ipados_mode": .addFeature,
-        "allow_ipad_apps": .addFeature,
-        "stage_manager_support": .addFeature,
         "charge_limit_menu": .addFeature,
         "tap_to_wake": .addFeature,
         "collision_sos": .addFeature,
         // Tweaks
-        "always_on_display": .tweaks,
-        "aod_vibrancy": .tweaks,
-        "disable_wallpaper_parallax": .tweaks,
-        "enable_liquid_glass_low_performance_mode": .tweaks,
-        "disable_liquid_glass_low_performance_mode": .tweaks,
-        "pulse_width_modulation": .tweaks,
         "boot_shutdown_chime": .tweaks,
-        "security_research_device_mode": .tweaks,
         "disable_region_restrictions": .tweaks,
-        "internal_storage_view": .tweaks,
-        "apple_internal_install": .tweaks,
-        "internal_features": .tweaks,
     ]
 
     static func section(of tweak: GestaltTweak) -> TweakSection {
@@ -458,12 +482,12 @@ struct TweaksView: View {
     // MARK: Browse by category
 
     /// The browsable categories: every section that holds
-    /// tweaks. Apply/Revert is an action, not a category, so
-    /// it gets its own section below instead of a row here.
-    /// "All" lives in the search capsule (an empty query
-    /// shows the full catalog).
+    /// tweaks, most-used first. Apply/Revert is an action, not
+    /// a category, so it gets its own section below instead of
+    /// a row here. "All" lives in the search capsule (an empty
+    /// query shows the full catalog).
     private var browseCategories: [TweakSection] {
-        [.dynamicIsland, .appleIntelligence, .tweaks, .addFeature]
+        [.dynamicIsland, .appleIntelligence, .ipados, .display, .internalFeatures, .tweaks, .addFeature]
     }
 
     private var browseSection: some View {
