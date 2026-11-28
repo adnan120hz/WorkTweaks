@@ -278,6 +278,48 @@ enum SupportInfo {
     static var normalDeployAvailable: Bool { normalDeployGate == .available }
     static var airliftDeployAvailable: Bool { airliftDeployGate == .available }
 
+    // MARK: - PosterBoard method availability (v8.0)
+    //
+    // Normal and Flake both write through the worse_query
+    // escape, so they share Normal Deploy's range: iOS 26.0 ..
+    // iOS 27.3 beta 1. worse_query is patched in iOS 27.3 beta 2
+    // (24C5049d), and Flake's README says the same about Flake
+    // itself ("This tool does NOT support iOS 18- and 27.3
+    // Developer Beta 2+. It will NEVER be supported on these
+    // versions.") — there is no flake fix for 27.3 beta 2+.
+    //
+    // Via Airlift is capped at iOS 27.2 beta 2 like Deploy via
+    // Airlift, AND it still needs the local escape to resolve
+    // the PosterBoard container and read the store version
+    // first — on iOS 17/18 the container can neither be
+    // resolved nor read, so there is nothing to stage into.
+    // Its range is therefore iOS 26.0 .. iOS 27.2 beta 2, not
+    // Deploy via Airlift's iOS 17/18/26/27 range. When the
+    // escape gate is above its maximum, both PosterBoard gates
+    // are closed and the page shows the honest blocked state.
+
+    /// Normal + Flake PosterBoard import (worse_query path):
+    /// iOS 26.0 .. iOS 27.3 beta 1.
+    static var posterBoardEscapeGate: DeployGate { normalDeployGate }
+
+    /// PosterBoard import via Airlift: iOS 26.0 .. 27.2 beta 2.
+    static var posterBoardAirliftGate: DeployGate {
+        switch normalDeployGate {
+        case .belowMinimum:
+            return .belowMinimum
+        case .unknownBuild:
+            return .unknownBuild
+        case .aboveMaximum:
+            return .aboveMaximum
+        case .available:
+            break
+        }
+        return airliftDeployGate
+    }
+
+    static var posterBoardEscapeAvailable: Bool { posterBoardEscapeGate == .available }
+    static var posterBoardAirliftAvailable: Bool { posterBoardAirliftGate == .available }
+
     /// Apple build-train order: year digits, train letter,
     /// finals (no letter suffix — RC / final releases) sort
     /// AFTER the betas of the same train letter, then build

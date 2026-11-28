@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import AirliftFFI
 
 // MARK: - PosterBoard (wallpaper data store)
 //
@@ -63,6 +64,18 @@ import Combine
 // the real code/message, a partially copied descriptor is
 // removed again, and nothing claims success that did not
 // verify. Every step logs with a [PosterBoard] prefix.
+//
+// Flake (v8.0, Squair — squairdev/Flake, GPL-3.0) adds
+// MercuryPoster support: its mercuryhelper finds a
+// descriptors folder under a com.apple.MercuryPoster
+// container dir and copies each descriptor into the
+// MercuryPoster descriptors store under a fresh UUID,
+// WITHOUT randomizing identifiers (only its
+// descriptorhelper randomizes). That discovery is ported
+// here as the Flake method; Flake's hardcoded store "61"
+// is NOT copied — the highest version folder is still read
+// dynamically. Via Airlift writes the same descriptors
+// through al_exploit_write_dir (Deploy's pattern).
 
 struct PosterBoardReceipt: Codable, Identifiable {
     /// The fresh-UUID folder name created for this descriptor.
@@ -80,10 +93,33 @@ struct PosterBoardReceipt: Codable, Identifiable {
     var id: String { descriptorUUID }
 }
 
+/// The three PosterBoard import methods (v8.0). Normal is the
+/// v7.0 method, unchanged. Flake ports Squair's Flake
+/// (squairdev/Flake, GPL-3.0): MercuryPoster descriptor
+/// discovery (mercuryhelper) plus no identifier randomization
+/// for Mercury descriptors — Flake's mercuryhelper never
+/// randomizes, only its descriptorhelper does. Via Airlift
+/// writes the descriptors through the Airlift exploit instead
+/// of the local sandbox-extension grant.
+enum PosterBoardMethod: String, CaseIterable, Identifiable {
+    case normal
+    case flake
+    case airlift
+
+    var id: String { rawValue }
+}
+
 final class PosterBoardManager: ObservableObject {
     static let posterBoardBundleID = "com.apple.PosterBoard"
     static let collectionsExtension = "com.apple.WallpaperKit.CollectionsPoster"
     static let photosExtension = "com.apple.PhotosUIPrivate.PhotosPosterProvider"
+    /// Flake's MercuryPoster extension — WorkTweaks had zero
+    /// Mercury support before v8.0 (verified by grep: no
+    /// "mercury" anywhere in the app). Ported from Squair's
+    /// Flake (squairdev/Flake, GPL-3.0), mercuryhelper /
+    /// mercurycopy, but with the store version read
+    /// dynamically (Flake hardcodes "61" — never copied).
+    static let mercuryExtension = "com.apple.MercuryPoster"
     static let dataStoreRelativePath = "Library/Application Support/PRBPosterExtensionDataStore"
     /// mond's container search order: Application first (via
     /// the App Data scan), then these two roots.
@@ -309,7 +345,7 @@ final class PosterBoardManager: ObservableObject {
 
     private static func descriptorCount(container: String, version: String) -> Int {
         var total = 0
-        for ext in [collectionsExtension, photosExtension] {
+        for ext in [collectionsExtension, photosExtension, mercuryExtension] {
             let path = descriptorsPath(container: container, version: version, ext: ext)
             guard let children = try? FileManager.default.contentsOfDirectory(atPath: path) else { continue }
             for child in children {
@@ -328,7 +364,9 @@ final class PosterBoardManager: ObservableObject {
     /// Import one .tendies package. The completion reports
     /// whether at least one descriptor was written and
     /// verified (the view then offers the respring prompt).
-    func importPackage(url: URL, completion: @escaping (Bool) -> Void) {
+    /// Normal is the v7.0 import, unchanged; Flake adds
+    /// MercuryPoster discovery and keeps Mercury identifiers.
+    func importPackage(url: URL, method: PosterBoardMethod = .normal, completion: @escaping (Bool) -> Void) {
         guard let containerPath, let version = storeVersion,
               case .ready = state, !isBusy else {
             completion(false)
@@ -338,7 +376,76 @@ final class PosterBoardManager: ObservableObject {
         lastResult = nil
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
-            let outcome = self.performImport(url: url, containerPath: containerPath, version: version)
+            let outcome = self.performImport(url: url, containerPath: containerPath, version: version, method: method)
+            DispatchQueue.main.async {
+                self.isBusy = false
+                self.lastResult = outcome.message
+                if outcome.written > 0 {
+                    self.receipts.append(contentsOf: outcome.newReceipts)
+                    self.saveReceipts()
+                    AppDataManager.shared.invalidateScanCache()
+                    self.refreshStatus()
+                }
+                completion(outcome.written > 0)
+            }
+        }
+    }
+
+    // MARK: Import via Airlift
+    //
+    // Same package flow as Normal (extract → find → receipt),
+    // but the copy step goes through the Airlift exploit
+    // instead of the local sandbox-extension grant:
+    //
+    //   al_exploit_write_dir(pairing, stageDir, containerPath)
+    //
+    // — the PROVEN FFI call behind Deploy via Airlift (and the
+    // passcode / wallet flashes), with the target host pointed
+    // at the Local Dev VPN gateway (10.7.0.1) first. The
+    // descriptors are staged into a temp dir mirroring their
+    // destination relative paths (store version included) and
+    // written in one call. The view gates this on the pairing
+    // + VPN transport and on iOS 26.0 .. 27.2 beta 2.
+    //
+    // HONEST LIMITS:
+    //   1. The container and its store version must already be
+    //      known from local resolution — on iOS 17/18 the
+    //      escape cannot resolve the container or read the
+    //      store, so there is nothing to stage into. That is
+    //      why this method's range starts at iOS 26.0 even
+    //      though Deploy via Airlift supports iOS 17/18.
+    //   2. Verification: when the container can still be read
+    //      locally (iOS 26/27 — the grant works), copied
+    //      descriptors are verified by file count like Normal
+    //      and a partial copy is removed again. Without a
+    //      grant a successful exploit return (rc == 0) is
+    //      reported as "Sent via Airlift", NOT as verified.
+    //   3. Nested folders are staged as-is; only flat
+    //      (top-level) payloads are proven over Airlift so far
+    //      (Deploy's own caveat) — descriptor trees are nested
+    //      by nature, so this path is honest but unproven on
+    //      device until the user tests it.
+    //   4. Discovery is Normal's, not Flake's: MercuryPoster
+    //      descriptors are only found inside a container
+    //      layout, as before — Flake's Mercury discovery is
+    //      not combined with this write path.
+
+    func importViaAirlift(url: URL, completion: @escaping (Bool) -> Void) {
+        guard let containerPath, let version = storeVersion,
+              case .ready = state, !isBusy else {
+            completion(false)
+            return
+        }
+        guard TransportGate.check().isReady else {
+            lastResult = "Import via Airlift needs the pairing file and the VPN tunnel — fix the transport first, then try again."
+            completion(false)
+            return
+        }
+        isBusy = true
+        lastResult = nil
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+            let outcome = self.performImportViaAirlift(url: url, containerPath: containerPath, version: version)
             DispatchQueue.main.async {
                 self.isBusy = false
                 self.lastResult = outcome.message
@@ -431,24 +538,169 @@ final class PosterBoardManager: ObservableObject {
         var message = ""
     }
 
-    private func performImport(url: URL, containerPath: String, version: String) -> ImportOutcome {
+    /// One import record for a descriptor written under a
+    /// fresh UUID. The stored relative path (store version
+    /// included) is what delete uses, so it works for
+    /// MercuryPoster descriptors exactly like the others.
+    private static func receipt(ext: String, destName: String, version: String, sourcePackage: String) -> PosterBoardReceipt {
+        PosterBoardReceipt(
+            descriptorUUID: destName,
+            ext: ext,
+            storeRelativePath: "\(dataStoreRelativePath)/\(version)/Extensions/\(ext)/descriptors/\(destName)",
+            sourcePackage: sourcePackage,
+            importedAt: ISO8601DateFormatter().string(from: Date())
+        )
+    }
+
+    /// The Airlift write: stage the found descriptors into a
+    /// temp dir mirroring their destination relative paths,
+    /// then one al_exploit_write_dir call (Deploy's pattern).
+    /// Verified by file count when the container can be read
+    /// locally, otherwise reported as sent, not verified.
+    private func performImportViaAirlift(url: URL, containerPath: String, version: String) -> ImportOutcome {
         let fm = FileManager.default
-        let packageName = url.lastPathComponent
         var outcome = ImportOutcome()
 
+        guard Self.receiptsDirectory() != nil else {
+            print("[PosterBoard] Airlift import aborted — the App Group container is unavailable")
+            outcome.message = "The app's group container is unavailable, so the import could not be recorded. Nothing was written."
+            return outcome
+        }
+
+        var stageMessage = ""
+        guard let staged = stagePackage(url: url, message: &stageMessage) else {
+            outcome.message = stageMessage
+            return outcome
+        }
+        defer { try? fm.removeItem(at: staged.staging) }
+
+        // Discovery is Normal's, not Flake's (see the method
+        // comment on importViaAirlift).
+        let found = Self.findDescriptors(in: staged.staging, includeMercury: false)
+        let total = found.values.reduce(0) { $0 + $1.count }
+        guard total > 0 else {
+            print("[PosterBoard] no descriptors found in \(staged.packageName)")
+            outcome.message = "No descriptors found in \(staged.packageName)."
+            return outcome
+        }
+        print("[PosterBoard] Airlift \(staged.packageName): \(total) descriptor(s) found")
+
+        // Stage every descriptor under its destination relative
+        // path (fresh UUID folder names, identifiers randomized
+        // like Normal), then one exploit write.
+        let airliftStage = fm.temporaryDirectory.appendingPathComponent("posterboard-airlift-\(UUID().uuidString)", isDirectory: true)
+        defer { try? fm.removeItem(at: airliftStage) }
+        var planned: [(ext: String, destName: String, fileCount: Int)] = []
+        do {
+            try fm.createDirectory(at: airliftStage, withIntermediateDirectories: true)
+            for (ext, folders) in found {
+                for folder in folders {
+                    Self.randomizeIdentifier(in: folder)
+                    let destName = UUID().uuidString
+                    let relPath = "\(Self.dataStoreRelativePath)/\(version)/Extensions/\(ext)/descriptors/\(destName)"
+                    let stagedDest = airliftStage.appendingPathComponent(relPath)
+                    try fm.createDirectory(at: stagedDest.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    try fm.copyItem(atPath: folder.path, toPath: stagedDest.path)
+                    planned.append((ext: ext, destName: destName, fileCount: Self.recursiveFileCount(folder)))
+                }
+            }
+        } catch {
+            print("[PosterBoard] Airlift staging failed for \(staged.packageName): \(error)")
+            outcome.message = "Staging \(staged.packageName) for the Airlift write failed: \(error.localizedDescription) — nothing was written."
+            return outcome
+        }
+
+        // The grant is held across the write so the post-write
+        // file-count check can use it (Deploy's pattern). When
+        // it is refused the write is still attempted — the
+        // exploit does not need the grant — but nothing can be
+        // verified afterwards.
+        let handle = consumeExtension(containerPath)
+        let hadGrant = handle > 0
+        print("[PosterBoard] Airlift grant for \(containerPath) -> \(handle)")
+        defer { if hadGrant { releaseExtension(handle) } }
+
+        "10.7.0.1".withCString { _ = al_set_target_host($0) }
+        let pairingPath = PairingController.pairingFilePath()
+        var outError: UnsafeMutablePointer<CChar>? = nil
+        let rc = pairingPath.withCString { pairC in
+            airliftStage.path.withCString { srcC in
+                containerPath.withCString { tgtC in
+                    al_exploit_write_dir(pairC, srcC, tgtC, nil, nil, &outError)
+                }
+            }
+        }
+        var ffiError: String? = nil
+        if let p = outError {
+            ffiError = String(validatingUTF8: p)
+            al_string_free(p)
+        }
+        print("[PosterBoard] Airlift write_dir rc=\(rc) for \(containerPath)\(ffiError.map { " — \($0)" } ?? "")")
+        guard rc == 0 else {
+            outcome.message = "Airlift write failed: \(ffiError ?? "exploit error (rc=\(rc))") — nothing was imported."
+            return outcome
+        }
+
+        for item in planned {
+            let dest = Self.descriptorsPath(container: containerPath, version: version, ext: item.ext) + "/\(item.destName)"
+            if hadGrant {
+                let destCount = Self.recursiveFileCount(URL(fileURLWithPath: dest))
+                guard destCount == item.fileCount else {
+                    try? fm.removeItem(atPath: dest)
+                    outcome.failed += 1
+                    print("[PosterBoard] Airlift verify failed for \(item.destName) (\(destCount) of \(item.fileCount) files) — partial copy removed")
+                    continue
+                }
+                outcome.written += 1
+                outcome.newReceipts.append(Self.receipt(ext: item.ext, destName: item.destName, version: version, sourcePackage: staged.packageName))
+                print("[PosterBoard] Airlift imported \(item.destName) (\(item.ext), \(item.fileCount) file(s))")
+            } else {
+                outcome.written += 1
+                outcome.newReceipts.append(Self.receipt(ext: item.ext, destName: item.destName, version: version, sourcePackage: staged.packageName))
+                print("[PosterBoard] Airlift sent \(item.destName) (\(item.ext)) — unverified, the exploit reported success")
+            }
+        }
+
+        if outcome.written > 0, outcome.failed == 0 {
+            outcome.message = hadGrant
+                ? "Imported \(outcome.written) wallpaper(s) from \(staged.packageName) via Airlift."
+                : "Sent \(outcome.written) wallpaper(s) from \(staged.packageName) via Airlift — the exploit reported success, but they could not be verified on-device."
+        } else if outcome.written > 0 {
+            outcome.message = "Imported \(outcome.written) wallpaper(s) from \(staged.packageName) via Airlift — \(outcome.failed) could not be verified (details in the Log)."
+        } else {
+            outcome.message = "Import via Airlift failed — none of the \(total) descriptor(s) in \(staged.packageName) could be verified. Nothing was imported."
+        }
+        return outcome
+    }
+
+    /// A package extracted into staging, ready for its
+    /// descriptors to be found and written. The caller owns
+    /// the staging dir and removes it.
+    private struct StagedPackage {
+        let staging: URL
+        let packageName: String
+    }
+
+    /// Read a .tendies package (ZIP check, entry read, safe
+    /// extraction into our own temp dir). Shared by the Normal
+    /// / Flake import and the Airlift import, so a bad package
+    /// is rejected exactly the same way by both. Returns nil
+    /// with the honest message when the package cannot be used.
+    private func stagePackage(url: URL, message: inout String) -> StagedPackage? {
+        let fm = FileManager.default
+        let packageName = url.lastPathComponent
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-
         guard let data = try? Data(contentsOf: url) else {
             print("[PosterBoard] could not read \(packageName)")
-            outcome.message = "Could not read \(packageName)."
-            return outcome
+            message = "Could not read \(packageName)."
+            return nil
         }
         // mond's not-a-zip check: a ZIP starts with "PK".
         guard data.count >= 4, data[0] == 0x50, data[1] == 0x4B else {
             print("[PosterBoard] \(packageName) is not a zip archive")
-            outcome.message = "\(packageName) is not a valid .tendies/zip archive."
-            return outcome
+            message = "\(packageName) is not a valid .tendies/zip archive."
+            return nil
         }
         let entries: [String: Data]
         switch DeployManager.zipEntries(from: data) {
@@ -456,9 +708,38 @@ final class PosterBoardManager: ObservableObject {
             entries = dict
         case .failure(let error):
             print("[PosterBoard] zip read failed for \(packageName): \(error.message)")
-            outcome.message = error.message
-            return outcome
+            message = error.message
+            return nil
         }
+        // Extract to a staging folder in our own temporary
+        // directory (no grant needed there).
+        let staging = fm.temporaryDirectory.appendingPathComponent("posterboard-\(UUID().uuidString)", isDirectory: true)
+        do {
+            try fm.createDirectory(at: staging, withIntermediateDirectories: true)
+            for (name, bytes) in entries {
+                if name.hasSuffix("/") { continue }
+                let components = name.split(separator: "/").map(String.init)
+                if components.isEmpty || components.contains("__MACOSX") { continue }
+                if components.contains("..") {
+                    print("[PosterBoard] package contains an unsafe path: \(name)")
+                    message = "The package contains an unsafe path (\(name)) — rejected whole, nothing was written."
+                    return nil
+                }
+                let dest = components.reduce(staging) { $0.appendingPathComponent($1) }
+                try fm.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try bytes.write(to: dest)
+            }
+        } catch {
+            print("[PosterBoard] extraction failed for \(packageName): \(error)")
+            message = "Extracting \(packageName) failed: \(error.localizedDescription)"
+            return nil
+        }
+        return StagedPackage(staging: staging, packageName: packageName)
+    }
+
+    private func performImport(url: URL, containerPath: String, version: String, method: PosterBoardMethod) -> ImportOutcome {
+        let fm = FileManager.default
+        var outcome = ImportOutcome()
 
         // Imports are recorded so they can be listed and
         // deleted again — without the records store there is
@@ -469,39 +750,26 @@ final class PosterBoardManager: ObservableObject {
             return outcome
         }
 
-        // Extract to a staging folder in our own temporary
-        // directory (no grant needed there).
-        let staging = fm.temporaryDirectory.appendingPathComponent("posterboard-\(UUID().uuidString)", isDirectory: true)
-        defer { try? fm.removeItem(at: staging) }
-        do {
-            try fm.createDirectory(at: staging, withIntermediateDirectories: true)
-            for (name, bytes) in entries {
-                if name.hasSuffix("/") { continue }
-                let components = name.split(separator: "/").map(String.init)
-                if components.isEmpty || components.contains("__MACOSX") { continue }
-                if components.contains("..") {
-                    print("[PosterBoard] package contains an unsafe path: \(name)")
-                    outcome.message = "The package contains an unsafe path (\(name)) — rejected whole, nothing was written."
-                    return outcome
-                }
-                let dest = components.reduce(staging) { $0.appendingPathComponent($1) }
-                try fm.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-                try bytes.write(to: dest)
-            }
-        } catch {
-            print("[PosterBoard] extraction failed for \(packageName): \(error)")
-            outcome.message = "Extracting \(packageName) failed: \(error.localizedDescription)"
+        var stageMessage = ""
+        guard let staged = stagePackage(url: url, message: &stageMessage) else {
+            outcome.message = stageMessage
             return outcome
         }
+        defer { try? fm.removeItem(at: staged.staging) }
 
-        let found = Self.findDescriptors(in: staging)
+        // Flake is the only method that looks for MercuryPoster
+        // descriptors outside a container layout — Normal is
+        // the v7.0 discovery, unchanged (a container-layout
+        // package can still carry a Mercury extension there,
+        // exactly as before).
+        let found = Self.findDescriptors(in: staged.staging, includeMercury: method == .flake)
         let total = found.values.reduce(0) { $0 + $1.count }
         guard total > 0 else {
-            print("[PosterBoard] no descriptors found in \(packageName)")
-            outcome.message = "No descriptors found in \(packageName)."
+            print("[PosterBoard] no descriptors found in \(staged.packageName)")
+            outcome.message = "No descriptors found in \(staged.packageName)."
             return outcome
         }
-        print("[PosterBoard] \(packageName): \(total) descriptor(s) found")
+        print("[PosterBoard] \(staged.packageName): \(total) descriptor(s) found")
 
         // One grant on the container for the whole import.
         let handle = consumeExtension(containerPath)
@@ -522,7 +790,13 @@ final class PosterBoardManager: ObservableObject {
                 continue
             }
             for folder in folders {
-                Self.randomizeIdentifier(in: folder)
+                // Flake's mercuryhelper never randomizes
+                // Mercury descriptors — they keep their original
+                // identifiers. Every other descriptor is
+                // randomized exactly like mond's randomize_id.
+                if !(method == .flake && ext == Self.mercuryExtension) {
+                    Self.randomizeIdentifier(in: folder)
+                }
                 let destName = UUID().uuidString
                 let dest = (destDir as NSString).appendingPathComponent(destName)
                 do {
@@ -541,23 +815,17 @@ final class PosterBoardManager: ObservableObject {
                     continue
                 }
                 outcome.written += 1
-                outcome.newReceipts.append(PosterBoardReceipt(
-                    descriptorUUID: destName,
-                    ext: ext,
-                    storeRelativePath: "\(Self.dataStoreRelativePath)/\(version)/Extensions/\(ext)/descriptors/\(destName)",
-                    sourcePackage: packageName,
-                    importedAt: ISO8601DateFormatter().string(from: Date())
-                ))
+                outcome.newReceipts.append(Self.receipt(ext: ext, destName: destName, version: version, sourcePackage: staged.packageName))
                 print("[PosterBoard] imported \(destName) (\(ext), \(destCount) file(s))")
             }
         }
 
         if outcome.written > 0, outcome.failed == 0 {
-            outcome.message = "Imported \(outcome.written) wallpaper(s) from \(packageName)."
+            outcome.message = "Imported \(outcome.written) wallpaper(s) from \(staged.packageName)."
         } else if outcome.written > 0 {
-            outcome.message = "Imported \(outcome.written) wallpaper(s) from \(packageName) — \(outcome.failed) could not be written (details in the Log)."
+            outcome.message = "Imported \(outcome.written) wallpaper(s) from \(staged.packageName) — \(outcome.failed) could not be written (details in the Log)."
         } else {
-            outcome.message = "Import failed — none of the \(total) descriptor(s) in \(packageName) could be written. Nothing was imported."
+            outcome.message = "Import failed — none of the \(total) descriptor(s) in \(staged.packageName) could be written. Nothing was imported."
         }
         return outcome
     }
@@ -626,7 +894,16 @@ final class PosterBoardManager: ObservableObject {
     /// descriptor(s) / video-descriptor(s) folders, or a deep
     /// search for descriptor containers and for folders that
     /// hold a descriptor identifier file.
-    private static func findDescriptors(in root: URL) -> [String: [URL]] {
+    ///
+    /// With includeMercury (the Flake method only) two more
+    /// layouts are found, ported from Flake's mercuryhelper:
+    /// a top-level com.apple.MercuryPoster folder holding a
+    /// descriptors folder, and — in the deep search — any
+    /// "descriptors" folder whose path runs through
+    /// com.apple.MercuryPoster. Flake's descriptorhelper flow
+    /// (loose descriptors + identifier randomization) is NOT
+    /// ported: the current code already does exactly that.
+    private static func findDescriptors(in root: URL, includeMercury: Bool = false) -> [String: [URL]] {
         let fm = FileManager.default
         var result: [String: [URL]] = [:]
         guard let top = try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: [.isDirectoryKey], options: .skipsHiddenFiles) else {
@@ -665,6 +942,18 @@ final class PosterBoardManager: ObservableObject {
                 continue
             }
         }
+        // Flake's mercuryhelper: a top-level
+        // com.apple.MercuryPoster folder holding a descriptors
+        // folder. (Flake only looks for Mercury inside a
+        // container layout or this loose folder — the deep
+        // search below is the same idea for packages that bury
+        // it deeper.)
+        if includeMercury,
+           let mercuryDir = top.first(where: { $0.lastPathComponent.lowercased() == mercuryExtension.lowercased() }),
+           let mercuryChildren = try? fm.contentsOfDirectory(at: mercuryDir, includingPropertiesForKeys: nil, options: .skipsHiddenFiles),
+           let mercuryDescriptors = mercuryChildren.first(where: { $0.lastPathComponent.lowercased() == "descriptors" }) {
+            result[mercuryExtension, default: []].append(contentsOf: descriptorFolders(in: mercuryDescriptors))
+        }
         if !result.isEmpty { return result }
 
         // The package root itself can be one bare descriptor.
@@ -677,6 +966,20 @@ final class PosterBoardManager: ObservableObject {
             for case let dir as URL in enumerator {
                 guard dir.lastPathComponent != "__MACOSX",
                       (try? dir.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else { continue }
+                // Flake's mercuryhelper search, exactly: a
+                // "descriptors" folder whose path runs through
+                // com.apple.MercuryPoster. Checked first, so a
+                // Mercury descriptor is never misread as a
+                // Collections one — its path contains the
+                // MercuryPoster container too.
+                if includeMercury, dir.path.lowercased().contains("com.apple.mercuryposter") {
+                    if isDescriptorContainer(dir) {
+                        result[mercuryExtension, default: []].append(contentsOf: descriptorFolders(in: dir))
+                    } else if isDescriptor(dir) {
+                        result[mercuryExtension, default: []].append(dir)
+                    }
+                    continue
+                }
                 if isDescriptorContainer(dir) {
                     let ext = dir.lastPathComponent.lowercased().hasPrefix("video") ? photosExtension : collectionsExtension
                     result[ext, default: []].append(contentsOf: descriptorFolders(in: dir))

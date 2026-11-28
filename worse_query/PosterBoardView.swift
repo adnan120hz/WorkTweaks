@@ -13,6 +13,15 @@ import UniformTypeIdentifiers
 // app's standard respring prompt, because SpringBoard only
 // reloads the wallpaper store when it (re)starts.
 //
+// Three import methods (v8.0): Normal (the v7.0 import),
+// Flake (Squair's Flake method — also finds MercuryPoster
+// descriptors and keeps their identifiers), and Via Airlift
+// (the copy step through the Airlift exploit, pairing + VPN
+// transport, iOS 26.0 .. 27.2 beta 2). Normal and Flake run
+// on iOS 26.0 .. 27.3 beta 1; on 27.3 beta 2+ the escape is
+// patched and the page shows the honest blocked state —
+// there is no flake fix for 27.3 beta 2 or later.
+//
 // The page renders as Liquid Glass cards (WTGlassPage /
 // WTSectionCard), like every other page since v3.8.
 
@@ -21,6 +30,8 @@ struct PosterBoardView: View {
     @StateObject private var manager = PosterBoardManager()
     @ObservedObject private var appData = AppDataManager.shared
 
+    @State private var method: PosterBoardMethod = .normal
+    @State private var transportStatus = TransportGate.check()
     @State private var showImporter = false
     @State private var showRespringChoice = false
     @State private var showManualRestartGuide = false
@@ -52,6 +63,14 @@ struct PosterBoardView: View {
             }
 
             if case .ready = manager.state {
+                methodCard
+
+                if method == .airlift, !transportStatus.isReady {
+                    TransportGateCard(status: transportStatus) {
+                        transportStatus = TransportGate.check()
+                    }
+                }
+
                 WTSectionCard(header: wtLang.tr("Import"), footer: wtLang.tr("Each wallpaper in the package is copied into PosterBoard's data store under a fresh identifier, so it can never clash with an existing wallpaper. A respring is required before a new wallpaper appears in the gallery.")) {
                     Button {
                         showImporter = true
@@ -69,7 +88,7 @@ struct PosterBoardView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .disabled(manager.isBusy)
+                    .disabled(manager.isBusy || !methodAvailable || (method == .airlift && !transportStatus.isReady))
                 }
 
                 WTSectionCard(header: wtLang.tr("Create"), footer: wtLang.tr("Builds a PosterBoard wallpaper on-device from your photo or video — the same descriptor format as an imported .tendies package, installed and listed exactly like one.")) {
@@ -131,7 +150,11 @@ struct PosterBoardView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             manager.loadReceipts()
+            transportStatus = TransportGate.check()
             kickResolution()
+        }
+        .onChange(of: method) { _, _ in
+            transportStatus = TransportGate.check()
         }
         .onChange(of: appData.didScan) { _, done in
             if done { manager.resolve() }
@@ -139,8 +162,19 @@ struct PosterBoardView: View {
         .fileImporter(isPresented: $showImporter, allowedContentTypes: packageContentTypes) { result in
             switch result {
             case .success(let url):
-                manager.importPackage(url: url) { ok in
-                    if ok { showRespringChoice = true }
+                switch method {
+                case .normal:
+                    manager.importPackage(url: url, method: .normal) { ok in
+                        if ok { showRespringChoice = true }
+                    }
+                case .flake:
+                    manager.importPackage(url: url, method: .flake) { ok in
+                        if ok { showRespringChoice = true }
+                    }
+                case .airlift:
+                    manager.importViaAirlift(url: url) { ok in
+                        if ok { showRespringChoice = true }
+                    }
                 }
             case .failure(let error):
                 pickerError = error.localizedDescription
@@ -266,7 +300,7 @@ struct PosterBoardView: View {
                 Text(receipt.sourcePackage)
                     .font(.subheadline.weight(.semibold))
                     .fixedSize(horizontal: false, vertical: true)
-                Text("\(receipt.descriptorUUID) • \(Self.displayDate(receipt.importedAt))")
+                Text("\(receipt.descriptorUUID)\(receipt.ext == PosterBoardManager.mercuryExtension ? " • MercuryPoster" : "") • \(Self.displayDate(receipt.importedAt))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -298,6 +332,15 @@ struct PosterBoardView: View {
     /// resolve — the same pattern Deploy uses: the scan runs
     /// once per app session and its results are shared.
     private func kickResolution() {
+        // iOS 27.3 beta 2+ (worse_query patched): neither the
+        // escape methods nor Airlift can run — show the honest
+        // blocked state instead of a confusing "container not
+        // found". There is no flake fix for 27.3 beta 2+.
+        if SupportInfo.posterBoardEscapeGate == .aboveMaximum,
+           SupportInfo.posterBoardAirliftGate == .aboveMaximum {
+            manager.state = .blocked(wtLang.tr("PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later."))
+            return
+        }
         if appData.didScan {
             manager.resolve()
         } else {
@@ -305,6 +348,124 @@ struct PosterBoardView: View {
             if !appData.isScanning {
                 appData.rescan()
             }
+        }
+    }
+
+    // MARK: Method picker
+
+    /// Whether the currently selected method is offered on
+    /// this device. The Import button stays disabled otherwise.
+    private var methodAvailable: Bool {
+        switch method {
+        case .normal, .flake:
+            return SupportInfo.posterBoardEscapeAvailable
+        case .airlift:
+            return SupportInfo.posterBoardAirliftAvailable
+        }
+    }
+
+    private var methodCard: some View {
+        WTSectionCard(header: wtLang.tr("PosterBoard Method")) {
+            VStack(alignment: .leading, spacing: 0) {
+                methodRow(.normal)
+                Divider().padding(.leading, 14)
+                methodRow(.flake)
+                Divider().padding(.leading, 14)
+                methodRow(.airlift)
+            }
+        }
+    }
+
+    /// One PosterBoard Method option row: title, supported iOS
+    /// range, what it does, and — when the gate closes it —
+    /// the honest reason, in orange. Unavailable options
+    /// cannot be selected. (DeployView's methodRow pattern.)
+    private func methodRow(_ option: PosterBoardMethod) -> some View {
+        let gate = option == .airlift ? SupportInfo.posterBoardAirliftGate : SupportInfo.posterBoardEscapeGate
+        let available = gate == .available
+        let selected = method == option
+        return Button {
+            guard available else { return }
+            SoundEffects.playTap()
+            method = option
+        } label: {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(selected ? Color.accentColor : .secondary)
+                    .font(.title3)
+                    .padding(.top, 1)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(wtLang.tr(methodTitle(option)))
+                            .font(.subheadline.weight(.semibold))
+                        if !available {
+                            Text(wtLang.tr("Not available on this iOS version"))
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                    Text(methodRange(option))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Text(wtLang.tr(methodDescription(option)))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if !available {
+                        Text(gateReason(option, gate))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+            .opacity(available ? 1 : 0.75)
+        }
+        .buttonStyle(.plain)
+        .disabled(!available)
+    }
+
+    private func methodTitle(_ option: PosterBoardMethod) -> String {
+        switch option {
+        case .normal: return "Normal"
+        case .flake: return "Flake (MercuryPoster)"
+        case .airlift: return "Via Airlift"
+        }
+    }
+
+    private func methodRange(_ option: PosterBoardMethod) -> String {
+        option == .airlift ? "iOS 26.0 – iOS 27.2 beta 2" : "iOS 26.0 – iOS 27.3 beta 1"
+    }
+
+    private func methodDescription(_ option: PosterBoardMethod) -> String {
+        switch option {
+        case .normal:
+            return "The current import — descriptors from any extension in the package, with fresh identifiers."
+        case .flake:
+            return "Flake's method — also finds MercuryPoster descriptors anywhere in the package and keeps their original identifiers."
+        case .airlift:
+            return "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is."
+        }
+    }
+
+    /// The user-facing reason a PosterBoard method is gated off
+    /// on this device.
+    private func gateReason(_ option: PosterBoardMethod, _ gate: SupportInfo.DeployGate) -> String {
+        switch gate {
+        case .available:
+            return ""
+        case .belowMinimum:
+            return wtLang.tr("Requires iOS 26.0 or later.")
+        case .aboveMaximum:
+            return option == .airlift
+                ? wtLang.tr("Blocked above iOS 27.2 beta 2.")
+                : wtLang.tr("Blocked above iOS 27.3 beta 1 — worse_query is patched in iOS 27.3 beta 2.")
+        case .unknownBuild:
+            return wtLang.tr("Could not read this iPhone's iOS build number.")
         }
     }
 }

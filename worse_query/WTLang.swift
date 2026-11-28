@@ -1079,6 +1079,16 @@ enum WTStrings {
         "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "File ditulis melalui exploit Airlift. Cadangan dibuat dulu hanya saat container bisa dibaca (iOS 26/27).",
         "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Tanda terima disimpan di DeployBackups/%@ — tidak ada cadangan yang dibuat, jadi deploy ini tidak bisa dipulihkan.",
 
+        "PosterBoard Method": "Metode PosterBoard",
+        "Normal": "Normal",
+        "Flake (MercuryPoster)": "Flake (MercuryPoster)",
+        "Via Airlift": "Via Airlift",
+        "The current import — descriptors from any extension in the package, with fresh identifiers.": "Impor saat ini — deskriptor dari ekstensi apa pun di dalam paket, dengan identifier baru.",
+        "Flake's method — also finds MercuryPoster descriptors anywhere in the package and keeps their original identifiers.": "Metode Flake — juga menemukan deskriptor MercuryPoster di mana saja dalam paket dan mempertahankan identifier aslinya.",
+        "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is.": "Menulis deskriptor melalui exploit Airlift lewat tunnel pairing + VPN. Transport di bawah harus siap dulu. Folder deskriptor dipentaskan beserta subfoldernya apa adanya.",
+        "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "Impor PosterBoard diblokir di versi iOS ini — worse_query sudah ditambal di iOS 27.3 beta 2, dan tidak ada perbaikan Flake untuk iOS 27.3 beta 2 atau yang lebih baru.",
+        "Reference — MercuryPoster wallpaper import (Flake method).": "Referensi — impor wallpaper MercuryPoster (metode Flake).",
+
     ]
 
     // Chinese (Simplified)
@@ -2023,6 +2033,16 @@ enum WTStrings {
         "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "Airlift 已写入文件，但无法在设备上验证——漏洞报告成功。",
         "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "文件通过 Airlift 漏洞写入。仅当容器可读时（iOS 26/27）才会先创建备份。",
         "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "收据已保存至 DeployBackups/%@——未创建备份，因此本次部署无法恢复。",
+
+        "PosterBoard Method": "PosterBoard 方式",
+        "Normal": "常规",
+        "Flake (MercuryPoster)": "Flake (MercuryPoster)",
+        "Via Airlift": "通过 Airlift",
+        "The current import — descriptors from any extension in the package, with fresh identifiers.": "当前导入方式——从安装包中任意扩展导入描述符，并赋予新的标识符。",
+        "Flake's method — also finds MercuryPoster descriptors anywhere in the package and keeps their original identifiers.": "Flake 方式——还会查找安装包中任何位置的 MercuryPoster 描述符，并保留其原始标识符。",
+        "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is.": "通过配对 + VPN 通道，使用 Airlift 漏洞写入描述符。须先准备好下方的传输通道。描述符文件夹连同子文件夹按原样暂存。",
+        "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "此 iOS 版本上 PosterBoard 导入已被阻止——worse_query 已在 iOS 27.3 beta 2 中被修复，且 Flake 没有针对 iOS 27.3 beta 2 或更高版本的修复。",
+        "Reference — MercuryPoster wallpaper import (Flake method).": "参考——MercuryPoster 壁纸导入（Flake 方法）。",
 
     ]
 
@@ -2969,6 +2989,16 @@ enum WTStrings {
         "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "File được ghi qua exploit Airlift. Bản sao lưu chỉ được tạo trước khi container đọc được (iOS 26/27).",
         "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Biên nhận đã lưu trong DeployBackups/%@ — không có bản sao lưu nào được tạo, nên bản triển khai này không thể khôi phục.",
 
+        "PosterBoard Method": "Phương thức PosterBoard",
+        "Normal": "Thường",
+        "Flake (MercuryPoster)": "Flake (MercuryPoster)",
+        "Via Airlift": "Qua Airlift",
+        "The current import — descriptors from any extension in the package, with fresh identifiers.": "Cách nhập hiện tại — descriptor từ mọi extension trong gói, với định danh mới.",
+        "Flake's method — also finds MercuryPoster descriptors anywhere in the package and keeps their original identifiers.": "Phương thức Flake — còn tìm descriptor MercuryPoster ở bất cứ đâu trong gói và giữ nguyên định danh gốc của chúng.",
+        "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is.": "Ghi descriptor qua exploit Airlift trên đường hầm pairing + VPN. Transport bên dưới phải sẵn sàng trước. Thư mục descriptor được dàn dựng kèm các thư mục con như cũ.",
+        "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "Nhập PosterBoard bị chặn trên phiên bản iOS này — worse_query đã bị vá trong iOS 27.3 beta 2 và không có bản sửa Flake nào cho iOS 27.3 beta 2 trở lên.",
+        "Reference — MercuryPoster wallpaper import (Flake method).": "Tham khảo — nhập hình nền MercuryPoster (phương thức Flake).",
+
     ]
 
     // Russian
@@ -3914,6 +3944,16 @@ enum WTStrings {
         "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "Файлы записываются через эксплойт Airlift. Резервная копия создаётся заранее только если контейнер читается (iOS 26/27).",
         "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Квитанция сохранена в DeployBackups/%@ — резервная копия не создана, поэтому это развёртывание нельзя восстановить.",
 
+        "PosterBoard Method": "Метод PosterBoard",
+        "Normal": "Обычный",
+        "Flake (MercuryPoster)": "Flake (MercuryPoster)",
+        "Via Airlift": "Через Airlift",
+        "The current import — descriptors from any extension in the package, with fresh identifiers.": "Текущий импорт — дескрипторы из любого расширения в пакете, с новыми идентификаторами.",
+        "Flake's method — also finds MercuryPoster descriptors anywhere in the package and keeps their original identifiers.": "Метод Flake — также находит дескрипторы MercuryPoster в любом месте пакета и сохраняет их исходные идентификаторы.",
+        "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is.": "Записывает дескрипторы через эксплойт Airlift по туннелю сопряжения + VPN. Сначала должен быть готов транспорт ниже. Папки дескрипторов подготавливаются вместе с вложенными папками как есть.",
+        "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "Импорт PosterBoard заблокирован в этой версии iOS — worse_query исправлен в iOS 27.3 beta 2, и исправления Flake для iOS 27.3 beta 2 и новее не существует.",
+        "Reference — MercuryPoster wallpaper import (Flake method).": "Справочник — импорт обоев MercuryPoster (метод Flake).",
+
     ]
 
     // ar
@@ -4849,6 +4889,16 @@ enum WTStrings {
         "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "كتب Airlift الملفات، لكن تعذّر التحقق منها على الجهاز — أبلغت الثغرة عن النجاح.",
         "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "تُكتب الملفات عبر ثغرة Airlift. تُنشأ نسخة احتياطية أولًا فقط عندما تكون الحاوية قابلة للقراءة (iOS 26/27).",
         "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "تم حفظ الإيصال في DeployBackups/%@ — لم تُنشأ نسخة احتياطية، لذا لا يمكن استعادة هذا النشر.",
+
+        "PosterBoard Method": "طريقة PosterBoard",
+        "Normal": "عادي",
+        "Flake (MercuryPoster)": "Flake (MercuryPoster)",
+        "Via Airlift": "عبر Airlift",
+        "The current import — descriptors from any extension in the package, with fresh identifiers.": "الاستيراد الحالي — واصفات من أي امتداد في الحزمة، بمعرّفات جديدة.",
+        "Flake's method — also finds MercuryPoster descriptors anywhere in the package and keeps their original identifiers.": "طريقة Flake — تعثر أيضًا على واصفات MercuryPoster في أي مكان داخل الحزمة وتحتفظ بمعرّفاتها الأصلية.",
+        "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is.": "يكتب الواصفات عبر ثغرة Airlift من خلال نفق الاقتران + VPN. يجب أن يكون النقل أدناه جاهزًا أولًا. تُجهَّز مجلدات الواصفات مع مجلداتها الفرعية كما هي.",
+        "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "استيراد PosterBoard محظور في إصدار iOS هذا — تم إصلاح worse_query في iOS 27.3 beta 2، ولا يوجد إصلاح Flake لنظام iOS 27.3 beta 2 أو الأحدث.",
+        "Reference — MercuryPoster wallpaper import (Flake method).": "مرجع — استيراد خلفية MercuryPoster (طريقة Flake).",
 
     ]
 
@@ -5786,6 +5836,16 @@ enum WTStrings {
         "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "Os arquivos são gravados pelo exploit Airlift. Um backup só é feito antes quando o contêiner pode ser lido (iOS 26/27).",
         "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Recibo salvo em DeployBackups/%@ — nenhum backup foi feito, então esta implantação não pode ser restaurada.",
 
+        "PosterBoard Method": "Método PosterBoard",
+        "Normal": "Normal",
+        "Flake (MercuryPoster)": "Flake (MercuryPoster)",
+        "Via Airlift": "Via Airlift",
+        "The current import — descriptors from any extension in the package, with fresh identifiers.": "A importação atual — descritores de qualquer extensão do pacote, com novos identificadores.",
+        "Flake's method — also finds MercuryPoster descriptors anywhere in the package and keeps their original identifiers.": "Método Flake — também encontra descritores MercuryPoster em qualquer lugar do pacote e mantém seus identificadores originais.",
+        "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is.": "Grava os descritores pelo exploit Airlift através do túnel de pareamento + VPN. O transporte abaixo precisa estar pronto primeiro. As pastas de descritores são preparadas com suas subpastas como estão.",
+        "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "A importação do PosterBoard está bloqueada nesta versão do iOS — o worse_query foi corrigido no iOS 27.3 beta 2 e não existe correção Flake para o iOS 27.3 beta 2 ou posterior.",
+        "Reference — MercuryPoster wallpaper import (Flake method).": "Referência — importação de papel de parede MercuryPoster (método Flake).",
+
     ]
 
     // es
@@ -6722,6 +6782,16 @@ enum WTStrings {
         "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "Los archivos se escriben a través del exploit Airlift. Solo se hace un respaldo antes cuando el contenedor se puede leer (iOS 26/27).",
         "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Recibo guardado en DeployBackups/%@ — no se hizo ningún respaldo, así que esta implementación no se puede restaurar.",
 
+        "PosterBoard Method": "Método PosterBoard",
+        "Normal": "Normal",
+        "Flake (MercuryPoster)": "Flake (MercuryPoster)",
+        "Via Airlift": "Vía Airlift",
+        "The current import — descriptors from any extension in the package, with fresh identifiers.": "La importación actual — descriptores de cualquier extensión del paquete, con identificadores nuevos.",
+        "Flake's method — also finds MercuryPoster descriptors anywhere in the package and keeps their original identifiers.": "Método Flake — también encuentra descriptores MercuryPoster en cualquier parte del paquete y conserva sus identificadores originales.",
+        "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is.": "Escribe los descriptores a través del exploit Airlift por el túnel de emparejamiento + VPN. El transporte de abajo debe estar listo primero. Las carpetas de descriptores se preparan con sus subcarpetas tal cual.",
+        "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "La importación de PosterBoard está bloqueada en esta versión de iOS — worse_query fue corregido en iOS 27.3 beta 2 y no existe una corrección de Flake para iOS 27.3 beta 2 o posterior.",
+        "Reference — MercuryPoster wallpaper import (Flake method).": "Referencia — importación de fondos MercuryPoster (método Flake).",
+
     ]
 
     // fr
@@ -7657,6 +7727,16 @@ enum WTStrings {
         "Airlift wrote the files, but they could not be verified on-device — the exploit reported success.": "Airlift a écrit les fichiers, mais ils n'ont pas pu être vérifiés sur l'appareil — l'exploit a signalé un succès.",
         "Files are written through the Airlift exploit. A backup is made first only when the container can be read (iOS 26/27).": "Les fichiers sont écrits via l'exploit Airlift. Une sauvegarde n'est faite d'abord que lorsque le conteneur est lisible (iOS 26/27).",
         "Receipt saved under DeployBackups/%@ — no backup was made, so this deploy cannot be restored.": "Reçu enregistré dans DeployBackups/%@ — aucune sauvegarde n'a été faite, donc ce déploiement ne peut pas être restauré.",
+
+        "PosterBoard Method": "Méthode PosterBoard",
+        "Normal": "Normal",
+        "Flake (MercuryPoster)": "Flake (MercuryPoster)",
+        "Via Airlift": "Via Airlift",
+        "The current import — descriptors from any extension in the package, with fresh identifiers.": "L'import actuel — descripteurs de n'importe quelle extension du paquet, avec de nouveaux identifiants.",
+        "Flake's method — also finds MercuryPoster descriptors anywhere in the package and keeps their original identifiers.": "Méthode Flake — trouve aussi les descripteurs MercuryPoster n'importe où dans le paquet et conserve leurs identifiants d'origine.",
+        "Writes the descriptors through the Airlift exploit over the pairing + VPN tunnel. The transport below must be ready first. Descriptor folders are staged with their subfolders as-is.": "Écrit les descripteurs via l'exploit Airlift à travers le tunnel d'appairage + VPN. Le transport ci-dessous doit d'abord être prêt. Les dossiers de descripteurs sont préparés avec leurs sous-dossiers tels quels.",
+        "PosterBoard import is blocked on this iOS version — worse_query was patched in iOS 27.3 beta 2, and no Flake fix exists for iOS 27.3 beta 2 or later.": "L'import PosterBoard est bloqué sur cette version d'iOS — worse_query est corrigé dans iOS 27.3 bêta 2 et aucun correctif Flake n'existe pour iOS 27.3 bêta 2 ou version ultérieure.",
+        "Reference — MercuryPoster wallpaper import (Flake method).": "Référence — import de fond d'écran MercuryPoster (méthode Flake).",
 
     ]
 }

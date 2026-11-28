@@ -121,6 +121,13 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     creditRow(
+                        title: "Flake — Squair",
+                        detail: wtLang.tr("Reference — MercuryPoster wallpaper import (Flake method)."),
+                        url: "https://github.com/squairdev/Flake"
+                    )
+                    Divider()
+                        .padding(.leading, 14)
+                    creditRow(
                         title: "CAPlayground",
                         detail: wtLang.tr("Reference — PosterBoard wallpaper format the maker was verified against."),
                         url: "https://github.com/CAPlayground/CAPlayground"
@@ -225,6 +232,11 @@ struct LicenseView: View {
                     Divider()
                         .padding(.leading, 14)
                     LabeledContent("3105 — YangJiii", value: "GPL-3.0")
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                    Divider()
+                        .padding(.leading, 14)
+                    LabeledContent("Flake — Squair", value: "GPL-3.0")
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
                 }
