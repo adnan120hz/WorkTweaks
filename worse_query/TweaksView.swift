@@ -481,7 +481,12 @@ struct TweaksView: View {
     }
 
     /// One category row: icon in a tinted square, title,
-    /// tweak count, chevron — as in the reference.
+    /// tweak count, chevron — as in the reference. The whole
+    /// row is the tap target: contentShape(Rectangle()) makes
+    /// the Spacer's empty middle tappable too — without it
+    /// only the icon, the texts and the chevron receive taps,
+    /// so the box only opened from the chevron corner. The
+    /// chevron stays as a visual indicator only.
     private func categoryRow(section: TweakSection) -> some View {
         HStack(spacing: 14) {
             Image(systemName: section.icon)
@@ -505,6 +510,7 @@ struct TweaksView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .wtGlassCard(cornerRadius: 16)
+        .contentShape(Rectangle())
     }
 
     /// One category's page: the section's tweak cards (with
