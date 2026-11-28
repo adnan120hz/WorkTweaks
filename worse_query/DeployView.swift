@@ -443,7 +443,7 @@ struct DeployPreviewSection: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(wtLang.tr("Airlift cannot back up files it replaces on iOS 17/18 — the exploit writes but cannot read them back. On iOS 26/27 a backup is made first when the container can be read. Files replaced without a backup cannot be restored from Deploy History."))
                                 .fixedSize(horizontal: false, vertical: true)
-                            Text(wtLang.tr("Files in subfolders are written with folder injection, preserving their folders."))
+                            Text(wtLang.tr("Files in subfolders are written one folder at a time, each file into the folder it belongs to."))
                                 .fixedSize(horizontal: false, vertical: true)
                             Text(wtLang.tr("AppGroup and InternalDaemon targets resolve from the local container scan; on iOS 17/18 only Application targets can be found over the tunnel."))
                                 .fixedSize(horizontal: false, vertical: true)

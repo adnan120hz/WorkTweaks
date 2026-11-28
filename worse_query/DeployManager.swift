@@ -603,15 +603,14 @@ final class DeployManager: ObservableObject {
     // Same package flow as Normal (manifest → resolve → backup
     // → write → receipt), but the writes go through the Airlift
     // exploit instead of the local sandbox-extension grant.
-    // The payloads are staged into a temp dir that mirrors
-    // their relative paths (subfolders included); each
-    // top-level folder is then written with
-    // al_exploit_inject_folder (one call per folder, hierarchy
-    // preserved), and any genuinely top-level files go through
-    // the PROVEN al_exploit_write_dir call behind the passcode
-    // flash (TelephonyUI caches) and the wallet flash (.pkpass
-    // folders). The target host is pointed at the Local Dev
-    // VPN gateway (10.7.0.1) first, like the wallet flash does.
+    // Files are written one parent folder at a time: each
+    // group stages its files FLAT (leaf names only) and goes
+    // through al_exploit_write_dir — the file-level call
+    // behind the passcode flash (TelephonyUI caches) and the
+    // wallet flash (.pkpass folders) — with the target set to
+    // that group's parent directory inside the container. The
+    // target host is pointed at the Local Dev VPN gateway
+    // (10.7.0.1) first, like the wallet flash does.
     //
     // Why not one write_dir call for the whole stage dir:
     // write_dir only collects files sitting directly at the
@@ -619,8 +618,22 @@ final class DeployManager: ObservableObject {
     // subfolders — so a nested payload (every repo package)
     // staged as Library/... found zero files and failed with
     // "no valid files found in source_dir" (device-proven
-    // 2026-11-28, Capcut Pro). inject_folder is the FFI call
-    // whose header promises complete hierarchy preservation.
+    // 2026-11-28, Capcut Pro).
+    //
+    // Why not al_exploit_inject_folder for the whole tree:
+    // inject_folder moves a whole DIRECTORY asset through
+    // AirTraffic, and its FFI call returns rc=0 without ever
+    // reading atc's post-FileComplete responses — a failed
+    // move is invisible to the caller. On device (2026-11-28,
+    // Capcut Pro, twice + retry) the move reported rc=0 yet
+    // the file never landed: the destination folder (Library)
+    // already exists in the target container, and a directory
+    // move onto an existing non-empty directory does not
+    // replace it. Only the post-write size check caught it.
+    // File assets moved onto existing files are the mechanism
+    // the passcode/wallet flashes rely on, so nested payloads
+    // are written file by file, grouped by parent folder. No
+    // Swift caller in this app uses inject_folder anymore.
     //
     // HONEST LIMITS (read airlift.h — there is no read or
     // download primitive in the FFI at all):
@@ -637,13 +650,17 @@ final class DeployManager: ObservableObject {
     //      (rc == 0) is reported as "Sent via Airlift", NOT as
     //      "Replaced (size)". With a grant, sizes are verified
     //      after the write and reported honestly.
-    //   3. al_exploit_inject_folder (used for nested payloads)
-    //      is UNPROVEN on-device in this app: no Swift caller
-    //      used it before this fix. The first nested Airlift
-    //      deploy is its device test — the Log lines
-    //      "inject_folder rc=" per folder show what happened.
+    //   3. Hidden files (leaf starts with '.'): write_dir
+    //      skips them in Rust, and inject_folder's archive
+    //      walk skips them too — neither FFI path can carry
+    //      them. They are reported as unsupported instead of
+    //      failing with a confusing size-check error.
     //   4. al_find_app_container (used by resolution) is
     //      unproven in-app; a failed lookup is an honest error.
+    //   5. A parent folder that does not exist yet in the
+    //      target container cannot be created over Airlift
+    //      (no mkdir primitive in the FFI) — files into a
+    //      missing folder fail their size check honestly.
 
     func deployViaAirlift(package: LoadedDeployPackage) {
         guard let containerPath = resolvedContainerPath, !isDeploying else { return }
@@ -720,64 +737,53 @@ final class DeployManager: ObservableObject {
         }
         let deployableFiles = package.files.filter { backupError[$0.relativePath] == nil }
 
-        // 2. Stage the deployable payloads into a temp dir
-        // mirroring their relative paths, then write them with
-        // the exploit. al_exploit_write_dir only collects files
-        // sitting directly at the top level of its source dir
-        // (it never descends into subfolders), so one write_dir
-        // call for the whole stage dir finds zero files for a
-        // nested payload and fails with "no valid files found
-        // in source_dir". Nested payloads therefore go through
-        // al_exploit_inject_folder — one call per top-level
-        // folder, which preserves the complete hierarchy —
-        // and only genuinely top-level files use the proven
-        // write_dir call.
-        guard let stageDir = stagePayloadsForAirlift(deployableFiles) else {
-            return DeployRunResult(
-                lines: [DeployRunLine(path: "", ok: false, message: "The payloads could not be staged for the Airlift write — nothing was deployed.")],
-                receiptFolderName: nil
-            )
-        }
-        defer { try? FileManager.default.removeItem(at: stageDir) }
+        // 2. Write the deployable payloads with the exploit,
+        // one parent folder at a time. Files are grouped by
+        // their parent directory; each group stages its files
+        // FLAT (leaf names only) and goes through
+        // al_exploit_write_dir with the target set to that
+        // group's parent directory inside the container.
+        // (See the section header for why inject_folder is
+        // not used: its directory-asset move silently fails
+        // when the destination folder already exists.)
+        //
+        // Hidden files (leaf starts with '.') cannot go
+        // through either FFI path — write_dir skips them in
+        // Rust — so they are set aside here and reported
+        // honestly in section 3 instead of failing with a
+        // confusing size-check error.
+        let writableFiles = deployableFiles.filter { !($0.relativePath as NSString).lastPathComponent.hasPrefix(".") }
+        let unsupportedFiles = deployableFiles.filter { ($0.relativePath as NSString).lastPathComponent.hasPrefix(".") }
 
         "10.7.0.1".withCString { _ = al_set_target_host($0) }
         let pairingPath = PairingController.pairingFilePath()
-        // Nothing deployable (every file failed its backup):
-        // skip the exploit calls — there is nothing to write.
+        // Nothing writable (every file failed its backup or
+        // is a hidden file): skip the exploit calls — there
+        // is nothing to write.
         var rc: Int32 = 0
         var ffiError: String? = nil
-        if !deployableFiles.isEmpty {
-            let topEntries = (try? FileManager.default.contentsOfDirectory(at: stageDir, includingPropertiesForKeys: [.isDirectoryKey])) ?? []
-            var hasTopLevelFiles = false
-            for entry in topEntries {
-                let isDir = (try? entry.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
-                if !isDir { hasTopLevelFiles = true; continue }
-                let folderName = entry.lastPathComponent
-                var callError: UnsafeMutablePointer<CChar>? = nil
-                let callRc = pairingPath.withCString { pairC in
-                    entry.path.withCString { folderC in
-                        containerPath.withCString { parentC in
-                            folderName.withCString { destC in
-                                al_exploit_inject_folder(pairC, folderC, parentC, destC, nil, nil, &callError)
-                            }
-                        }
-                    }
-                }
-                if let p = callError {
-                    if ffiError == nil { ffiError = String(validatingUTF8: p) }
-                    al_string_free(p)
-                }
-                print("[Deploy] Airlift inject_folder rc=\(callRc) for \(folderName) -> \(containerPath)")
-                if rc == 0 { rc = callRc }
+        if !writableFiles.isEmpty {
+            // Group by parent directory, sorted so the Log
+            // order is stable run to run.
+            var groups: [String: [LoadedDeployFile]] = [:]
+            for file in writableFiles {
+                let parent = (file.relativePath as NSString).deletingLastPathComponent
+                groups[parent, default: []].append(file)
             }
-            if hasTopLevelFiles {
-                // Flat top-level files: the proven write_dir path
-                // (it only collects top-level files, which is
-                // exactly what is left to write here).
+            for parent in groups.keys.sorted() {
+                let groupFiles = groups[parent] ?? []
+                guard let flatStageDir = stageFlatFilesForAirlift(groupFiles) else {
+                    if rc == 0 { rc = 1 }
+                    if ffiError == nil { ffiError = "The payloads could not be staged for the Airlift write" }
+                    print("[Deploy] Airlift staging failed for folder \(parent.isEmpty ? "(container root)" : parent)")
+                    continue
+                }
+                defer { try? FileManager.default.removeItem(at: flatStageDir) }
+                let targetDir = parent.isEmpty ? containerPath : (containerPath as NSString).appendingPathComponent(parent)
                 var callError: UnsafeMutablePointer<CChar>? = nil
                 let callRc = pairingPath.withCString { pairC in
-                    stageDir.path.withCString { srcC in
-                        containerPath.withCString { tgtC in
+                    flatStageDir.path.withCString { srcC in
+                        targetDir.withCString { tgtC in
                             al_exploit_write_dir(pairC, srcC, tgtC, nil, nil, &callError)
                         }
                     }
@@ -786,7 +792,7 @@ final class DeployManager: ObservableObject {
                     if ffiError == nil { ffiError = String(validatingUTF8: p) }
                     al_string_free(p)
                 }
-                print("[Deploy] Airlift write_dir rc=\(callRc) for top-level files -> \(containerPath)")
+                print("[Deploy] Airlift write_dir rc=\(callRc) for \(parent.isEmpty ? "(container root)" : parent) (\(groupFiles.count) file(s)) -> \(containerPath)")
                 if rc == 0 { rc = callRc }
             }
         }
@@ -805,8 +811,16 @@ final class DeployManager: ObservableObject {
             lines.append(DeployRunLine(path: file.relativePath, ok: false, message: "Backup failed: \(backupError[file.relativePath] ?? "") — not deployed"))
             receiptFiles.append(DeployReceiptFile(path: file.relativePath, existedBefore: true, size: file.data.count, status: "failed"))
         }
+        // Hidden files were never staged and never written —
+        // neither FFI path can carry them (write_dir skips
+        // them in Rust). They fail here, honestly, instead
+        // of as a size-check mystery.
+        for file in unsupportedFiles {
+            lines.append(DeployRunLine(path: file.relativePath, ok: false, message: "Hidden files cannot be written via Airlift — the exploit skips files whose name starts with '.'"))
+            receiptFiles.append(DeployReceiptFile(path: file.relativePath, existedBefore: existedBefore[file.relativePath] ?? false, size: file.data.count, status: "failed"))
+        }
         if rc != 0 {
-            for file in deployableFiles {
+            for file in writableFiles {
                 lines.append(DeployRunLine(path: file.relativePath, ok: false, message: "Airlift write failed: \(ffiError ?? "exploit error (rc=\(rc))")"))
                 receiptFiles.append(DeployReceiptFile(path: file.relativePath, existedBefore: existedBefore[file.relativePath] ?? false, size: file.data.count, status: "failed"))
             }
@@ -817,7 +831,7 @@ final class DeployManager: ObservableObject {
             if !hadGrant {
                 noteKeys.append("Airlift wrote the files, but they could not be verified on-device — the exploit reported success.")
             }
-            for file in deployableFiles {
+            for file in writableFiles {
                 let destPath = (containerPath as NSString).appendingPathComponent(file.relativePath)
                 let existed = existedBefore[file.relativePath] ?? false
                 if hadGrant {
@@ -827,6 +841,13 @@ final class DeployManager: ObservableObject {
                             ? "Replaced (\(wtFormatSize(Int64(file.data.count))))"
                             : "Created (\(wtFormatSize(Int64(file.data.count))))"))
                     } else {
+                        // Log expected vs actual so the next
+                        // device test is diagnostic: an old
+                        // file still in place, a truncated
+                        // write, and a live app rewriting its
+                        // own file all look different here.
+                        let found = size?.int64Value
+                        print("[Deploy] Airlift size check \(file.relativePath): expected \(file.data.count) bytes, found \(found.map { "\($0) bytes" } ?? "no file")")
                         lines.append(DeployRunLine(path: file.relativePath, ok: false, message: "Size check failed after writing"))
                     }
                     receiptFiles.append(DeployReceiptFile(path: file.relativePath, existedBefore: existed, size: file.data.count, status: lines.last?.ok == true ? "ok" : "failed"))
@@ -860,19 +881,20 @@ final class DeployManager: ObservableObject {
         return result
     }
 
-    /// Stage payload files into a temp dir that mirrors their
-    /// relative paths (subfolders included), ready for the
-    /// Airlift write step (inject_folder per top-level folder,
-    /// write_dir for flat top-level files). Nil when staging fails.
-    private static func stagePayloadsForAirlift(_ files: [LoadedDeployFile]) -> URL? {
+    /// Stage one parent folder's files FLAT (leaf names
+    /// only) into a fresh temp dir, ready for a single
+    /// al_exploit_write_dir call whose target is that
+    /// folder. Flat is a hard requirement: write_dir only
+    /// collects files sitting directly at the top level of
+    /// its source dir. Nil when staging fails.
+    private static func stageFlatFilesForAirlift(_ files: [LoadedDeployFile]) -> URL? {
         let stageDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("airlift_deploy_\(UUID().uuidString)", isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: stageDir, withIntermediateDirectories: true)
             for file in files {
-                let dest = stageDir.appendingPathComponent(file.relativePath)
-                try FileManager.default.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-                try file.data.write(to: dest)
+                let leaf = (file.relativePath as NSString).lastPathComponent
+                try file.data.write(to: stageDir.appendingPathComponent(leaf))
             }
             return stageDir
         } catch {
